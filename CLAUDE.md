@@ -29,6 +29,7 @@ v1과 다릅니다. v2는 **티켓 1개로 자기완결적**입니다.
 
 - **핵심 기능 SSOT는 `docs/requirements/FE_REQUIREMENTS_FOR_CLAUDE_CODE.md`** 이다. 기능 88개 = MVP 36(P0) + 추가기능 50(P1/P2). 기능 ID(`LOGIN-FE-001` 등)를 티켓 추적자로 사용한다.
 - **디자인 토큰 SSOT는 `docs/design/panda.config.ts` + `DESIGN_SYSTEM.md`** 이다. 루트 `panda.config.ts`로 그대로 적용 후 `pnpm panda codegen`.
+- **디자인 작업(토큰/시맨틱/recipe/textStyles 수정·추가) → `src/theme/README.md` 참조** (규칙 본진·분해 구조).
 - **다크 모드 전용 · 데스크탑 전용** (1100px 미만 1열 fallback만, 반응형 모바일은 MVP 밖).
 - 색은 semantic token만 사용. 컴포넌트는 Park UI 베이스 + GamBTI recipe로 덮어쓴다.
 
