@@ -49,3 +49,7 @@ docs/scratch/*
 docs/tickets/**/*.md
 !docs/tickets/README.md
 !docs/tickets/_TEMPLATE.md
+
+# Storybook (빌드 산출물·디버그 로그)
+storybook-static/
+*storybook.log
