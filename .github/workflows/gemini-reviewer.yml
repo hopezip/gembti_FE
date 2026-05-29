@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
+      issues: write
       pull-requests: write
 
     steps:
@@ -16,7 +18,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Gemini AI Review
-        # 깃헙에 공개된 신뢰할 수 있는 제마이내 리뷰어 액션을 가져옵니다
-        uses: google-gemini/gemini-github-actions/code-review@main
+        # Google 공식 액션 (https://github.com/google-github-actions/run-gemini-cli)
+        # GEMINI_API_KEY 시크릿이 리포지토리에 등록돼 있어야 동작한다.
+        uses: google-github-actions/run-gemini-cli@v0
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: '/pr-code-review'
