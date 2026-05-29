@@ -1,8 +1,7 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { css } from 'styled-system/css';
-import { NotFoundPage } from './NotFoundPage';
 
-function HomePage() {
+export function NotFoundPage() {
   return (
     <main
       className={css({
@@ -15,12 +14,13 @@ function HomePage() {
     >
       <section
         className={css({
-          w: 'min(720px, 100%)',
+          w: 'min(560px, 100%)',
           bg: 'bg.surface',
           border: '1px solid',
           borderColor: 'border.default',
           borderRadius: '3xl',
           p: '8',
+          textAlign: 'center',
           boxShadow: 'xl',
         })}
       >
@@ -34,7 +34,7 @@ function HomePage() {
             mb: '2',
           })}
         >
-          Bootstrap ready
+          404
         </p>
         <h1
           className={css({
@@ -43,17 +43,35 @@ function HomePage() {
             mb: '2',
           })}
         >
-          GamBTI
+          페이지를 찾을 수 없습니다
         </h1>
-        <p className={css({ textStyle: 'body.md', color: 'fg.muted' })}>
-          게임 유저들을 위한 AI 게임 추천 서비스
+        <p
+          className={css({
+            textStyle: 'body.md',
+            color: 'fg.muted',
+            mb: '6',
+          })}
+        >
+          요청하신 경로가 존재하지 않거나 이동되었습니다.
         </p>
+        <Link
+          to="/"
+          className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            bg: 'accent.default',
+            color: 'fg.onAccent',
+            textStyle: 'body.md',
+            fontWeight: 'medium',
+            px: '5',
+            py: '2.5',
+            borderRadius: 'lg',
+            _hover: { bg: 'accent.hover' },
+          })}
+        >
+          홈으로 가기
+        </Link>
       </section>
     </main>
   );
 }
-
-export const router = createBrowserRouter([
-  { path: '/', element: <HomePage /> },
-  { path: '*', element: <NotFoundPage /> },
-]);

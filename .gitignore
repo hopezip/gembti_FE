@@ -22,6 +22,12 @@ Thumbs.db
 styled-system/
 src/types/api.ts
 
+# Test coverage (Vitest)
+coverage/
+
+# TypeScript incremental build
+*.tsbuildinfo
+
 # Playwright
 test-results/
 playwright-report/
