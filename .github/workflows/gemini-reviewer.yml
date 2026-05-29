@@ -20,6 +20,10 @@ jobs:
       - name: Gemini AI Review
         # Google 공식 액션 (https://github.com/google-github-actions/run-gemini-cli)
         # GEMINI_API_KEY 시크릿이 리포지토리에 등록돼 있어야 동작한다.
+        # 헤드리스(CI) 환경에서는 워크스페이스 신뢰가 필요하다.
+        # https://geminicli.com/docs/cli/trusted-folders/#headless-and-automated-environments
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
         uses: google-github-actions/run-gemini-cli@v0
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
