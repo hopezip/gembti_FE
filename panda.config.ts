@@ -27,11 +27,20 @@
  *   - 공지(notice) → note.default
  */
 import { defineConfig } from '@pandacss/dev';
+import { createPreset } from '@park-ui/panda-preset';
+import orange from '@park-ui/panda-preset/colors/orange';
+import slate from '@park-ui/panda-preset/colors/slate';
 
 export default defineConfig({
   preflight: true,
   jsxFramework: 'react',
   include: ['./src/**/*.{ts,tsx,jsx}'],
+
+  // Park UI 베이스(컴포넌트 anatomy/slotRecipe) 채택.
+  // 색·radius는 preset 기본값을 깔고, 아래 theme.extend가 GamBTI 토큰으로 덮어쓴다.
+  presets: [
+    createPreset({ accentColor: orange, grayColor: slate, radius: 'md' }),
+  ],
 
   // 다크 모드만 사용 — 라이트 모드는 MVP 이후
   conditions: {
@@ -492,8 +501,10 @@ export default defineConfig({
           },
         },
 
-        card: {
-          className: 'card',
+        // Park UI preset이 'card'를 slotRecipe로 제공하므로, 우리 단일 recipe는
+        // 이름 충돌을 피해 'gameCard'로 둔다. (slotRecipe vs recipe 동명 충돌 해소)
+        gameCard: {
+          className: 'gameCard',
           base: {
             bg: 'bg.surface',
             border: '1px solid',
