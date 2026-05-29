@@ -31,3 +31,6 @@ playwright-report/
 
 # 세션 원문 로그 (시크릿 위험)
 docs/logs/sessions/
+
+# 일일 로그 (팀 충돌 방지 — 로컬 보관, README·템플릿은 추적 유지)
+docs/logs/[0-9][0-9][0-9][0-9]-*.md
