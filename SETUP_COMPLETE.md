@@ -7,7 +7,7 @@
 - **기능 SSOT**: `docs/requirements/FE_REQUIREMENTS_FOR_CLAUDE_CODE.md` (MVP 36 / 추가기능 50). 기능 ID(`LOGIN-FE-001` 등)를 티켓 추적자로 사용.
 - **디자인 SSOT**: `docs/design/DESIGN_SYSTEM.md` + 루트 `panda.config.ts`. **다크 모드·데스크탑 전용**, semantic token만, Park UI 베이스 + recipe.
 - **스택**: Vite + React 19 / TS strict / Panda CSS + Park UI / Zustand / TanStack Query / ky / React Router / RHF+Zod / JWT(httpOnly Cookie) / MSW / Vitest+RTL + Playwright / Biome.
-- **작업 모드**: 풀팀(7명, 본인=프론트 리드) → PR 의무, **본인 머지 금지(1명 승인)**, micro 흐름 비활성.
+- **작업 모드**: 풀팀(8명, 프론트 4명) → PR 의무, **본인 머지 금지(1명 승인)**, micro 흐름 비활성.
 
 ## v2의 의미
 
