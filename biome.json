@@ -8,6 +8,7 @@
       "!!**/build",
       "!!**/.vite",
       "!!**/styled-system",
+      "!!**/storybook-static",
       "!!docs/design",
       "!!public/mockServiceWorker.js"
     ]
