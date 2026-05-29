@@ -1,0 +1,4 @@
+# 줄바꿈 정규화
+# Biome 포매터는 LF를 요구하는데 Windows의 core.autocrlf=true가 CRLF를 만들어
+# lint(format) 충돌이 난다. 저장소 저장·체크아웃 모두 LF로 강제해 전 플랫폼 일관성 확보.
+* text=auto eol=lf
