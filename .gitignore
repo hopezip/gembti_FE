@@ -1,0 +1,33 @@
+# Node
+node_modules/
+dist/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Generated (Panda CSS codegen, API types)
+styled-system/
+src/types/api.ts
+
+# Playwright
+test-results/
+playwright-report/
+
+# Claude Code Hook
+.claude/hooks/.current-session-id
+
+# 세션 원문 로그 (시크릿 위험)
+docs/logs/sessions/
