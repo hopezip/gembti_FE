@@ -15,7 +15,8 @@ bugfix/<티켓-ID>-<짧은-설명>    ← 버그 수정
 hotfix/<티켓-ID>-<짧은-설명>    ← 긴급 (main 직접)
 refactor/<티켓-ID>-<짧은-설명>  ← 리팩터링
 task/<티켓-ID>-<짧은-설명>      ← 작업
-chore/<티켓-ID>-<짧은-설명>     ← 설정/문서
+docs/<티켓-ID>-<짧은-설명>      ← 문서
+chore/<티켓-ID>-<짧은-설명>     ← 설정/빌드/패키지
 ```
 
 > ⚠️ 풀팀 모드라 **티켓 ID 없는 micro 브랜치(`fix/*`, `chore/*` 단독)는 사용하지 않습니다.** 모든 변경에 티켓이 있습니다.
@@ -29,9 +30,41 @@ chore/<티켓-ID>-<짧은-설명>     ← 설정/문서
 | HOTFIX | `hotfix/` | main (긴급) |
 | REFACTOR | `refactor/` | dev |
 | TASK | `task/` | dev |
+| DOCS | `docs/` | dev |
 | CHORE | `chore/` | dev |
 
 REQ 기능 ID를 티켓 ID로 쓰는 경우 예: `feature/LOGIN-FE-001-email-login`
+
+> **`feat` vs `feature/` 는 일부러 다릅니다 (오타 아님).**
+> - `feat`, `docs`, `refactor` … = **Conventional Commits**의 커밋 *타입* (커밋 메시지용)
+> - `feature/`, `docs/`, `refactor/` … = **Git Flow**의 브랜치 *prefix* (브랜치 이름용)
+> 두 표준의 다른 계층이라, 새 기능은 `feat` 커밋 ↔ `feature/` 브랜치로 매핑됩니다. (`docs`/`refactor`/`chore` 등은 타입·prefix 철자가 같음)
+
+## 이슈 네이밍
+
+> 모든 작업은 GitHub Issue를 먼저 만들고 진행합니다. 이슈 제목에서 작업 성격이 바로 보이도록 통일합니다.
+
+**양식:** `[<type>] <티켓-ID> <subject>`
+
+```
+[refactor] TASK-DEVEX-002 panda.config.ts 모듈 분리
+[feat] LOGIN-FE-001 이메일 로그인 화면
+[docs] TASK-DOCS-001 이슈·브랜치·커밋 네이밍 통일
+```
+
+- `<type>` = 커밋 타입과 동일한 어휘 사용: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
+- `<티켓-ID>` = 내부 티켓/기능 ID (`TASK-*`, `LOGIN-FE-001` 등). 1:1로 브랜치·커밋과 연결됨
+- `<subject>` = 한국어, 마침표 없이 간결하게
+- GitHub `label`은 보조 수단 — 제목의 `[type]`이 1차 식별자
+
+**이슈 → 브랜치 → 커밋 추적 예시 (한 줄로 연결):**
+
+| 단계 | 예시 |
+|------|------|
+| 이슈 | `[refactor] TASK-DEVEX-002 panda.config.ts 모듈 분리` |
+| 브랜치 | `refactor/TASK-DEVEX-002-split-panda-config` |
+| 커밋 | `refactor(config): TASK-DEVEX-002 panda 설정 모듈 분리` |
+| PR | 본문에 `Closes #16` 으로 이슈 연결 |
 
 ## 브랜치 라이프사이클 (normal/cross)
 
