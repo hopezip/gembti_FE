@@ -726,7 +726,7 @@ src/
 │  ├─ RootLayout.tsx          # Header + Outlet + Footer
 │  ├─ HeaderBar.tsx
 │  └─ Footer.tsx
-├─ pages/                     # Next.js or Vite routes
+├─ routes/                    # React Router 라우트/페이지 엔트리
 └─ panda.config.ts
 ```
 

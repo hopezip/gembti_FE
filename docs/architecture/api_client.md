@@ -2,7 +2,7 @@
 
 ## 핵심 규칙 (인라인 룰 추출용)
 
-- API 호출은 반드시 `src/services/*` 또는 자동 생성된 `src/lib/api/` 함수 사용 (컴포넌트에서 fetch/ky 직접 호출 금지)
+- 컴포넌트에서 fetch/ky 직접 호출 금지. 기본 호출 경로는 자동 생성된 `src/lib/api/` 함수. `src/services/`는 필요 시 도메인 단위로 조합하는 **선택 레이어**(없어도 됨)
 - `docs/03-api/openapi.json`, `src/types/api.ts`, `src/lib/api/*.ts`, `src/mocks/handlers/*.ts`는 자동 생성 → 직접 편집 금지
 - HTTP 클라이언트는 ky 단일 인스턴스(`src/lib/ky.ts`), `credentials: 'include'`로 쿠키 자동 전송
 - MSW로 개발 (`VITE_USE_MOCK=true`), 실서버 전환 시 false
@@ -10,8 +10,8 @@
 ## 폴더/파일 위치
 
 - `src/lib/ky.ts` — ky 인스턴스 (baseURL, credentials, 에러 인터셉터)
-- `src/services/` — 도메인 서비스 (authApi, steamApi, surveyApi, gameApi, userApi, communityApi, chatbotApi)
-- `src/lib/api/` — 자동 생성 API 함수 (Swagger 완성 후)
+- `src/lib/api/` — 자동 생성 API 함수 (Swagger 완성 후) — 저수준 호출 기본 경로 (직접 편집 금지)
+- `src/services/` — 선택적 도메인 서비스 레이어 — 필요 시 `lib/api` 호출을 도메인 단위로 조합 (없어도 됨). 예: `authApi`, `gameApi` 등. 저수준 호출 자체는 services에 중복 작성하지 않는다(lib/api와 역할 구분).
 - `src/types/api.ts` — 자동 생성 타입
 - `src/mocks/handlers/` — 자동 생성 MSW 핸들러
 - `docs/03-api/openapi.json` — 백엔드 Swagger 미러
