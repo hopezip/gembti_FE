@@ -35,6 +35,7 @@ pnpm dev
 
 ## 문서
 
+- `CONTRIBUTING.md` — **기여 가이드 허브** (브랜치·커밋·이슈/티켓·PR·폴더 규칙 진입점)
 - `CLAUDE.md` — Claude Code 진입점
 - `docs/SSOT.md` — 단일 진실 문서
 - `docs/ARCHITECTURE.md` — 시스템 개요
