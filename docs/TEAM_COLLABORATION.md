@@ -21,7 +21,7 @@
 **Trigger**: 새 작업 시작
 **Action**:
 1. `git pull origin dev` 으로 최신 받기
-2. ANSWERS.md / SSOT.md / REQ / DesignEx에 변경이 있나 확인
+2. SSOT.md / REQ / DesignEx에 변경이 있나 확인
 3. 변경 있으면 디스코드 채널에 알림 확인
 
 ## 티켓 ID 충돌 방지
@@ -43,7 +43,7 @@
 
 **Trigger**: PR 머지
 **Action**:
-1. ANSWERS.md / SSOT.md 변경 있으면 디스코드 알림
+1. SSOT.md 변경 있으면 디스코드 알림
 2. Breaking API change 있으면 디스코드 알림
 3. 공통 컴포넌트(`components/ui`, `patterns`)·디자인 토큰 변경 시 프론트 전원 알림
 

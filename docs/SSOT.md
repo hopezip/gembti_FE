@@ -118,7 +118,7 @@ docs/
 
 ## 변경 규칙
 - 이 SSOT.md는 사용자의 명시적 승인 없이 수정 금지
-- 기술 스택 변경 시 ANSWERS.md도 함께 갱신
+- 기술 스택 변경 시 이 SSOT.md를 기준으로 갱신 (`docs/archive/ANSWERS.md`는 초기 인터뷰 기록일 뿐 갱신 대상 아님)
 - 변경 시 `docs/logs/`에 기록
 
 ## 핵심 기능 (P0)
