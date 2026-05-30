@@ -711,8 +711,9 @@ src/
 │  │  ├─ menu.tsx
 │  │  ├─ tabs.tsx
 │  │  └─ ...
-│  └─ patterns/               # 도메인 컴포넌트
-│     ├─ GameCard.tsx
+│  └─ feedback/               # Park UI에 없어 직접 만드는 도메인 무지 공통 (EmptyState, SkeletonLoader, Timer ...)
+├─ features/<domain>/components/   # 도메인 컴포넌트 (도메인 지식 필요)
+│     ├─ GameCard.tsx              # features/game/components/
 │     ├─ ReviewCard.tsx
 │     ├─ PartyCard.tsx
 │     ├─ CommentThread.tsx
@@ -721,10 +722,10 @@ src/
 │     ├─ TypeTag.tsx
 │     ├─ FilterSidebar.tsx
 │     └─ ...
-├─ layouts/
-│  ├─ GlobalShell.tsx         # Header + Footer
-│  ├─ DetailLayout.tsx        # 2-col main + side
-│  └─ FormLayout.tsx          # 2-col form + guide
+├─ layout/                    # 앱 셸 (전역 1회)
+│  ├─ RootLayout.tsx          # Header + Outlet + Footer
+│  ├─ HeaderBar.tsx
+│  └─ Footer.tsx
 ├─ pages/                     # Next.js or Vite routes
 └─ panda.config.ts
 ```
@@ -763,5 +764,5 @@ src/
 **다음 단계 (Claude Code에게 위임 가능한 작업)**
 - [ ] `panda.config.ts` 그대로 적용 후 `pnpm panda codegen` 실행
 - [ ] `components/ui/*` 부터 1개씩 구현 — 우선순위: `Button` → `Input/Textarea/Select` → `Field` → `Tag`/`Chip` → `Card` → `Dialog` → `Toast` → `Menu` → `Tabs` → `Avatar`
-- [ ] 이후 `components/patterns/*` — 우선순위: `GameCard` → `ReviewCard` → `TypeTag` → `CommentThread` → `PartyCard` → `MatchScore`
+- [ ] 이후 `features/<domain>/components/*` (도메인 컴포넌트) — 우선순위: `GameCard` → `ReviewCard` → `TypeTag` → `CommentThread` → `PartyCard` → `MatchScore`
 - [ ] 각 컴포넌트는 Park UI Ark 베이스 + 본 문서의 anatomy/variant/size 강제

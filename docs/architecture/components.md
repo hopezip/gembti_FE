@@ -47,16 +47,16 @@ src/
 │   │       ├── GameCard/        # 썸네일+이름+태그, 메인·추천·검색 화면 공용
 │   │       ├── WarningCard/     # ui/Card + 빨강 테두리 + 충돌 사유
 │   │       └── GameDetailSection/
-│   ├── chat/
+│   ├── chatbot/
 │   │   └── components/
-│   │       ├── ChatFloatingButton/   # 정의는 여기, 렌더는 RootLayout
-│   │       └── ChatWindow/
+│   │       ├── ChatbotFloatingButton/   # 정의는 여기, 렌더는 RootLayout
+│   │       └── ChatbotWindow/
 │   └── community/
 │       └── components/
 │           └── PostItem/
 │
 ├── layout/                      # 앱 셸
-│   ├── RootLayout/              # 안에서 <HeaderBar/> <Outlet/> <Footer/> + <ChatFloatingButton/>
+│   ├── RootLayout/              # 안에서 <HeaderBar/> <Outlet/> <Footer/> + <ChatbotFloatingButton/>
 │   ├── HeaderBar/               # REQ-USER-001, 로그인/비로그인 공통
 │   └── Footer/
 │
@@ -73,7 +73,7 @@ src/
 |---|---|---|
 | `components/ui/` | Park UI base를 recipe로 덮어쓴 것. 새로 만들지 않음 | Button, Input, Dialog, Card, Badge |
 | `components/feedback/` | Park UI에 없어 직접 만드는 도메인 무지 공통 | EmptyState, SkeletonLoader, Timer |
-| `features/<domain>/components/` | 도메인 "의미"를 알아야 동작 | GameCard, WarningCard, RadarChart, StatBadge, LikertScale, PostItem, ChatWindow |
+| `features/<domain>/components/` | 도메인 "의미"를 알아야 동작 | GameCard, WarningCard, RadarChart, StatBadge, LikertScale, PostItem, ChatbotWindow |
 | `layout/` | 앱 셸 (전역 1회) | RootLayout, HeaderBar, Footer |
 
 > ⚠️ WarningCard·StatBadge는 헷갈리기 쉽다. "비선호 태그 충돌", "대표 성향" 같은 **의미**를 알아야 하므로 feature다. 단 시각 base(테두리 Card, 칩 Badge)는 `ui/`에서 가져와 얹는다.
@@ -92,7 +92,7 @@ function RootLayout() {
       <HeaderBar />
       <Outlet />              {/* 각 페이지가 여기 들어옴 */}
       <Footer />
-      <ChatFloatingButton />  {/* features/chat에서 import, 전역 1회 */}
+      <ChatbotFloatingButton />  {/* features/chatbot에서 import, 전역 1회 */}
     </>
   )
 }
@@ -109,7 +109,7 @@ export function LoginForm() { ... }
 import { GameCard } from '@/features/game/components/GameCard';
 
 // ✅ layout이 features 컴포넌트를 렌더 (단방향)
-import { ChatFloatingButton } from '@/features/chat/components/ChatFloatingButton';
+import { ChatbotFloatingButton } from '@/features/chatbot/components/ChatbotFloatingButton';
 ```
 
 ## 안티패턴
