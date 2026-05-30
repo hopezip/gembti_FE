@@ -7,7 +7,7 @@
 - Park UI에 없어 직접 만드는 공통은 `src/components/feedback/`.
 - 도메인 지식을 아는 컴포넌트는 `src/features/<domain>/components/` (예: GameCard는 게임 도메인 소속).
 - **도메인 컴포넌트가 다른 도메인을 import 금지** (격리).
-- **의존 방향은 한 방향**: `features/ → components/`, `layout/ → components/`. 역방향(공통이 features를 import) 금지.
+- **의존 방향은 한 방향**: `features/ → components/`, `layout/ → components/`, `layout/ → features/`(전역 위젯 한정, 예: `ChatbotFloatingButton`). 역방향(공통이 features를 import) 금지.
 - 페이지/라우트 컴포넌트는 비즈니스 로직 최소화 (훅으로 위임).
 - 컴포넌트는 DESIGN_SYSTEM.md의 anatomy/variant/size를 그대로 따른다 (임의 변형 금지).
 
