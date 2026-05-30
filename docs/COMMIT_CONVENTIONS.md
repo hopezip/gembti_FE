@@ -12,6 +12,10 @@
 <footer (선택)>
 ```
 
+> **티켓 ID는 콜론 바로 뒤, subject 앞에 둡니다.** 끝에 `[TASK-XXX]`처럼 대괄호로 붙이지 않습니다.
+> - ✅ `chore(ci): TASK-CI-001 Gemini 워크플로우 제거`
+> - ❌ `chore(ci): Gemini 워크플로우 제거 [TASK-CI-001]`
+
 ## Type (필수)
 
 | Type | 의미 | 예시 |
@@ -28,9 +32,13 @@
 | `build` | 빌드 시스템 | `build: vite 설정 변경` |
 | `revert` | 되돌리기 | `revert: feat(auth) 되돌림` |
 
+> **커밋 타입(`feat`)과 브랜치 prefix(`feature/`)는 일부러 다릅니다.** 타입은 Conventional Commits, 브랜치는 Git Flow 어휘입니다. 자세한 매핑은 `GIT_WORKFLOW.md` 참조.
+
 ## Scope (선택)
 
-영향 받는 도메인/모듈: `auth`, `steam`, `survey`, `tendency`, `main`, `search`, `recommendation`, `game`, `community`, `party`, `chatbot`, `api`, `ui`, `mock`. 전체 영향이면 생략.
+영향 받는 도메인/모듈: `auth`, `steam`, `survey`, `tendency`, `main`, `search`, `recommendation`, `game`, `community`, `party`, `chatbot`, `api`, `ui`, `config`, `mock`. 전체 영향(예: `docs`, `chore`)이면 생략.
+
+> **scope는 선택입니다.** 도메인이 명확하면 붙이고(`feat(auth): …`), 전체/문서/설정 변경이면 생략합니다(`docs: …`). 매번 억지로 채우지 않습니다.
 
 ## Subject (필수)
 
@@ -61,6 +69,7 @@ Closes #15
 - `fix: 오타`, `update: 수정` 같은 모호한 메시지
 - 마침표로 subject 끝내기
 - subject 안에서 영어·한국어 혼용
+- 티켓 ID를 끝에 대괄호로 붙이기 (`... [TASK-XXX]`) — 콜론 뒤로 통일
 
 ## 자동화
 
