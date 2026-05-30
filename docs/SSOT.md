@@ -55,13 +55,18 @@ src/
 ├── App.tsx      루트 컴포넌트
 ├── routes/      React Router 라우트/페이지 엔트리
 ├── features/    도메인별 응집 (auth, steam, survey, tendency, main, search, recommendation, game, mypage, user, follow, community, party, chatbot)
-├── components/
-│   ├── ui/      Park UI 래핑 Primitive (button, input, tag, chip, card, dialog, toast, menu, tabs, avatar)
-│   └── patterns/ 도메인 컴포넌트 (GameCard, ReviewCard, PartyCard, CommentThread, MatchScore, TypeTag ...)
-├── layouts/     GlobalShell, DetailLayout, FormLayout
+│                 ※ 위 14개가 전체 도메인. 각 도메인은 components/hooks/schemas/store를 자체 보유.
+│                 ※ TASK-DEVEX-003 골격은 이 중 6개(auth, survey, tendency, game, chatbot, community)만 선반영.
+│                   나머지 도메인 폴더는 각 기능 구현 티켓에서 추가된다(부분집합, 충돌 아님).
+├── components/  공통 — 도메인 무지(domain-agnostic)
+│   ├── ui/       Park UI 래핑 Primitive (button, input, tag, chip, card, dialog, toast, menu, tabs, avatar)
+│   └── feedback/ Park UI에 없어 직접 만드는 도메인 무지 공통 (EmptyState, SkeletonLoader, Timer ...)
+│   ※ 도메인 지식이 필요한 컴포넌트(GameCard, ReviewCard, MatchScore ...)는 features/<domain>/components/ 에 둔다.
+├── layout/      앱 셸 (전역 1회): RootLayout, HeaderBar, Footer
 ├── lib/
-│   └── api/     API 클라이언트 (자동 생성, 직접 편집 금지)
-├── services/    도메인 서비스 레이어 (authApi, steamApi, surveyApi, gameApi ...)
+│   └── api/     API 클라이언트 — 자동 생성 저수준 호출 (직접 편집 금지)
+├── services/    선택적 도메인 서비스 레이어 — 필요 시 lib/api 호출을 도메인 단위로 조합 (없어도 됨)
+│                 ※ lib/api(자동생성 저수준)와 역할 구분. 저수준 호출 자체는 services에 중복 작성하지 않는다.
 ├── hooks/       공용 훅
 ├── types/       타입 (api.ts는 자동 생성)
 └── mocks/       MSW 핸들러 (자동 생성)
@@ -83,6 +88,11 @@ docs/
 # docs/analysis/        → 회고는 티켓 ## 회고 섹션
 # docs/superpowers/plans/ → plan은 티켓 ## Plan 섹션
 ```
+
+> **명칭 통일 (chatbot 확정)**: features 챗봇 도메인은 `chatbot`으로 통일한다.
+> `FE_REQUIREMENTS`(`CHATBOT-FE-*`, `ChatbotFloatingButton`/`ChatbotWindow`), `api_client.md`(`chatbotApi`),
+> `DESIGN_SYSTEM.md`(chatbot FAB) 등 기존 SSOT가 모두 `chatbot`을 쓰므로 그에 맞춘다.
+> TASK-DEVEX-003 골격이 만든 `src/features/chat/`은 `src/features/chatbot/`으로 정정한다(해당 PR에서 반영).
 
 ## 환경변수 규칙
 
