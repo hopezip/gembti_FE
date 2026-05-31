@@ -26,8 +26,9 @@ description: PR 본문을 정교하게 작성한다. pr-creating 스킬이 호�
 ### 3. PR 본문 (`.github/PULL_REQUEST_TEMPLATE.md` 양식)
 
 ```markdown
-## 관련 티켓
-- [<티켓-ID>](경로): <제목>
+## 관련 이슈
+Closes #<이슈번호>
+(canonical 추적자는 GitHub Issue. 로컬 티켓 `<티켓-ID>`는 보조 노트로만 — `docs/tickets` 경로 링크 금지: gitignore되어 깨진 링크가 됨)
 
 ## 변경 요약
 (티켓 회고의 "실제로 한 일" + "빗나간 점" 기반, 3~5줄)

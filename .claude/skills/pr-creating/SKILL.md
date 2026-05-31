@@ -45,7 +45,7 @@ git log origin/<현재브랜치>..HEAD --oneline 2>/dev/null
 - 일반: `dev` / hotfix/*: `main`
 
 ### 5. PR 본문 자동 작성
-`.github/PULL_REQUEST_TEMPLATE.md` 양식. 관련 티켓(REQ ID 링크) / 변경 요약(회고 기반) / 변경 파일 / 자동 검증 체크리스트 / 리뷰 포인트 자동 채움.
+`.github/PULL_REQUEST_TEMPLATE.md` 양식. 관련 이슈(`Closes #N` — canonical은 GitHub Issue, 로컬 티켓 ID는 참고 텍스트로만, `docs/tickets` 경로 링크 X) / 변경 요약(회고 기반) / 변경 파일 / 자동 검증 체크리스트 / 리뷰 포인트 자동 채움.
 
 ### 6. 사용자에게 제안 (승인 게이트)
 ```
@@ -57,8 +57,9 @@ PR을 다음과 같이 생성하겠습니다:
 
 본문:
 ---
-## 관련 티켓
-- LOGIN-FE-001: 이메일 로그인
+## 관련 이슈
+Closes #<이슈번호>
+(로컬 티켓 LOGIN-FE-001은 보조 참조 — 경로 링크 없이 텍스트로만)
 ## 변경 요약
 (회고 기반)
 ## 변경 파일 / 자동 검증 결과 / 리뷰 포인트
