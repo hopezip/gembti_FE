@@ -1,0 +1,74 @@
+# CI 워크플로우 — 로컬 검증 명령(package.json scripts)을 PR·push 시 실제로 자동 실행한다.
+# 검증을 "권고"에서 "강제 신호"로 만드는 것이 목적이며, CI용 별도 명령은 만들지 않고
+# 로컬 스크립트(type-check / lint / test / build / test:e2e)를 그대로 호출만 한다.
+#
+# 범위 밖: branch protection(필수 status check 지정 등 레포 설정)은 이 티켓 범위 밖이다.
+#          혼자 셋업 중이라 PR 통과 신호만 만들고, 팀 합류 시 후속 티켓에서 필수 체크로 승격한다.
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+jobs:
+  # 정적/단위/빌드 검증 — 서로 독립이므로 matrix로 병렬 실행한다.
+  # install 시 prepare(panda codegen --silent)가 styled-system을 생성하므로 별도 codegen step은 없다.
+  check:
+    name: ${{ matrix.task }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [type-check, lint, test, build]
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: pnpm 설치
+        # 버전은 package.json의 packageManager(pnpm@10.33.0)를 SSOT로 사용한다.
+        # action에 version을 또 지정하면 ERR_PNPM_BAD_PM_VERSION으로 충돌하므로 생략한다.
+        uses: pnpm/action-setup@v4
+
+      - name: Node 설치 (pnpm 캐시)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: 검증 실행
+        run: pnpm ${{ matrix.task }}
+
+  # E2E — Playwright CLI 방식.
+  # playwright.config.ts의 webServer(pnpm dev)가 앱을 자동 기동하므로 별도 서버 기동 step은 없다.
+  # 설정이 Desktop Chrome 단일이므로 브라우저는 chromium 1종만 설치한다.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v4
+
+      - name: pnpm 설치
+        # 버전은 package.json의 packageManager(pnpm@10.33.0)를 SSOT로 사용한다.
+        # action에 version을 또 지정하면 ERR_PNPM_BAD_PM_VERSION으로 충돌하므로 생략한다.
+        uses: pnpm/action-setup@v4
+
+      - name: Node 설치 (pnpm 캐시)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: Playwright 브라우저 설치 (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E 실행
+        run: pnpm test:e2e
