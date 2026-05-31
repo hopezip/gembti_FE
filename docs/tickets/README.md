@@ -1,10 +1,11 @@
 # docs/tickets
 
-> 작업 단위 = 실행 계약서.
+> canonical 추적자는 **GitHub Issue**다. 로컬 `.md`는 보조 작업노트(실행 계약서).
 > v2: spec + plan + 회고가 한 파일에 통합.
 
 ## 이 폴더의 책임
-- 모든 normal/cross 변경의 추적 단위
+- GitHub Issue가 canonical 추적자이고, 로컬 `.md` 파일은 그 보조 작업노트(spec/plan/AC/인라인 룰/회고 누적)다.
+- 로컬 `.md`는 `.gitignore`(49~51행)로 추적하지 않는다(README·`_TEMPLATE.md`만 추적). 변경 추적·리뷰는 GitHub Issue/PR에서 한다.
 - spec/plan/AC/인라인 룰/회고가 한 티켓 파일에 누적
 - (풀팀 모드라 micro 흐름 비활성 → `micro-fixes.md`는 거의 미사용)
 
