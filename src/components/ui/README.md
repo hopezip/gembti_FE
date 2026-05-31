@@ -16,6 +16,7 @@ GamBTI recipe(`styled-system/recipes`)를 덮어쓴 스타일 컴포넌트만 �
 |---|---|---|---|---|
 | `Button` | `Button.tsx` | `button` | variant(primary/secondary/ghost/danger/dangerSolid), size(sm/md/lg) | 액션 버튼 |
 | `Tag` | `Tag.tsx` | `tag` | tone(neutral/review/party/guide/notice), filled(boolean) | 읽기 전용 라벨/카테고리(선택형은 Chip) |
+| `Chip` | `Chip.tsx` | `chip` | 없음 (선택 상태는 소비자가 `data-state="on"`/`.on`으로 전달) | 클릭 토글형 필터/장르/성향 선택(button element) |
 
 ## Button 패턴 (신규 primitive 추가 절차)
 
