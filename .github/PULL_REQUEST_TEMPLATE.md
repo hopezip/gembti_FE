@@ -1,5 +1,9 @@
-## 관련 티켓
-- [<티켓-ID>](docs/tickets/MS-NN/<TICKET>_<설명>.md): <제목>
+## 관련 이슈
+<!-- canonical 추적자는 GitHub Issue다. 로컬 docs/tickets/*.md는 gitignore되는 보조 작업노트이므로 링크하지 않는다. -->
+Closes #<이슈번호>
+
+<!-- (참고) 로컬 작업노트 ID: <티켓-ID> — 링크 대신 텍스트 참고용으로만 -->
+
 
 ## 변경 요약
 
