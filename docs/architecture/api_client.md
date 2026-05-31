@@ -38,7 +38,14 @@ export const api = ky.create({
   credentials: 'include', // httpOnly Cookie 자동 전송
 });
 
-// ✅ 서비스 레이어
+// ✅ 서비스 레이어 (정식): lib/api 함수를 도메인 단위로 조합 (저수준 호출은 lib/api가 담당)
+import { getUsersMe } from '@/lib/api/users'; // Swagger 생성물
+export const authApi = {
+  me: () => getUsersMe(),
+};
+
+// ⏳ Swagger 전 한시적: lib/api가 아직 없을 때만 services에서 ky 직접 호출
+//    (생성물이 들어오면 위 조합 형태로 교체, services에 저수준 호출을 남기지 않는다)
 export const getMe = () => api.get('users/me').json<User>();
 
 // ✅ 응답 가공은 호출부/훅에서
