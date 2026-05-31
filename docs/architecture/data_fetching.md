@@ -16,7 +16,9 @@
 
 ```typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { searchGames, addToWishlist } from '@/services/gameApi';
+// 기본 호출 경로는 자동 생성된 lib/api 함수 (함수명/경로는 Swagger 후 확정 예시)
+import { searchGames } from '@/lib/api/games';
+import { addToWishlist } from '@/lib/api/wishlist';
 
 export function useSearchGames(query: string, filters: GameFilters) {
   return useQuery({
