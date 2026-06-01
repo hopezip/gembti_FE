@@ -6,6 +6,7 @@ import { vstack } from 'styled-system/patterns';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/features/auth/components/PasswordInput';
 import { type LoginInput, loginSchema } from '@/lib/schemas/auth';
 import {
   type AuthUser,
@@ -80,7 +81,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <Input
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder="name@example.com"
           disabled={isSubmitting}
           {...register('email')}
         />
@@ -92,9 +93,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         required
         error={errors.password?.message}
       >
-        <Input
-          type="password"
+        {/* 👁 토글 래퍼(PasswordInput). Field가 주입한 id/aria-*는 안쪽 Input으로 forward된다. */}
+        <PasswordInput
           autoComplete="current-password"
+          placeholder="비밀번호 입력"
           disabled={isSubmitting}
           {...register('password')}
         />
@@ -125,7 +127,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         disabled={isSubmitting}
         aria-busy={isSubmitting || undefined}
       >
-        {isSubmitting ? '로그인 중…' : '로그인'}
+        {isSubmitting ? '로그인 중…' : '로그인 →'}
       </Button>
     </form>
   );

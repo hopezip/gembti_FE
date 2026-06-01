@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import {
   createMemoryRouter,
   MemoryRouter,
@@ -65,13 +65,13 @@ describe('라우트 골격', () => {
 
   it('인증 페이지(/login)에도 GlobalShell 셸이 적용된다', () => {
     // 셸이 모든 라우트를 감싸므로 /login(LoginPage)에도 Header/Footer landmark가 보인다.
-    // LoginPage의 AuthCard 제목은 "이메일로 로그인"이다(PlaceholderPage "로그인"이 아님).
+    // LoginPage AuthCard(=main)의 헤딩은 "로그인"이다(Figma auth-modal 재구성, LOGIN-FE-001b).
+    //   Header에도 "로그인" 링크가 있어 main 범위로 한정해 충돌을 피한다.
     renderAt('/login');
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: '이메일로 로그인' }),
-    ).toBeInTheDocument();
+    const card = within(screen.getByRole('main'));
+    expect(card.getByRole('heading', { name: '로그인' })).toBeInTheDocument();
   });
 
   it('Auth 가드는 비로그인 stub(status:anonymous)에서 /login으로 리다이렉트한다', () => {
@@ -114,12 +114,18 @@ describe('라우트 골격', () => {
 
   it('/login은 비로그인 시 LoginPage(이메일 로그인 폼)를 렌더한다', () => {
     renderAt('/login');
-    // AuthCard 제목 + 이메일/비밀번호 입력 라벨
+    // AuthCard(=main) 헤딩 "로그인" + 이메일/비밀번호 입력 라벨.
+    //   Header "로그인" 링크와 충돌하지 않게 main 범위로 한정한다(LOGIN-FE-001b).
+    const card = within(screen.getByRole('main'));
+    expect(card.getByRole('heading', { name: '로그인' })).toBeInTheDocument();
+    // 비밀번호 필드는 👁 토글 버튼의 aria-label "비밀번호 표시"와 부분 매칭이 겹치므로
+    //   selector로 input 요소만 한정한다(LOGIN-FE-001b PasswordInput 추가 영향).
     expect(
-      screen.getByRole('heading', { name: '이메일로 로그인' }),
+      screen.getByLabelText(/이메일/, { selector: 'input' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/이메일/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/비밀번호/)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/비밀번호/, { selector: 'input' }),
+    ).toBeInTheDocument();
   });
 
   it('/login은 로그인 상태면 PublicOnlyRoute가 홈(/)으로 리다이렉트한다', () => {
