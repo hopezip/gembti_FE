@@ -153,27 +153,6 @@ export function GameRecommendStrip({
         >
           당신의 성향에 맞는 게임
         </span>
-        <span
-          className={css({
-            fontSize: '10.5px',
-            fontWeight: 'bold',
-            color: 'fg.default',
-            lineHeight: '1.2',
-          })}
-        >
-          예시
-        </span>
-        <span
-          className={css({
-            ml: 'auto',
-            fontFamily: 'mono',
-            fontSize: 'xs',
-            color: 'fg.subtle',
-            whiteSpace: 'nowrap',
-          })}
-        >
-          클릭 → 해당 게임 게시판으로 이동 · 리뷰 쓰기는 사후 리뷰(COMM004)
-        </span>
       </div>
 
       {/* 가로 스크롤 카드 목록 */}
