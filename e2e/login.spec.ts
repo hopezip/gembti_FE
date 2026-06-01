@@ -7,9 +7,8 @@ import { type Page, expect, test } from '@playwright/test';
 //
 // 셸 주의(GlobalShell): /login 페이지에도 글로벌 Header가 함께 렌더된다.
 //   Header에는 "로그인" 텍스트 링크(role=link)와 "회원가입" 링크가 있으므로,
-//   폼 조작 셀렉터는 AuthCard 영역(role=main)으로 한정해 strict mode 충돌을 피한다.
-//   (폼 제출 버튼은 role=button "로그인"이라 Header 링크와 role이 다르지만,
-//    이메일/비밀번호 라벨·alert 등은 카드 범위로 묶어 안정화한다.)
+//   카드 헤딩·폼 조작 셀렉터는 AuthCard 영역(role=main)으로 한정해 strict mode 충돌을 피한다.
+//   (LOGIN-FE-001b: Figma auth-modal 재구성 — 헤딩 "로그인"(main 한정), 제출 버튼 "로그인 →".)
 
 const VALID_EMAIL = 'test@gambti.com';
 const VALID_PASSWORD = 'password123';
@@ -19,12 +18,18 @@ function loginCard(page: Page) {
   const card = page.getByRole('main');
   return {
     card,
-    heading: card.getByRole('heading', { name: '이메일로 로그인' }),
+    // 카드 헤딩 "로그인"(main 한정). Header "로그인" 링크와 분리.
+    heading: card.getByRole('heading', { name: '로그인' }),
     email: card.getByLabel(/이메일/),
-    password: card.getByLabel(/비밀번호/),
-    // 폼 제출 버튼(role=button). 이름 정확 매칭으로 Header "로그인" 링크와 분리.
-    submit: card.getByRole('button', { name: '로그인', exact: true }),
+    // 비밀번호 input — 👁 토글 버튼 aria-label "비밀번호 표시"와 겹치므로 input id로 한정.
+    password: card.locator('#login-password'),
+    // 폼 제출 버튼(role=button "로그인 →"). Header "로그인" 링크와 role/이름 모두 다르다.
+    submit: card.getByRole('button', { name: '로그인 →' }),
     alert: card.getByRole('alert'),
+    // 👁 비밀번호 표시/숨김 토글(aria-label 기준).
+    toggle: card.getByRole('button', { name: /비밀번호 (표시|숨기기)/ }),
+    // 회원가입 세그먼트 탭(카드 내 링크).
+    signupTab: card.getByRole('link', { name: '회원가입' }),
   };
 }
 
@@ -114,5 +119,40 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.submit.click();
 
     await expect(page).toHaveURL('http://localhost:5173/');
+  });
+
+  test('👁 토글 클릭 시 비밀번호 입력 type이 password↔text로 바뀐다', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    const form = loginCard(page);
+    await form.password.fill('secret123');
+
+    // 초기: type=password, 토글 aria-pressed=false, aria-label="비밀번호 표시"
+    await expect(form.password).toHaveAttribute('type', 'password');
+    await expect(form.toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(form.toggle).toHaveAttribute('aria-label', '비밀번호 표시');
+
+    // 토글 on → type=text, aria-pressed=true, aria-label="비밀번호 숨기기"
+    await form.toggle.click();
+    await expect(form.password).toHaveAttribute('type', 'text');
+    await expect(form.toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(form.toggle).toHaveAttribute('aria-label', '비밀번호 숨기기');
+    // 입력값은 유지된다
+    await expect(form.password).toHaveValue('secret123');
+
+    // 다시 토글 off → type=password 복귀
+    await form.toggle.click();
+    await expect(form.password).toHaveAttribute('type', 'password');
+    await expect(form.toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('회원가입 세그먼트 탭 클릭 시 /signup으로 이동한다', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    const form = loginCard(page);
+    await form.signupTab.click();
+    await expect(page).toHaveURL(/\/signup$/);
   });
 });

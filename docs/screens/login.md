@@ -22,21 +22,23 @@
   - 보안: redirect 값은 **앱 내부 상대경로만** 허용(`/`로 시작, `//` 또는 절대 URL 차단)하여 오픈 리다이렉트를 막는다.
 
 ## UI 컴포넌트
-DESIGN_SYSTEM.md 7장 매핑 기준 — 인증 페이지(08)는 `AuthCard`(중앙 카드 + OAuth 버튼들), 폼은 `Field` + `Input` + `Button` 조합.
+**LOGIN-FE-001b(#61)에서 Figma `auth-modal`(335:7434) 구성으로 재구성.** 라우트 페이지를 유지하되 모달 스타일 카드로 시각/레이아웃을 맞췄다(실제 모달 아님 → ✕ 닫기 버튼 없음). 이메일 인증 로직(RHF+Zod/useMutation/redirect/a11y)은 무변경.
 
-- `AuthCard`: 화면 중앙 카드 컨테이너 (다크, 데스크탑 중앙 정렬). 제목 영역 + 폼 + 후속 자리표시 + 하단 회원가입 링크.
-- `Field` (×2): label row + help + error 래퍼 (DESIGN_SYSTEM 2.15). `aria-required`, `aria-invalid`, `aria-describedby` 표준 적용.
-  - 이메일 `Field` → `Input` (`type="email"`, `size` variant 기본)
-  - 비밀번호 `Field` → `Input` (`type="password"`)
-- `Button` (variant `primary`, type `submit`): "로그인". 제출 중 `loading`/`disabled` 표현.
-- 폼 레벨 에러 영역: 401 등 서버 인증 실패 메시지 표시 영역 (개별 필드 에러와 분리, `role="alert"`).
-- 하단 보조 링크: "회원가입" → `/signup` (`Public only`).
-- **후속 자리표시(이번 구현 대상 아님)**:
-  - Steam 로그인 버튼 자리 (`LOGIN-FE-002`) — `AuthCard`의 OAuth 버튼 슬롯
-  - "자동 로그인" 체크박스 자리 (`LOGIN-FE-005`)
-  - 정의서에는 위치만 표기하고 렌더링/동작은 후속 티켓에서 추가.
+`AuthCard`는 슬롯(`tabs` / `heading` / `subtitle` / `children`) 기반 컨테이너로, 위→아래 다음 구성을 조립한다:
 
-사용 primitive 경로: `src/components/ui/Input.tsx`(size variant, `aria-invalid` 소비), `src/components/ui/Button.tsx`(variant), `src/components/ui/field.tsx`(Field 래퍼).
+1. **세그먼트 탭(`AuthTabs`)**: `[로그인(active) | 회원가입]`. 로그인 탭 active 강조(`bg.muted`/`fg.default`), 회원가입 탭은 `<Link to="/signup">`(`fg.subtle`). 컨테이너 `bg.canvas`+`border.default`+radius.
+2. **헤딩 + 부제**: 좌측 정렬 "로그인"(`fontSize: 2xl`/`bold` — 22px 1:1 토큰 부재로 근접 토큰 사용) + "취향에 맞는 게임을 추천받으려면 로그인이 필요해요."(`fg.muted`).
+3. **Steam 자리 버튼(`SteamButton`)**: "Steam으로 계속하기" `disabled` 버튼. 브랜드색 금지 — `bg.muted`/`border.default`/`fg.subtle` + opacity. `aria-disabled`/`title="준비 중"`. 동작 없음(후속 `LOGIN-FE-002`).
+4. **구분선**: "또는 이메일로 로그인" (`border.default` 라인 + `fg.subtle`, `aria-hidden`).
+5. **이메일 로그인 폼(`LoginForm`)**: `Field`×2 + 제출 버튼.
+   - 이메일 `Field` → `Input` (`type="email"`, placeholder `name@example.com`)
+   - 비밀번호 `Field` → `PasswordInput` (👁 표시/숨김 토글, placeholder `비밀번호 입력`). `PasswordInput`은 공유 `Input`을 무편집 래핑해 `type`만 password↔text로 토글하고 id/aria-*/ref를 안쪽 Input으로 forward.
+   - `Button`(variant `primary`, type `submit`): "로그인 →"(loading 시 "로그인 중…"). `aria-busy`.
+   - 폼 레벨 에러 영역(401/네트워크): 개별 필드 에러와 분리, `role="alert"`.
+
+> 하단 "회원가입" 보조 링크는 상단 세그먼트 탭으로 대체되어 제거했다. ✕ 닫기 버튼은 만들지 않는다(라우트 페이지).
+
+사용 primitive 경로: `src/components/ui/Input.tsx`(size variant, `aria-invalid` 소비, **무편집**), `src/components/ui/Button.tsx`(variant), `src/components/ui/Field.tsx`(Field 래퍼). 보조 조합: `src/features/auth/components/{AuthTabs,SteamButton,PasswordInput}.tsx`.
 
 ## 입력 / 검증 규칙 (Zod 안)
 
@@ -119,34 +121,33 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ## 와이어 (간단히)
 
 ```
-            (다크 · 데스크탑 · 중앙 정렬)
+            (다크 · 데스크탑 · 중앙 정렬 · 모달 스타일 카드, ✕ 없음)
         +------------------------------------+
-        |              GamBTI                |
-        |          이메일로 로그인           |
+        |  [ 로그인(active) | 회원가입 ]      | 세그먼트 탭(회원가입→/signup)
+        |                                    |
+        |  로그인                            | 좌측 정렬 헤딩(2xl/bold)
+        |  취향에 맞는 게임을 추천받으려면…   | 부제(fg.muted)
+        |                                    |
+        |  [ 🎮 Steam으로 계속하기 ](disabled)| 비활성 자리(LOGIN-FE-002)
+        |  ----- 또는 이메일로 로그인 -----   | 구분선(aria-hidden)
         |                                    |
         |  이메일 *                          |
-        |  [______________________________] |
+        |  [ name@example.com ____________ ] |
         |  (error: 올바른 이메일 형식 아님)  |
         |                                    |
         |  비밀번호 *                        |
-        |  [______________________________] |
+        |  [ 비밀번호 입력 ____________  👁 ] | 👁 표시/숨김 토글
         |  (error: 비밀번호를 입력해주세요)  |
         |                                    |
         |  [! 로그인 실패 안내 (401)        ] | role=alert
         |                                    |
-        |  [        로그인  (primary)       ] | loading 시 spinner
-        |                                    |
-        |  ----- 후속 자리표시(미구현) ----- |
-        |  [ ] 자동 로그인   (LOGIN-FE-005)  |
-        |  [  Steam 으로 로그인 ](LOGIN-FE-002)|
-        |                                    |
-        |  계정이 없으신가요?  회원가입 →    |
+        |  [        로그인 →  (primary)      ]| loading 시 "로그인 중…"
         +------------------------------------+
 ```
 
 ## 범위 밖 (후속)
-- `LOGIN-FE-002` Steam 소셜 로그인 — `AuthCard` OAuth 슬롯에 자리만, 동작은 후속.
-- `LOGIN-FE-005` 자동 로그인 체크박스 — 자리만, 지속 세션은 백엔드 쿠키 만료 정책 위임(auth.md).
+- `LOGIN-FE-002` Steam 소셜 로그인 — `SteamButton`이 **비활성 자리 버튼**으로 렌더되며 실제 OAuth 동작·브랜드색 토큰은 후속.
+- `LOGIN-FE-005` 자동 로그인 체크박스 — 미구현(이번 재구성에서 제외). 지속 세션은 백엔드 쿠키 만료 정책 위임(auth.md).
 - 세션 복원/`loading` 가드 상태 — 현 `useAuthStore`는 `'anonymous' | 'authenticated'` 2상태 stub. 복원 로직·`loading` 추가는 auth 티켓 소관.
 - 실제 백엔드 로그인 계약 확정 및 `/api-sync` 생성물 교체.
 
