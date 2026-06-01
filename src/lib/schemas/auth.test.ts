@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { type SignupInput, loginSchema, signupSchema } from './auth';
+import {
+  type SignupInput,
+  loginSchema,
+  signupSchema,
+  verifyCodeSchema,
+} from './auth';
 
 describe('loginSchema', () => {
   it('유효한 이메일/비밀번호를 통과시킨다', () => {
@@ -144,5 +149,39 @@ describe('signupSchema', () => {
   it('선택 약관(마케팅) 미동의는 통과시킨다', () => {
     const result = signupSchema.safeParse({ ...valid, marketing: false });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('verifyCodeSchema', () => {
+  it('6자리 숫자 코드를 통과시킨다', () => {
+    expect(verifyCodeSchema.safeParse({ code: '123456' }).success).toBe(true);
+  });
+
+  it('빈 코드는 한국어 에러를 낸다', () => {
+    const result = verifyCodeSchema.safeParse({ code: '' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe('인증 코드를 입력해주세요');
+    }
+  });
+
+  it('숫자가 아닌 코드는 실패한다', () => {
+    const result = verifyCodeSchema.safeParse({ code: 'abc123' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.message === '6자리 숫자 인증 코드를 입력해주세요',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('자릿수가 6이 아니면 실패한다(5자리)', () => {
+    expect(verifyCodeSchema.safeParse({ code: '12345' }).success).toBe(false);
+  });
+
+  it('자릿수가 6이 아니면 실패한다(7자리)', () => {
+    expect(verifyCodeSchema.safeParse({ code: '1234567' }).success).toBe(false);
   });
 });

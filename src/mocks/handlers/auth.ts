@@ -21,6 +21,19 @@ interface SignupBody {
   email?: string;
 }
 
+interface VerifyBody {
+  email?: string;
+  code?: string;
+}
+
+// 이메일 인증(LOGIN-FE-004) mock 데모 코드.
+// - '123456': 인증 성공(200)
+// - '000000': 만료 데모(410)
+// - 그 외: 코드 불일치 데모(400)
+const MOCK_VERIFY_CODE = '123456';
+const MOCK_EXPIRED_CODE = '000000';
+const MOCK_VERIFY_TTL_SECONDS = 300;
+
 export const authHandlers = [
   // 경로는 ky 인스턴스(prefixUrl 없음)가 만드는 `${origin}/api/auth/login`과 일치한다.
   // origin 무관 매칭을 위해 절대 URL 와일드카드(`*/api/auth/login`)를 쓴다.
@@ -70,6 +83,46 @@ export const authHandlers = [
             'gambti_session=mock-session; HttpOnly; Path=/; SameSite=Lax',
         },
       },
+    );
+  }),
+
+  // 이메일 인증 코드 발송/재전송(LOGIN-FE-004 STEP2) — 한시적 수동 mock.
+  // 항상 200 + 유효시간(ttlSeconds)을 응답한다. 재전송도 동일 엔드포인트 재호출이다.
+  http.post('*/api/auth/email/verification', () => {
+    return HttpResponse.json(
+      { ttlSeconds: MOCK_VERIFY_TTL_SECONDS },
+      { status: 200 },
+    );
+  }),
+
+  // 인증 코드 검증 — 한시적 수동 mock.
+  // 123456=성공(200), 000000=만료(410), 그 외=코드 불일치(400).
+  http.post('*/api/auth/email/verify', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as VerifyBody;
+
+    if (body.code === MOCK_VERIFY_CODE) {
+      return new HttpResponse(null, { status: 200 });
+    }
+    if (body.code === MOCK_EXPIRED_CODE) {
+      return HttpResponse.json(
+        { message: '인증 코드가 만료되었습니다' },
+        { status: 410 },
+      );
+    }
+    return HttpResponse.json(
+      { message: '인증 코드가 올바르지 않습니다' },
+      { status: 400 },
+    );
+  }),
+
+  // 이메일 중복확인 — 한시적 수동 mock.
+  // 기존 mock 이메일(test@gambti.com)이면 사용 불가, 그 외는 사용 가능(기존 signup 409 데모와 일관).
+  http.get('*/api/auth/email/check', ({ request }) => {
+    const url = new URL(request.url);
+    const email = url.searchParams.get('email');
+    return HttpResponse.json(
+      { available: email !== MOCK_EMAIL },
+      { status: 200 },
     );
   }),
 ];

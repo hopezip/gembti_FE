@@ -1,4 +1,5 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { css } from 'styled-system/css';
 import { AuthCard } from '@/features/auth/components/AuthCard';
 import { AuthDivider } from '@/features/auth/components/AuthDivider';
 import { AuthTabs } from '@/features/auth/components/AuthTabs';
@@ -19,6 +20,9 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const setAuthenticated = useAuthStore((s) => s.setAuthenticated);
 
+  // 다른 화면(예: 회원가입 완료)에서 넘긴 1회성 안내 문구. 가입 직후 로그인 유도에 사용한다.
+  const notice = (location.state as { notice?: string } | null)?.notice ?? null;
+
   const handleSuccess = (user: AuthUser) => {
     setAuthenticated(user);
 
@@ -36,6 +40,25 @@ export function LoginPage() {
       heading="로그인"
       subtitle="취향에 맞는 게임을 추천받으려면 로그인이 필요해요."
     >
+      {/* 가입 완료 등 외부에서 넘긴 안내(있을 때만). 폼 에러와 구분되는 정보성 메시지다. */}
+      {notice && (
+        <p
+          role="status"
+          className={css({
+            textStyle: 'body.sm',
+            color: 'success.fg',
+            bg: 'success.soft',
+            border: '1px solid',
+            borderColor: 'success.default',
+            borderRadius: 'lg',
+            px: '3',
+            py: '2',
+          })}
+        >
+          {notice}
+        </p>
+      )}
+
       {/* Steam 소셜 로그인 자리(비활성, 후속 LOGIN-FE-002) */}
       <SteamButton />
 
