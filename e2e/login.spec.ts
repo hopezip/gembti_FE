@@ -93,9 +93,9 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.password.fill(VALID_PASSWORD);
     await form.submit.click();
 
-    // /search PlaceholderPage로 이동(셸 안에서 페이지 heading은 "검색" 하나뿐)
+    // /search SearchPage로 이동(검색 input placeholder로 확인)
     await expect(page).toHaveURL(/\/search$/);
-    await expect(page.getByRole('heading', { name: '검색' })).toBeVisible();
+    await expect(page.getByPlaceholder('게임, 장르, 태그 검색')).toBeVisible();
   });
 
   test('성공 시 redirect가 없으면 홈(/)으로 이동한다', async ({ page }) => {
