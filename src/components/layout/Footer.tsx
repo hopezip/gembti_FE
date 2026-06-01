@@ -1,7 +1,8 @@
 import { css } from 'styled-system/css';
+import { LogoMark } from './Logo';
 
 // 글로벌 셸 푸터 (DESIGN_SYSTEM 4.1 + Figma g-footer).
-// 레이아웃: [GAMBITI 워드마크(muted) · © 2026 GAMBITI] ...(spacer)... [⚙ 설정 버튼]
+// 레이아웃: [G 마크 + GAMBITI 워드마크(muted) · © 2026 GAMBITI] ...(spacer)... [⚙ 설정 버튼]
 // 데스크탑 전용 다크 모드. 색은 semantic token만, 신규 토큰/recipe 없음.
 export function Footer() {
   return (
@@ -24,9 +25,12 @@ export function Footer() {
           gap: '4',
         })}
       >
-        {/* 워드마크(muted) — 헤더 로고와 동일 서체, 푸터는 fg.subtle 톤. */}
+        {/* 로고: G 마크(accent) + 워드마크(muted). 헤더 로고와 동일 서체, 푸터는 fg.subtle 톤. */}
         <span
           className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2',
             fontFamily: 'display',
             fontStyle: 'italic',
             letterSpacing: 'widest',
@@ -36,6 +40,7 @@ export function Footer() {
             whiteSpace: 'nowrap',
           })}
         >
+          <LogoMark />
           GAMBITI
         </span>
         {/* 저작권 캡션 = mono · fontSize xs · fg.subtle (Figma g-footer "© 2026 GAMBITI"). */}
