@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 
-// 글로벌 셸 1차 내비게이션 (DESIGN_SYSTEM 4.1: gap 22px, active 시 하단 2px accent 바).
-// 노출 항목은 routing.md 확정 라우트 맵의 Public 주요 섹션에서 도출한다(셸은 Public 위주 노출).
-//  - 메인 '/'           : Public
-//  - 검색 '/search'      : Public
-//  - 게임 추천 '/recommendations' : Public
-//  - 커뮤니티 '/community'        : Public
+// 글로벌 셸 1차 내비게이션 (DESIGN_SYSTEM 4.1 + Figma g-header: gap 22px, active 시 주황 Bold + 하단 2px accent 바).
+// 노출 항목은 Figma 헤더 디자인 기준 3개(홈/커뮤니티/추천). 검색은 별도 검색창으로 분리된다.
+//  - 홈 '/'                 : Public
+//  - 커뮤니티 '/community'   : Public
+//  - 추천 '/recommendations' : Public
 // 가드/권한 분기는 라우트가 책임지며 Nav는 표시(링크)만 한다.
 interface NavItem {
   // 표시 라벨
@@ -18,10 +17,9 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: '메인', to: '/', end: true },
-  { label: '검색', to: '/search' },
-  { label: '게임 추천', to: '/recommendations' },
+  { label: '홈', to: '/', end: true },
   { label: '커뮤니티', to: '/community' },
+  { label: '추천', to: '/recommendations' },
 ];
 
 // 링크 기본 스타일 — active 여부와 무관한 공통 시각.
@@ -51,9 +49,10 @@ const linkBase = css({
   },
 });
 
-// active(현재 경로 일치) 상태 — 텍스트 강조 + 하단 바 노출.
+// active(현재 경로 일치) 상태 — accent 색 + Bold + 하단 바 노출 (Figma g-header active).
 const linkActive = css({
-  color: 'fg.default',
+  color: 'accent.default',
+  fontWeight: 'bold',
   _after: { opacity: 1 },
 });
 

@@ -1,6 +1,7 @@
 import { css } from 'styled-system/css';
 
-// 글로벌 셸 푸터 (DESIGN_SYSTEM 4.1: border-top, fg.subtle 12.5 캡션).
+// 글로벌 셸 푸터 (DESIGN_SYSTEM 4.1 + Figma g-footer).
+// 레이아웃: [GAMBITI 워드마크(muted) · © 2026 GAMBITI] ...(spacer)... [⚙ 설정 버튼]
 // 데스크탑 전용 다크 모드. 색은 semantic token만, 신규 토큰/recipe 없음.
 export function Footer() {
   return (
@@ -18,12 +19,56 @@ export function Footer() {
         className={css({
           maxW: 'containerLg',
           mx: 'auto',
-          // caption = mono · fontSize xs · fg.subtle (DESIGN_SYSTEM 4.1 푸터 캡션).
-          textStyle: 'caption',
-          textTransform: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4',
         })}
       >
-        © 2026 GAMBITI · 게임 유저를 위한 AI 게임 추천 서비스
+        {/* 워드마크(muted) — 헤더 로고와 동일 서체, 푸터는 fg.subtle 톤. */}
+        <span
+          className={css({
+            fontFamily: 'display',
+            fontStyle: 'italic',
+            letterSpacing: 'widest',
+            textTransform: 'uppercase',
+            fontSize: 'sm',
+            color: 'fg.subtle',
+            whiteSpace: 'nowrap',
+          })}
+        >
+          GAMBITI
+        </span>
+        {/* 저작권 캡션 = mono · fontSize xs · fg.subtle (Figma g-footer "© 2026 GAMBITI"). */}
+        <span className={css({ textStyle: 'caption', textTransform: 'none' })}>
+          © 2026 GAMBITI
+        </span>
+
+        {/* spacer — 설정 버튼을 우측 끝으로 민다. */}
+        <div className={css({ flex: '1', minW: '0' })} />
+
+        {/* ⚙ 설정 버튼 (Figma g-footer 우측 원형 버튼). 설정 라우트는 MVP 밖 → 후속 연결 예정. */}
+        <button
+          type="button"
+          aria-label="설정"
+          className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            w: '8',
+            h: '8',
+            flexShrink: 0,
+            borderRadius: 'full',
+            border: '1px solid',
+            borderColor: 'border.emphasized',
+            bg: 'transparent',
+            color: 'fg.muted',
+            cursor: 'pointer',
+            transition: 'color {durations.fast}, border-color {durations.fast}',
+            _hover: { color: 'fg.default', borderColor: 'fg.subtle' },
+          })}
+        >
+          ⚙
+        </button>
       </div>
     </footer>
   );

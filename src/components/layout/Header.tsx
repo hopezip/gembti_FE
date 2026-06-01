@@ -1,10 +1,24 @@
 import { Link } from 'react-router-dom';
 import { css } from 'styled-system/css';
+import { button } from 'styled-system/recipes';
 import { Avatar } from '@/components/ui/Avatar';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { Logo } from './Logo';
 import { Nav } from './Nav';
+
+// 비로그인 인증 액션의 "로그인" ghost 텍스트 링크 스타일 (회원가입은 button recipe 사용).
+const loginLink = css({
+  display: 'inline-flex',
+  alignItems: 'center',
+  textStyle: 'body.md',
+  fontWeight: 'medium',
+  color: 'fg.muted',
+  textDecoration: 'none',
+  whiteSpace: 'nowrap',
+  transition: 'color {durations.fast}',
+  _hover: { color: 'fg.default' },
+});
 
 // 글로벌 셸 헤더 (DESIGN_SYSTEM 4.1).
 // 레이아웃: [Logo][Nav] ...(spacer)... [Search 280][인증 액션]
@@ -43,12 +57,12 @@ export function Header() {
         {/* spacer — Logo/Nav 는 좌측, Search/인증 액션은 우측으로 민다. */}
         <div className={css({ flex: '1', minW: '0' })} />
 
-        {/* Search: 기존 Input 재사용 + 인스턴스 형태 override(신규 recipe 없음). */}
+        {/* Search: 기존 Input 재사용 + 인스턴스 형태 override(신규 recipe 없음). placeholder는 Figma 헤더 기준. */}
         <Input
           size="sm"
           type="search"
-          aria-label="게임 검색"
-          placeholder="게임 검색"
+          aria-label="검색"
+          placeholder="🔍 게임, 장르, 태그 검색"
           className={css({
             minW: '280px',
             w: '280px',
@@ -58,7 +72,7 @@ export function Header() {
           })}
         />
 
-        {/* 인증 액션: authenticated → Avatar, 그 외 → 로그인 링크. status 읽기만. */}
+        {/* 인증 액션: authenticated → Avatar, 그 외 → 로그인(링크) + 회원가입(filled 버튼). status 읽기만. */}
         {status === 'authenticated' ? (
           <Link
             to="/mypage"
@@ -73,23 +87,25 @@ export function Header() {
             <Avatar size="sm" name="내 계정" />
           </Link>
         ) : (
-          <Link
-            to="/login"
+          <div
             className={css({
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
+              gap: '3',
               flexShrink: 0,
-              textStyle: 'body.md',
-              fontWeight: 'medium',
-              color: 'fg.muted',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              transition: 'color {durations.fast}',
-              _hover: { color: 'fg.default' },
             })}
           >
-            로그인
-          </Link>
+            <Link to="/login" className={loginLink}>
+              로그인
+            </Link>
+            {/* 회원가입: Park UI button recipe(primary)로 스타일한 라우터 링크. 신규 토큰 없음. */}
+            <Link
+              to="/signup"
+              className={button({ variant: 'primary', size: 'sm' })}
+            >
+              회원가입
+            </Link>
+          </div>
         )}
       </div>
     </header>
