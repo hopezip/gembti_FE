@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { GlobalShell } from '@/components/layout/GlobalShell';
 import { NotFoundPage } from './NotFoundPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
@@ -93,11 +94,22 @@ function withGuard({ title, path, access }: RouteDef) {
   return { path, element };
 }
 
-// 라우트 객체 배열 (테스트의 createMemoryRouter에서 재사용)
-export const routeObjects = [
+// GlobalShell layout 라우트의 children (가드/권한표 SSOT는 그대로 유지하고 children으로 이동).
+// NotFound(*)도 셸 안에 두어 404에서도 Header/Footer가 노출된다.
+const shellChildren = [
   ...mvpRoutes.map(withGuard),
   ...extraRoutes.map(withGuard),
   { path: '*', element: <NotFoundPage /> },
+];
+
+// 라우트 객체 배열 (테스트의 createMemoryRouter에서 재사용).
+// 모든 라우트를 GlobalShell layout 라우트(element=<GlobalShell/>, 내부 <Outlet/>)로 감싼다.
+// 인증 페이지(/login·/signup)를 포함한 전 화면에 공통 셸이 적용된다.
+export const routeObjects = [
+  {
+    element: <GlobalShell />,
+    children: shellChildren,
+  },
 ];
 
 export const router = createBrowserRouter(routeObjects);

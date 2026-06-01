@@ -30,6 +30,32 @@ describe('라우트 골격', () => {
     expect(screen.getByRole('heading', { name: '메인' })).toBeInTheDocument();
   });
 
+  it('GlobalShell layout 라우트가 모든 경로에 Header/Footer 셸을 렌더한다', () => {
+    // 중첩 구조에서 페이지(Outlet)와 함께 셸 landmark(banner/nav/contentinfo)가 보여야 한다.
+    renderAt('/search');
+    expect(screen.getByRole('banner')).toBeInTheDocument(); // <header>
+    expect(
+      screen.getByRole('navigation', { name: '주요 메뉴' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument(); // <footer>
+    // 페이지 콘텐츠도 함께 렌더(셸이 페이지를 덮어쓰지 않음).
+    expect(screen.getByRole('heading', { name: '검색' })).toBeInTheDocument();
+  });
+
+  it('비로그인 stub에서 셸 인증 액션이 "로그인" 링크를 보여준다', () => {
+    // useAuthStore stub은 항상 'anonymous'이므로 Avatar 대신 로그인 링크가 보인다.
+    renderAt('/');
+    const loginLink = screen.getByRole('link', { name: '로그인' });
+    expect(loginLink).toHaveAttribute('href', '/login');
+  });
+
+  it('인증 페이지(/login)에도 GlobalShell 셸이 적용된다', () => {
+    renderAt('/login');
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '로그인' })).toBeInTheDocument();
+  });
+
   it('Auth 가드는 비로그인 stub(status:anonymous)에서 /login으로 리다이렉트한다', () => {
     // useAuthStore stub이 항상 'anonymous'를 반환하므로 ProtectedRoute는
     // 보호 페이지 대신 /login 화면을 렌더해야 한다.
