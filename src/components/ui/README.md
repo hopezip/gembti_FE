@@ -21,6 +21,40 @@ GamBTI recipe(`styled-system/recipes`)를 덮어쓴 스타일 컴포넌트만 �
 | `GameCard` | `GameCard.tsx` | `gameCard` | padding(none/sm/md/lg), interactive(boolean), tone(default/accent) | children을 감싸는 thin 컨테이너(div element). `interactive`는 hover 시각 효과만, 클릭/role/키보드 a11y와 내부 레이아웃은 소비자 책임 |
 | `Field` | `Field.tsx` | 없음(조합) | 없음 (props: `label`/`id`/`required?`/`hint?`/`help?`/`error?`/`children`) | 폼 래퍼. `styled-system/patterns`(vstack)+`css`(기존 textStyles 매핑+semantic token)로 label row→입력 children 슬롯→help→error를 조합. `htmlFor`/`aria-required`/`aria-invalid`/`aria-describedby`를 children 입력에 주입(a11y). error 존재 시 help 대신 error 표시. RHF/Zod 미결합 — `error` 문자열 생성은 소비자 책임 |
 | `Avatar` | `Avatar.tsx` | 없음(조합) | 없음 (props: `size`(xs/sm/md/lg/xl, 기본 md)/`src?`/`name`/`op?`) | 유저 표시 primitive(DESIGN_SYSTEM 2.6). Ark UI Avatar(Root/Image/Fallback) 위에 `css`(기존 sizes 토큰 `avatarXs`~`avatarXl`+semantic token)만 얹어 원형 이미지 + 이니셜 fallback을 조합. `src` 미제공/로드 실패 시 `name` 기반 이니셜로 자동 전환(Ark). `op`(글쓴이)는 `border.accent`+`accent.default`로 강조. a11y는 Root `aria-label={name}`+이미지 `alt`(이니셜은 `aria-hidden`). 도메인 로직(데이터 패칭) 미결합 — `src`/`name`은 소비자 주입 |
+| `Toast` | `Toast.tsx` | `toast`(slot recipe) | 없음 (API: `toaster`, `Toaster`) | Park UI Toast 기반 전역 피드백. `GlobalShell`에서 `Toaster`를 렌더하고, 소비자는 `toaster.create({ title, type })` 또는 `toaster.*`를 호출한다 |
+
+## Toast 사용 패턴
+
+`Toaster`는 `layout/GlobalShell.tsx`에서 전역 1회 렌더한다. 페이지·컴포넌트·훅에서는 `toaster`만 import해서 호출한다.
+
+```tsx
+import { toaster } from '@/components/ui/Toast';
+
+toaster.success({
+  title: '저장 완료',
+  description: '정상적으로 처리되었습니다.',
+  closable: true,
+});
+```
+
+ky 호출은 `src/services/*`에서 도메인 에러로 정규화하고, 화면에서는 성공/실패 결과에 맞춰 Toast를 띄운다.
+
+```tsx
+import { toaster } from '@/components/ui/Toast';
+import { login, LoginError } from '@/services/auth';
+
+try {
+  await login(payload);
+  toaster.success({ title: '로그인 완료', closable: true });
+} catch (error) {
+  const description =
+    error instanceof LoginError && error.kind === 'invalid-credentials'
+      ? '이메일 또는 비밀번호를 확인해주세요.'
+      : '잠시 후 다시 시도해주세요.';
+
+  toaster.error({ title: '로그인 실패', description, closable: true });
+}
+```
 
 ## Button 패턴 (신규 primitive 추가 절차)
 
