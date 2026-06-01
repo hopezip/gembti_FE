@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
+import { LoginPage } from './LoginPage';
 import { NotFoundPage } from './NotFoundPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
@@ -79,10 +80,18 @@ const extraRoutes: RouteDef[] = [
   { title: '타인 프로필', path: '/users/:userId', access: 'Public' },
 ];
 
-// 권한에 맞는 가드로 PlaceholderPage를 감싼다.
+// 권한에 맞는 가드로 페이지를 감싼다.
 // Public/Technical은 가드 없음, Auth는 ProtectedRoute, Public only는 PublicOnlyRoute.
-function withGuard({ title, path, access }: RouteDef) {
-  const page = <PlaceholderPage title={title} route={path} access={access} />;
+// 대부분의 경로는 아직 공통 PlaceholderPage를 공유하지만,
+// 구현된 화면은 path별로 실제 페이지를 매핑한다(LOGIN-FE-001: /login → LoginPage).
+function pageElement({ title, path, access }: RouteDef) {
+  if (path === '/login') return <LoginPage />;
+  return <PlaceholderPage title={title} route={path} access={access} />;
+}
+
+function withGuard(def: RouteDef) {
+  const { path, access } = def;
+  const page = pageElement(def);
 
   let element = page;
   if (access === 'Auth') {

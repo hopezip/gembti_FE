@@ -33,5 +33,9 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // E2E는 항상 MSW mock으로 띄운다(로컬/CI 무관). VITE_USE_MOCK은 .env.local(gitignore)에만
+    // 있어 CI의 pnpm dev에는 주입되지 않으므로, webServer.env로 강제해 MSW worker가 항상 뜨게 한다.
+    // (크로스플랫폼 안전 — command 문자열에 인라인 env를 박지 않는다.)
+    env: { VITE_USE_MOCK: 'true' },
   },
 });
