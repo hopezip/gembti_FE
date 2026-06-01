@@ -5,6 +5,7 @@ import { CommunitySidebar } from '@/features/community/components/CommunitySideb
 import { CommunityTabs } from '@/features/community/components/CommunityTabs';
 import { FeedSortBar } from '@/features/community/components/FeedSortBar';
 import { GameRecommendStrip } from '@/features/community/components/GameRecommendStrip';
+import { PostList } from '@/features/community/components/PostList';
 import { PostWriteRow } from '@/features/community/components/PostWriteRow';
 
 // 커뮤니티 페이지 (COMMU-FE-001 Shell + COMMU-FE-002 피드 헤더).
@@ -48,24 +49,7 @@ export function CommunityPage() {
           >
             <PostWriteRow />
             <FeedSortBar />
-
-            {/* 피드 목록 — PR3 구현 예정 */}
-            <div
-              className={css({
-                minH: '400px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 'lg',
-                border: '1px dashed',
-                borderColor: 'border.default',
-                color: 'fg.subtle',
-                fontSize: 'md',
-                fontFamily: 'mono',
-              })}
-            >
-              피드 목록 — PR3 구현 예정
-            </div>
+            <PostList />
           </div>
         </div>
 
