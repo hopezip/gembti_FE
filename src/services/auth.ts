@@ -54,3 +54,49 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     throw new LoginError('generic');
   }
 }
+
+// 회원가입(LOGIN-FE-003) 요청 페이로드 — Figma STEP1 계정정보 + 약관 동의.
+// 비밀번호 확인(passwordConfirm)은 클라 검증용이라 서버로 보내지 않는다.
+export interface SignupPayload {
+  email: string;
+  password: string;
+  ageOver14: boolean;
+  termsOfService: boolean;
+  privacy: boolean;
+  marketing: boolean;
+}
+
+export interface SignupResponse {
+  user: AuthUser;
+}
+
+// 회원가입 실패 유형 — 폼 레벨 에러 분기에 사용한다.
+// - 'email-taken': 409 — 이미 가입된 이메일
+// - 'generic': 그 외 4xx/5xx/네트워크
+export type SignupErrorKind = 'email-taken' | 'generic';
+
+export class SignupError extends Error {
+  readonly kind: SignupErrorKind;
+
+  constructor(kind: SignupErrorKind) {
+    super(kind);
+    this.name = 'SignupError';
+    this.kind = kind;
+  }
+}
+
+export async function signupWithEmail(
+  payload: SignupPayload,
+): Promise<SignupResponse> {
+  try {
+    return await api
+      .post('api/auth/signup', { json: payload })
+      .json<SignupResponse>();
+  } catch (error) {
+    // 409는 이메일 중복, 그 외는 일반 오류로 정규화한다.
+    if (error instanceof HTTPError && error.response.status === 409) {
+      throw new SignupError('email-taken');
+    }
+    throw new SignupError('generic');
+  }
+}

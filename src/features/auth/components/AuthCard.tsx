@@ -13,6 +13,8 @@ import { vstack } from 'styled-system/patterns';
 interface AuthCardProps {
   /** 상단 세그먼트 탭 슬롯(AuthTabs) */
   tabs: ReactNode;
+  /** 헤딩 위 mono eyebrow(예: "STEP 1 / 2 · 계정 정보"). 없으면 미표시. */
+  eyebrow?: ReactNode;
   /** 좌측 정렬 헤딩 텍스트(예: 로그인) */
   heading: string;
   /** 헤딩 아래 부제 문구 */
@@ -21,7 +23,13 @@ interface AuthCardProps {
   children: ReactNode;
 }
 
-export function AuthCard({ tabs, heading, subtitle, children }: AuthCardProps) {
+export function AuthCard({
+  tabs,
+  eyebrow,
+  heading,
+  subtitle,
+  children,
+}: AuthCardProps) {
   return (
     <main
       className={css({
@@ -48,8 +56,21 @@ export function AuthCard({ tabs, heading, subtitle, children }: AuthCardProps) {
         {/* ① 상단 세그먼트 탭 슬롯 */}
         {tabs}
 
-        {/* ② 좌측 정렬 헤딩 + 부제 */}
+        {/* ② 좌측 정렬 (eyebrow) + 헤딩 + 부제 */}
         <div className={vstack({ gap: '1', alignItems: 'flex-start' })}>
+          {eyebrow && (
+            <span
+              className={css({
+                fontFamily: 'mono',
+                fontSize: 'xs',
+                fontWeight: 'medium',
+                letterSpacing: 'wide',
+                color: 'accent.default',
+              })}
+            >
+              {eyebrow}
+            </span>
+          )}
           <h1
             className={css({
               // 22px 1:1 토큰이 없어 신규 textStyle 없이 근접 토큰으로 처리(LOGIN-FE-001b 결정).

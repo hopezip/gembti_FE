@@ -17,6 +17,10 @@ interface LoginBody {
   password?: string;
 }
 
+interface SignupBody {
+  email?: string;
+}
+
 export const authHandlers = [
   // 경로는 ky 인스턴스(prefixUrl 없음)가 만드는 `${origin}/api/auth/login`과 일치한다.
   // origin 무관 매칭을 위해 절대 URL 와일드카드(`*/api/auth/login`)를 쓴다.
@@ -41,6 +45,31 @@ export const authHandlers = [
     return HttpResponse.json(
       { message: '이메일 또는 비밀번호가 올바르지 않습니다' },
       { status: 401 },
+    );
+  }),
+
+  // 회원가입(LOGIN-FE-003) — 한시적 수동 mock. 기본 200 성공 + 세션 쿠키 발급 모사.
+  // 기존 mock 계정(test@gambti.com)으로 가입 시도 시 409(email-taken) 데모를 응답한다.
+  // 실제 이메일 인증(인증 코드 발송, STEP2)은 LOGIN-FE-004(백엔드 의존)에서 다룬다.
+  http.post('*/api/auth/signup', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as SignupBody;
+
+    if (body.email === MOCK_EMAIL) {
+      return HttpResponse.json(
+        { message: '이미 가입된 이메일입니다' },
+        { status: 409 },
+      );
+    }
+
+    return HttpResponse.json(
+      { user: { id: 'u_new', nickname: '새유저' } },
+      {
+        status: 200,
+        headers: {
+          'Set-Cookie':
+            'gambti_session=mock-session; HttpOnly; Path=/; SameSite=Lax',
+        },
+      },
     );
   }),
 ];

@@ -128,6 +128,24 @@ describe('라우트 골격', () => {
     ).toBeInTheDocument();
   });
 
+  it('/signup은 비로그인 시 SignupPage(회원가입 폼)를 렌더한다', () => {
+    renderAt('/signup');
+    // AuthCard(=main) 헤딩 "회원가입". Header에는 "회원가입" 링크가 없어 별도 한정 불필요하나
+    //   일관성 위해 main 범위로 본다.
+    const card = within(screen.getByRole('main'));
+    expect(card.getByRole('heading', { name: '회원가입' })).toBeInTheDocument();
+    // 필수표시 `*`/"비밀번호 확인" 중복으로 label 매칭이 취약해 placeholder로 입력을 한정한다.
+    expect(screen.getByPlaceholderText('name@example.com')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('영문·숫자 포함 10자 이상'),
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('비밀번호 재입력')).toBeInTheDocument();
+    // 제출 버튼(STEP1)
+    expect(
+      screen.getByRole('button', { name: '인증 코드 받기 →' }),
+    ).toBeInTheDocument();
+  });
+
   it('/login은 로그인 상태면 PublicOnlyRoute가 홈(/)으로 리다이렉트한다', () => {
     // data router(createMemoryRouter)는 jsdom에서 Navigate 시 fetch/AbortSignal 비호환 이슈가 있어,
     // ProtectedRoute 테스트와 동일하게 MemoryRouter(non-data) + PublicOnlyRoute로 가드만 검증한다.
