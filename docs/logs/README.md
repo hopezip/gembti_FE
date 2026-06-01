@@ -40,9 +40,9 @@ docs/logs/
 
 | 파일 | 정책 | 이유 |
 |------|------|------|
-| `docs/logs/YYYY-MM-DD.md` (일일 로그) | **커밋** | 사람이 정리한 요약, 팀 공유 가치 |
+| `docs/logs/YYYY-MM-DD.md` (일일 로그) | **로컬 전용 (gitignore)** | 로컬 보관 — 팀 충돌 방지, 공유는 `/log` 요약·티켓 회고로 |
 | `docs/logs/sessions/*.md` (세션 원문) | **gitignore** (기본) | 도구 입력 평문이라 시크릿 노출 위험. 마스킹은 사후 보호일 뿐 |
-| `docs/tickets/MS-*/*.md` (티켓 = 회고 포함) | **반드시 커밋** | v2: 티켓 + 회고가 한 파일 |
+| `docs/tickets/MS-*/*.md` (티켓 = 회고 포함) | **로컬 전용 (gitignore)** | 로컬 보관 — 티켓+회고가 한 파일, 공유는 이슈(ID 선점)·PR로 |
 
 > v1의 `docs/analysis/*_report.md`는 v2에서 폐기. 회고는 티켓 파일 `## 회고` 섹션으로 통합.
 

@@ -37,15 +37,18 @@ Route Component
 
 | 폴더 | 책임 |
 |------|------|
-| `src/routes/` | React Router 라우트/페이지 엔트리 |
+| `src/routes/` | React Router 라우트/페이지 엔트리 + 가드(`guards/`) |
 | `src/features/<domain>/` | 도메인별 컴포넌트/훅/스키마/store |
+| `src/features/<domain>/components/` | 도메인 지식이 있는 컴포넌트 (GameCard 등) |
 | `src/components/ui/` | Park UI 래핑 Primitive |
-| `src/components/patterns/` | 도메인 컴포넌트 (GameCard 등) |
-| `src/layouts/` | GlobalShell / DetailLayout / FormLayout |
-| `src/services/` | 도메인 서비스 레이어 (컴포넌트가 직접 fetch 금지) |
+| `src/components/feedback/` | Park UI에 없어 직접 만드는 도메인 무지 공통 (EmptyState 등) |
+| `src/layout/` | 앱 셸 (RootLayout / HeaderBar / Footer) |
+| `src/services/` | **선택적** 도메인 서비스 레이어. 단순 도메인은 hook→`lib/api` 직접 호출, 복잡한 조합만 services 경유 |
 | `src/lib/api/` | API 호출 함수 (**자동 생성**) |
 | `src/types/` | 타입 (`api.ts`는 **자동 생성**) |
 | `src/mocks/` | MSW 핸들러 (**자동 생성**) |
+
+> 폴더 구조 표준 SSOT는 `architecture/components.md`(features 기반)다. 도메인 무지 공통은 `components/`, 도메인 지식이 있으면 `features/<domain>/components/`. 의존 방향은 `features/ → components/` 단방향(역방향 금지).
 
 ## 도메인 문서 지도
 

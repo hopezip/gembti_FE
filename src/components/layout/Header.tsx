@@ -1,0 +1,113 @@
+import { Link } from 'react-router-dom';
+import { css } from 'styled-system/css';
+import { button } from 'styled-system/recipes';
+import { Avatar } from '@/components/ui/Avatar';
+import { Input } from '@/components/ui/Input';
+import { useAuthStore } from '@/lib/store/useAuthStore';
+import { Logo } from './Logo';
+import { Nav } from './Nav';
+
+// 비로그인 인증 액션의 "로그인" ghost 텍스트 링크 스타일 (회원가입은 button recipe 사용).
+const loginLink = css({
+  display: 'inline-flex',
+  alignItems: 'center',
+  textStyle: 'body.md',
+  fontWeight: 'medium',
+  color: 'fg.muted',
+  textDecoration: 'none',
+  whiteSpace: 'nowrap',
+  transition: 'color {durations.fast}',
+  _hover: { color: 'fg.default' },
+});
+
+// 글로벌 셸 헤더 (DESIGN_SYSTEM 4.1).
+// 레이아웃: [Logo][Nav] ...(spacer)... [Search 280][인증 액션]
+// - g-header 60px · bg.canvas · border-bottom
+// - Search: 기존 ui Input(size sm) 재사용 + 인스턴스 override(radii.full · min-width 280 · mono).
+//   새 recipe/토큰 추가 없이 styled className merge 로만 형태를 맞춘다.
+// - 인증 액션: useAuthStore의 status만 "읽어" 분기(읽기 전용, auth 로직 변경 금지).
+//   현 stub은 항상 'anonymous'라 로그인-후 Avatar는 stub 토글로만 확인된다(회고 명시).
+export function Header() {
+  // status만 선택 구독 — 스토어 형태/액션은 건드리지 않는다.
+  const status = useAuthStore((s) => s.status);
+
+  return (
+    <header
+      className={css({
+        h: '60px',
+        bg: 'bg.canvas',
+        borderBottom: '1px solid',
+        borderColor: 'border.default',
+        px: { base: '7', '2xl': '8' },
+      })}
+    >
+      <div
+        className={css({
+          maxW: 'containerLg',
+          mx: 'auto',
+          h: 'full',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '7',
+        })}
+      >
+        <Logo />
+        <Nav />
+
+        {/* spacer — Logo/Nav 는 좌측, Search/인증 액션은 우측으로 민다. */}
+        <div className={css({ flex: '1', minW: '0' })} />
+
+        {/* Search: 기존 Input 재사용 + 인스턴스 형태 override(신규 recipe 없음). placeholder는 Figma 헤더 기준. */}
+        <Input
+          size="sm"
+          type="search"
+          aria-label="검색"
+          placeholder="🔍 게임, 장르, 태그 검색"
+          className={css({
+            minW: '280px',
+            w: '280px',
+            borderRadius: 'full',
+            fontFamily: 'mono',
+            fontSize: 'md',
+          })}
+        />
+
+        {/* 인증 액션: authenticated → Avatar, 그 외 → 로그인(링크) + 회원가입(filled 버튼). status 읽기만. */}
+        {status === 'authenticated' ? (
+          <Link
+            to="/mypage"
+            aria-label="내 프로필"
+            className={css({
+              display: 'inline-flex',
+              alignItems: 'center',
+              flexShrink: 0,
+              borderRadius: 'full',
+            })}
+          >
+            <Avatar size="sm" name="내 계정" />
+          </Link>
+        ) : (
+          <div
+            className={css({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3',
+              flexShrink: 0,
+            })}
+          >
+            <Link to="/login" className={loginLink}>
+              로그인
+            </Link>
+            {/* 회원가입: Park UI button recipe(primary)로 스타일한 라우터 링크. 신규 토큰 없음. */}
+            <Link
+              to="/signup"
+              className={button({ variant: 'primary', size: 'sm' })}
+            >
+              회원가입
+            </Link>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

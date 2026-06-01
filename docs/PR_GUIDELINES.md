@@ -26,7 +26,7 @@
 ## PR 본문 (자동 생성)
 
 `.github/PULL_REQUEST_TEMPLATE.md` 양식. 자동 채워지는 항목:
-- 관련 티켓 링크 (REQ 기능 ID)
+- 관련 이슈 (Closes #N) — canonical 추적자는 GitHub Issue, 로컬 티켓 ID는 참고용 텍스트(`docs/tickets` 경로 링크 X)
 - 변경 요약 (티켓 회고 섹션 기반)
 - 변경 파일 목록
 - 자동 검증 결과 체크리스트

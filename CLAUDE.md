@@ -130,7 +130,7 @@ cross 강제 영역 (무조건 cross):
 이 프로젝트는 자동 로깅이 활성화되어 있습니다. ⚠️ **단, Hook은 WSL/macOS/Linux 전용**입니다. Windows PowerShell에서 실행 중이면 Hook이 안 도므로 `/log` 수동을 사용하세요.
 
 - **세션 자동 기록**: `docs/logs/sessions/` (Hook 기반, gitignore)
-- **일일 로그**: `docs/logs/YYYY-MM-DD.md` (자동 + 수동, 커밋)
+- **일일 로그**: `docs/logs/YYYY-MM-DD.md` (자동 + 수동, 로컬 전용 · gitignore)
 - **티켓 회고**: 티켓 파일의 `## 회고` 섹션 (v2 — v1 analysis 폴더 대체)
 - **수동 보강**: `/log` 슬래시 커맨드
 

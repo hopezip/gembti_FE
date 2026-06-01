@@ -26,6 +26,18 @@
 
 ```typescript
 // ✅ 백엔드가 Set-Cookie로 발급, 클라이언트는 토큰 문자열을 직접 저장하지 않음
+//    (credentials: 'include'로 쿠키 자동 전송, Authorization 헤더 조립 불필요)
+
+// ✅ 서비스 레이어 (정식): lib/api 함수를 도메인 단위로 조합 (저수준 호출은 lib/api가 담당)
+import { getUsersMe } from '@/lib/api/users'; // Swagger 생성물
+import { postAuthLogout } from '@/lib/api/auth'; // Swagger 생성물
+export const authApi = {
+  me: () => getUsersMe(),
+  logout: () => postAuthLogout(),
+};
+
+// ⏳ Swagger 전 한시적: lib/api가 아직 없을 때만 services에서 ky 직접 호출
+//    (생성물이 들어오면 위 조합 형태로 교체, services에 저수준 호출을 남기지 않는다)
 import { api } from '@/lib/ky';
 export const getMe = () => api.get('users/me').json<User>();
 export const logout = () => api.post('auth/logout');
