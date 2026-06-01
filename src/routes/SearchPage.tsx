@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { css } from 'styled-system/css';
 import { Input } from '@/components/ui/Input';
 import { GameSearchCard } from '@/features/game/components/GameSearchCard';
+import { SearchEmptyState } from '@/features/game/components/SearchEmptyState';
 import {
   FilterSidebar,
   DEFAULT_FILTERS,
@@ -533,18 +534,15 @@ export function SearchPage() {
               )}
             </div>
           ) : sortedGames.length === 0 ? (
-            <div
-              className={css({
-                textAlign: 'center',
-                py: '20',
-                color: 'fg.muted',
-                fontSize: 'sm',
-              })}
-            >
-              {query
-                ? `"${query}"에 해당하는 게임이 없어요`
-                : '검색어를 입력해보세요'}
-            </div>
+            <SearchEmptyState
+              query={query}
+              suggestions={[...filters.genres, ...filters.tags].slice(0, 1)}
+              altGames={allGames.slice(0, 4)}
+              onSearch={(q) => {
+                setInputValue(q);
+                setSearchParams({ q });
+              }}
+            />
           ) : (
             <div
               className={css({
