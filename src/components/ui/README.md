@@ -20,6 +20,7 @@ GamBTI recipe(`styled-system/recipes`)를 덮어쓴 스타일 컴포넌트만 �
 | `Input` | `Input.tsx` | `input` | size(sm/md/lg) | 텍스트 입력(input element). invalid는 소비자가 `aria-invalid={true}`로 전달, 폼 로직(RHF/Zod)은 소비자 책임 |
 | `GameCard` | `GameCard.tsx` | `gameCard` | padding(none/sm/md/lg), interactive(boolean), tone(default/accent) | children을 감싸는 thin 컨테이너(div element). `interactive`는 hover 시각 효과만, 클릭/role/키보드 a11y와 내부 레이아웃은 소비자 책임 |
 | `Field` | `Field.tsx` | 없음(조합) | 없음 (props: `label`/`id`/`required?`/`hint?`/`help?`/`error?`/`children`) | 폼 래퍼. `styled-system/patterns`(vstack)+`css`(기존 textStyles 매핑+semantic token)로 label row→입력 children 슬롯→help→error를 조합. `htmlFor`/`aria-required`/`aria-invalid`/`aria-describedby`를 children 입력에 주입(a11y). error 존재 시 help 대신 error 표시. RHF/Zod 미결합 — `error` 문자열 생성은 소비자 책임 |
+| `Avatar` | `Avatar.tsx` | 없음(조합) | 없음 (props: `size`(xs/sm/md/lg/xl, 기본 md)/`src?`/`name`/`op?`) | 유저 표시 primitive(DESIGN_SYSTEM 2.6). Ark UI Avatar(Root/Image/Fallback) 위에 `css`(기존 sizes 토큰 `avatarXs`~`avatarXl`+semantic token)만 얹어 원형 이미지 + 이니셜 fallback을 조합. `src` 미제공/로드 실패 시 `name` 기반 이니셜로 자동 전환(Ark). `op`(글쓴이)는 `border.accent`+`accent.default`로 강조. a11y는 Root `aria-label={name}`+이미지 `alt`(이니셜은 `aria-hidden`). 도메인 로직(데이터 패칭) 미결합 — `src`/`name`은 소비자 주입 |
 
 ## Button 패턴 (신규 primitive 추가 절차)
 
