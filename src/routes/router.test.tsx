@@ -32,11 +32,11 @@ afterEach(() => {
 });
 
 describe('라우트 골격', () => {
-  it('대표 Public 경로(/search)가 PlaceholderPage를 렌더한다', () => {
+  it('대표 Public 경로(/search)가 SearchPage를 렌더한다', () => {
     renderAt('/search');
-    expect(screen.getByRole('heading', { name: '검색' })).toBeInTheDocument();
-    expect(screen.getByText('/search')).toBeInTheDocument();
-    expect(screen.getByText('Public')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('게임, 장르, 태그 검색'),
+    ).toBeInTheDocument();
   });
 
   it('메인 경로(/)가 PlaceholderPage를 렌더한다', () => {
@@ -53,7 +53,9 @@ describe('라우트 골격', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument(); // <footer>
     // 페이지 콘텐츠도 함께 렌더(셸이 페이지를 덮어쓰지 않음).
-    expect(screen.getByRole('heading', { name: '검색' })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('게임, 장르, 태그 검색'),
+    ).toBeInTheDocument();
   });
 
   it('비로그인 stub에서 셸 인증 액션이 "로그인" 링크를 보여준다', () => {

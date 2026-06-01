@@ -265,6 +265,28 @@ const MOCK_GAMES: MockGame[] = [
   },
 ];
 
+export const MOCK_GENRES = [
+  { label: 'RPG', count: 428 },
+  { label: '액션', count: 312 },
+  { label: '어드벤처', count: 186 },
+  { label: 'FPS', count: 141 },
+  { label: '전략', count: 98 },
+  { label: '시뮬레이션', count: 73 },
+  { label: '퍼즐', count: 55 },
+];
+
+export const MOCK_TAGS = [
+  { label: '오픈월드', count: 247 },
+  { label: '다크 판타지', count: 112 },
+  { label: '잔잔한', count: 68 },
+  { label: '스토리 중심', count: 203 },
+  { label: '협동', count: 156 },
+  { label: '로그라이크', count: 94 },
+  { label: 'SF', count: 81 },
+];
+
+export const MOCK_PLAYER_MODES = ['싱글플레이어', '협동', '온라인 멀티'];
+
 const MOCK_TOTAL = 1247;
 const PAGE_SIZE = 12;
 

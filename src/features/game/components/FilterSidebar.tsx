@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { css, cx } from 'styled-system/css';
+import {
+  MOCK_GENRES,
+  MOCK_TAGS,
+  MOCK_PLAYER_MODES,
+} from '@/mocks/handlers/games';
 
 export interface FilterState {
   genres: string[];
@@ -22,28 +27,6 @@ export const DEFAULT_FILTERS: FilterState = {
   playerModes: [],
   minRating: 0,
 };
-
-const GENRES = [
-  { label: 'RPG', count: 428 },
-  { label: '액션', count: 312 },
-  { label: '어드벤처', count: 186 },
-  { label: 'FPS', count: 141 },
-  { label: '전략', count: 98 },
-  { label: '시뮬레이션', count: 73 },
-  { label: '퍼즐', count: 55 },
-];
-
-const TAGS = [
-  { label: '오픈월드', count: 247 },
-  { label: '다크 판타지', count: 112 },
-  { label: '잔잔한', count: 68 },
-  { label: '스토리 중심', count: 203 },
-  { label: '협동', count: 156 },
-  { label: '로그라이크', count: 94 },
-  { label: 'SF', count: 81 },
-];
-
-const PLAYER_MODES = ['싱글플레이어', '협동', '온라인 멀티'];
 
 interface Props {
   filters: FilterState;
@@ -177,8 +160,8 @@ export function FilterSidebar({ filters, onChange, onReset }: Props) {
   const [showAllGenres, setShowAllGenres] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
 
-  const visibleGenres = showAllGenres ? GENRES : GENRES.slice(0, 5);
-  const visibleTags = showAllTags ? TAGS : TAGS.slice(0, 6);
+  const visibleGenres = showAllGenres ? MOCK_GENRES : MOCK_GENRES.slice(0, 5);
+  const visibleTags = showAllTags ? MOCK_TAGS : MOCK_TAGS.slice(0, 6);
 
   const hasActive =
     filters.genres.length > 0 ||
@@ -463,7 +446,7 @@ export function FilterSidebar({ filters, onChange, onReset }: Props) {
       <div>
         <span className={sectionLabel}>플레이어 모드</span>
         <div className={css({ mt: '2' })}>
-          {PLAYER_MODES.map((mode) => (
+          {MOCK_PLAYER_MODES.map((mode) => (
             <CheckItem
               key={mode}
               label={mode}
