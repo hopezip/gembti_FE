@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
+import { CommunityPage } from './CommunityPage';
 import { LoginPage } from './LoginPage';
 import { NotFoundPage } from './NotFoundPage';
 import { SignupPage } from './SignupPage';
@@ -88,6 +89,7 @@ const extraRoutes: RouteDef[] = [
 function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
+  if (path === '/community') return <CommunityPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 

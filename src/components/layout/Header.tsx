@@ -34,7 +34,7 @@ export function Header() {
   return (
     <header
       className={css({
-        h: '60px',
+        h: '68px',
         bg: 'bg.canvas',
         borderBottom: '1px solid',
         borderColor: 'border.default',
@@ -43,8 +43,6 @@ export function Header() {
     >
       <div
         className={css({
-          maxW: 'containerLg',
-          mx: 'auto',
           h: 'full',
           display: 'flex',
           alignItems: 'center',
@@ -62,7 +60,7 @@ export function Header() {
           size="sm"
           type="search"
           aria-label="검색"
-          placeholder="🔍 게임, 장르, 태그 검색"
+          placeholder="🔍 게시글, 게임, 유저 검색"
           className={css({
             minW: '280px',
             w: '280px',
