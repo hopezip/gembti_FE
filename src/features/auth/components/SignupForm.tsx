@@ -6,9 +6,10 @@ import { vstack } from 'styled-system/patterns';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
+import { useEmailAvailability } from '@/features/auth/hooks/useEmailAvailability';
 import { type SignupInput, signupSchema } from '@/lib/schemas/auth';
 import {
-  type AuthUser,
+  requestEmailVerification,
   SignupError,
   type SignupErrorKind,
   signupWithEmail,
@@ -23,9 +24,24 @@ const FORM_ERROR_MESSAGE: Record<SignupErrorKind, string> = {
   generic: '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
 };
 
+// 이메일 실시간 중복확인(LOGIN-FE-004 d 항목) 상태 표시 문구/색 매핑.
+//   error는 "확인 불가"로 degrade하며 표시하지 않는다(가입을 막지 않음, 서버 409가 최종 안전망).
+const EMAIL_HINT: Record<
+  'checking' | 'available' | 'taken',
+  {
+    message: string;
+    color: string;
+  }
+> = {
+  checking: { message: '확인 중…', color: 'fg.subtle' },
+  available: { message: '사용 가능한 이메일이에요', color: 'success.fg' },
+  taken: { message: '이미 사용 중인 이메일이에요', color: 'danger.fg' },
+};
+
 interface SignupFormProps {
-  // 회원가입(mock) 성공 시 호출. STEP2(이메일 인증)는 LOGIN-FE-004에서 연결한다.
-  onSuccess?: (user: AuthUser) => void;
+  // STEP1(계정정보) 성공 + 인증 코드 발송 후 호출. 가입 이메일과 발송 유효시간(초)을 넘겨
+  //   페이지가 STEP2(이메일 인증)로 전환한다.
+  onSuccess?: (email: string, ttlSeconds: number) => void;
 }
 
 export function SignupForm({ onSuccess }: SignupFormProps) {
@@ -54,10 +70,28 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   // 비밀번호 규칙/강도 실시간 표시용.
   const password = watch('password') ?? '';
+  // 이메일 실시간 중복확인(STEP1) — 입력값을 debounce 후 형식 통과 시 조회.
+  const email = watch('email') ?? '';
+  const { status: emailStatus, isTaken: emailTaken } =
+    useEmailAvailability(email);
 
+  // 가입(mock) 성공 → 인증 코드 발송 → STEP2 전환. 발송 응답의 ttlSeconds를 onSuccess로 넘긴다.
   const mutation = useMutation({
-    mutationFn: signupWithEmail,
-    onSuccess: (data) => onSuccess?.(data.user),
+    mutationFn: async (values: SignupInput) => {
+      // passwordConfirm은 클라 검증용이라 서버 전송에서 제외한다.
+      await signupWithEmail({
+        email: values.email,
+        password: values.password,
+        ageOver14: values.ageOver14,
+        termsOfService: values.termsOfService,
+        privacy: values.privacy,
+        marketing: values.marketing,
+      });
+      // STEP2 진입과 동시에 인증 코드를 발송한다(유효시간 확보).
+      const { ttlSeconds } = await requestEmailVerification(values.email);
+      return { email: values.email, ttlSeconds };
+    },
+    onSuccess: (data) => onSuccess?.(data.email, data.ttlSeconds),
   });
 
   let formErrorMessage: string | null = null;
@@ -77,15 +111,12 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   };
 
   const onValid = (values: SignupInput) => {
-    // passwordConfirm은 클라 검증용이라 서버 전송에서 제외한다.
-    mutation.mutate({
-      email: values.email,
-      password: values.password,
-      ageOver14: values.ageOver14,
-      termsOfService: values.termsOfService,
-      privacy: values.privacy,
-      marketing: values.marketing,
-    });
+    // 실시간 중복확인이 'taken'이면 서버 409 전에 제출을 막는다(이중 안전).
+    if (emailTaken) {
+      setFocus('email');
+      return;
+    }
+    mutation.mutate(values);
   };
 
   return (
@@ -108,6 +139,21 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           {...register('email')}
         />
       </Field>
+
+      {/* 이메일 실시간 중복확인 상태(확인 중 / 사용 가능 / 이미 사용 중).
+          형식 미통과(idle)·확인 불가(error)는 표시하지 않는다. 필드 에러와는 별개 표시다. */}
+      {emailStatus !== 'idle' && emailStatus !== 'error' && (
+        <p
+          role="status"
+          className={css({
+            textStyle: 'body.sm',
+            color: EMAIL_HINT[emailStatus].color,
+            mt: '-3',
+          })}
+        >
+          {EMAIL_HINT[emailStatus].message}
+        </p>
+      )}
 
       <Field
         label="비밀번호"
@@ -162,29 +208,12 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         </p>
       )}
 
-      {/* mock 성공 안내 — 실제 인증 코드 발송(STEP2)은 LOGIN-FE-004에서 연결 */}
-      {mutation.isSuccess && (
-        <p
-          role="status"
-          className={css({
-            textStyle: 'body.sm',
-            color: 'success.fg',
-            bg: 'success.soft',
-            border: '1px solid',
-            borderColor: 'success.default',
-            borderRadius: 'lg',
-            px: '3',
-            py: '2',
-          })}
-        >
-          가입 정보가 확인됐어요. 다음 단계(이메일 인증)는 준비 중입니다.
-        </p>
-      )}
+      {/* STEP1 성공 시 페이지가 STEP2로 전환하므로 별도 mock 성공 안내는 두지 않는다. */}
 
       <Button
         type="submit"
         variant="primary"
-        disabled={isSubmitting}
+        disabled={isSubmitting || emailTaken}
         aria-busy={isSubmitting || undefined}
       >
         {isSubmitting ? '처리 중…' : '인증 코드 받기 →'}

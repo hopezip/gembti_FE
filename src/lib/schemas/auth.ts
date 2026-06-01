@@ -53,3 +53,16 @@ export const signupSchema = z
   });
 
 export type SignupInput = z.infer<typeof signupSchema>;
+
+// 이메일 인증(LOGIN-FE-004 STEP2) 코드 입력 스키마.
+// 6자리 숫자 인증 코드만 허용한다. 코드의 실제 유효성(만료/오답)은 서버(verify)가 판별하고,
+// 여기선 형식(자릿수·숫자)만 검증한다. 메시지는 한국어.
+export const VERIFY_CODE_LENGTH = 6;
+export const verifyCodeSchema = z.object({
+  code: z
+    .string()
+    .min(1, '인증 코드를 입력해주세요')
+    .regex(/^\d{6}$/, '6자리 숫자 인증 코드를 입력해주세요'),
+});
+
+export type VerifyCodeInput = z.infer<typeof verifyCodeSchema>;

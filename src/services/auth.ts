@@ -100,3 +100,73 @@ export async function signupWithEmail(
     throw new SignupError('generic');
   }
 }
+
+// ── 이메일 인증(LOGIN-FE-004 STEP2) ──────────────────────────────────────────
+// 인증 코드 발송/검증·이메일 실시간 중복확인. 전부 httpOnly Cookie 전제(토큰 미조립)이며
+// Swagger 미완 동안 한시적 수동 호출이다(/api-sync 후 생성물 조합으로 교체).
+
+// 인증 코드 발송 응답 — 유효시간(초). 클라 카운트다운 타이머의 초기값으로 쓴다.
+export interface EmailVerificationResponse {
+  ttlSeconds: number;
+}
+
+// 인증 코드 발송(최초/재전송 공용). 재전송 쿨다운은 클라이언트가 제어한다(서버는 동일 엔드포인트).
+export async function requestEmailVerification(
+  email: string,
+): Promise<EmailVerificationResponse> {
+  return await api
+    .post('api/auth/email/verification', { json: { email } })
+    .json<EmailVerificationResponse>();
+}
+
+// 인증 코드 검증 실패 유형 — 폼 레벨 에러 분기에 사용한다.
+// - 'invalid-code': 400/422 — 코드 불일치
+// - 'expired': 410 — 코드 만료(타이머 0 또는 서버 만료)
+// - 'generic': 그 외 4xx/5xx/네트워크
+export type VerifyErrorKind = 'invalid-code' | 'expired' | 'generic';
+
+export class VerifyError extends Error {
+  readonly kind: VerifyErrorKind;
+
+  constructor(kind: VerifyErrorKind) {
+    super(kind);
+    this.name = 'VerifyError';
+    this.kind = kind;
+  }
+}
+
+export interface VerifyEmailCodePayload {
+  email: string;
+  code: string;
+}
+
+export async function verifyEmailCode(
+  payload: VerifyEmailCodePayload,
+): Promise<void> {
+  try {
+    await api.post('api/auth/email/verify', { json: payload });
+  } catch (error) {
+    // 410=만료, 400/422=코드 불일치, 그 외=일반 오류로 정규화한다.
+    if (error instanceof HTTPError) {
+      const status = error.response.status;
+      if (status === 410) throw new VerifyError('expired');
+      if (status === 400 || status === 422)
+        throw new VerifyError('invalid-code');
+    }
+    throw new VerifyError('generic');
+  }
+}
+
+// 이메일 중복확인 — STEP1 이메일 필드 실시간 표시용.
+// 네트워크/4xx 등 실패는 호출부에서 "확인 불가"로 degrade한다(가입을 막지 않는다).
+export interface EmailAvailability {
+  available: boolean;
+}
+
+export async function checkEmailAvailability(
+  email: string,
+): Promise<EmailAvailability> {
+  return await api
+    .get('api/auth/email/check', { searchParams: { email } })
+    .json<EmailAvailability>();
+}
