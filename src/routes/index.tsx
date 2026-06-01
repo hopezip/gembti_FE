@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { NotFoundPage } from './NotFoundPage';
+import { SignupPage } from './SignupPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -86,6 +87,7 @@ const extraRoutes: RouteDef[] = [
 // 구현된 화면은 path별로 실제 페이지를 매핑한다(LOGIN-FE-001: /login → LoginPage).
 function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
+  if (path === '/signup') return <SignupPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 

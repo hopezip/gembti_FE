@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { css } from 'styled-system/css';
 import { AuthCard } from '@/features/auth/components/AuthCard';
+import { AuthDivider } from '@/features/auth/components/AuthDivider';
 import { AuthTabs } from '@/features/auth/components/AuthTabs';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import { SteamButton } from '@/features/auth/components/SteamButton';
@@ -40,30 +40,7 @@ export function LoginPage() {
       <SteamButton />
 
       {/* 구분선 "— 또는 이메일로 로그인 —" (장식이라 a11y 트리에서 숨김) */}
-      <div
-        aria-hidden="true"
-        className={css({
-          display: 'flex',
-          alignItems: 'center',
-          gap: '3',
-          color: 'fg.subtle',
-          textStyle: 'body.sm',
-          _before: {
-            content: '""',
-            flex: '1',
-            borderTop: '1px solid',
-            borderColor: 'border.default',
-          },
-          _after: {
-            content: '""',
-            flex: '1',
-            borderTop: '1px solid',
-            borderColor: 'border.default',
-          },
-        })}
-      >
-        또는 이메일로 로그인
-      </div>
+      <AuthDivider>또는 이메일로 로그인</AuthDivider>
 
       <LoginForm onSuccess={handleSuccess} />
     </AuthCard>
