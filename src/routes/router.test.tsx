@@ -39,9 +39,13 @@ describe('라우트 골격', () => {
     ).toBeInTheDocument();
   });
 
-  it('메인 경로(/)가 PlaceholderPage를 렌더한다', () => {
+  it('메인 경로(/)가 MainPage Hero 배너(MAIN-FE-001)를 렌더한다', () => {
+    // '/'는 PlaceholderPage 대신 MainPage(HeroBanner)를 렌더한다.
+    // 배너 텍스트는 추천 데이터 로딩/에러와 무관하게 항상 렌더되므로 <h1>로 검증한다.
     renderAt('/');
-    expect(screen.getByRole('heading', { name: '메인' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+    ).toBeInTheDocument();
   });
 
   it('GlobalShell layout 라우트가 모든 경로에 Header/Footer 셸을 렌더한다', () => {

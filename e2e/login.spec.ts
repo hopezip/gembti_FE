@@ -106,7 +106,10 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.submit.click();
 
     await expect(page).toHaveURL('http://localhost:5173/');
-    await expect(page.getByRole('heading', { name: '메인' })).toBeVisible();
+    // '/'는 MainPage(MAIN-FE-001 Hero 배너)를 렌더한다(이전 PlaceholderPage "메인" 대체).
+    await expect(
+      page.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+    ).toBeVisible();
   });
 
   test('외부 redirect(//evil.com)는 무시하고 홈으로 이동한다', async ({

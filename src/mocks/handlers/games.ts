@@ -14,12 +14,19 @@ export interface MockGame {
   onSale: boolean;
   koreanSub: boolean;
   playerModes: string[];
+  // 커버 이미지 URL. 백엔드 자산 확정 전까지 optional — 없으면 프론트가 그라데이션 placeholder로 대체한다.
+  coverImageUrl?: string;
 }
 
 export interface GamesSearchResponse {
   total: number;
   games: MockGame[];
   hasMore: boolean;
+}
+
+// MAIN-FE-001 메인 추천 배너용 응답. 메인 페이지는 첫 1건만 배경으로 사용한다.
+export interface RecommendedGamesResponse {
+  games: MockGame[];
 }
 
 const MOCK_GAMES: MockGame[] = [
@@ -314,5 +321,15 @@ export const gameHandlers = [
       games,
       hasMore: filtered.length > start + PAGE_SIZE,
     });
+  }),
+
+  // MAIN-FE-001 메인 추천 배너 — 평점 내림차순 상위 6개를 추천으로 제공한다.
+  // 한시적 수동 핸들러(백엔드 계약 확정 후 /api-sync 자동 생성물로 교체).
+  http.get('*/api/games/recommended', () => {
+    const games = [...MOCK_GAMES]
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+      .slice(0, 6);
+
+    return HttpResponse.json<RecommendedGamesResponse>({ games });
   }),
 ];
