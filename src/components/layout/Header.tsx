@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { Logo } from './Logo';
 import { Nav } from './Nav';
+import { pageContainer, pageGutter } from './PageContainer';
 
 // 비로그인 인증 액션의 "로그인" ghost 텍스트 링크 스타일 (회원가입은 button recipe 사용).
 const loginLink = css({
@@ -36,18 +37,15 @@ export function Header() {
 
   return (
     <header
-      className={css({
+      className={css(pageGutter, {
         h: '60px',
         bg: 'bg.canvas',
         borderBottom: '1px solid',
         borderColor: 'border.default',
-        px: { base: '7', '2xl': '8' },
       })}
     >
       <div
-        className={css({
-          maxW: 'containerLg',
-          mx: 'auto',
+        className={css(pageContainer, {
           h: 'full',
           display: 'flex',
           alignItems: 'center',
