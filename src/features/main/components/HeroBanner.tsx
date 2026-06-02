@@ -1,11 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
 import { Tag } from '@/components/ui/Tag';
-import { api } from '@/lib/ky';
-import type { RecommendedGamesResponse } from '@/mocks/handlers/games';
+import { useGuestHome } from '@/features/main/api/guestHome';
 
 // MAIN-FE-001 비로그인 메인 Hero 배너 (Figma Hero 387:4742).
 // 구조(3층): ① 배경(추천 첫 1건 커버 이미지 또는 그라데이션 placeholder)
@@ -25,31 +23,13 @@ const styles = {
     borderBottom: '1px solid',
     borderColor: 'border.default',
   }),
-  // ① 배경 레이어 — coverImageUrl이 있으면 인라인 style로 url 주입(런타임 데이터), 없으면 surface 단색.
+  // ① 배경 레이어 — background_image_url이 있으면 인라인 style로 url 주입(런타임 데이터), 없으면 surface 단색.
   bgLayer: css({
     position: 'absolute',
     inset: '0',
     bg: 'bg.surface',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-  }),
-  // 이미지가 없을 때 배경 우측에 흐릿하게 깔리는 큰 게임 제목(시각적 placeholder).
-  bgPlaceholderText: css({
-    position: 'absolute',
-    inset: '0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    pr: '12',
-    fontFamily: 'display',
-    fontStyle: 'italic',
-    fontWeight: 'extrabold',
-    fontSize: 'display',
-    letterSpacing: 'tighter',
-    color: 'fg.default',
-    opacity: '0.05',
-    whiteSpace: 'nowrap',
-    userSelect: 'none',
   }),
   // ② 좌→우 어두운 그라데이션 오버레이 — 좌측 텍스트 영역을 진하게, 우측은 투명에 가깝게.
   overlay: css({
@@ -70,9 +50,10 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
   }),
-  label: css({ mb: '5' }),
+  // Tag recipe 기본(tone neutral: fg.muted/medium)을 Figma 칩(#7a7a82·Regular)에 맞춰 override.
+  label: css({ mb: '5', color: 'fg.subtle', fontWeight: 'normal' }),
   headline: css({
-    textStyle: 'heading.h1',
+    textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
   }),
   accentWord: css({ color: 'accent.default' }),
@@ -95,17 +76,13 @@ const styles = {
 };
 
 export function HeroBanner() {
-  const { data } = useQuery({
-    queryKey: ['games', 'recommended'],
-    queryFn: () =>
-      api.get('api/games/recommended').json<RecommendedGamesResponse>(),
-  });
+  const { data } = useGuestHome();
 
-  // 추천 첫 1건을 배경으로 사용. 로딩/에러/빈 응답이면 featured는 undefined가 되어
-  // 배경은 surface 단색 fallback이 되고, 배너 텍스트·CTA는 데이터와 무관하게 항상 렌더된다.
-  const featured = data?.games[0];
-  const hasCover = Boolean(featured?.coverImageUrl);
-  const placeholderText = featured?.title;
+  // 배경은 guest-home의 curation_banner.background_image_url만 사용한다.
+  // 이미지가 없으면(로딩/에러/빈/자산 미정) surface 단색 + 그라데이션 fallback이 되고,
+  // 배너 텍스트·CTA는 데이터와 무관하게 항상 렌더된다(비로그인 카피는 하드코딩 유지).
+  const backgroundImageUrl = data?.curationBanner.backgroundImageUrl;
+  const hasCover = Boolean(backgroundImageUrl);
 
   return (
     <section className={styles.section} aria-label="오늘의 추천">
@@ -114,15 +91,11 @@ export function HeroBanner() {
         className={styles.bgLayer}
         style={
           hasCover
-            ? { backgroundImage: `url(${featured?.coverImageUrl})` }
+            ? { backgroundImage: `url(${backgroundImageUrl})` }
             : undefined
         }
         aria-hidden="true"
-      >
-        {!hasCover && placeholderText && (
-          <span className={styles.bgPlaceholderText}>{placeholderText}</span>
-        )}
-      </div>
+      />
 
       {/* ② 그라데이션 오버레이 */}
       <div className={styles.overlay} aria-hidden="true" />
