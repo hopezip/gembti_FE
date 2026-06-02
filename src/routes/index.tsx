@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { NotFoundPage } from './NotFoundPage';
+import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
@@ -88,6 +89,7 @@ const extraRoutes: RouteDef[] = [
 function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
+  if (path === '/search') return <SearchPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 

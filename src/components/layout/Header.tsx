@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
 import { Avatar } from '@/components/ui/Avatar';
@@ -30,6 +31,8 @@ const loginLink = css({
 export function Header() {
   // status만 선택 구독 — 스토어 형태/액션은 건드리지 않는다.
   const status = useAuthStore((s) => s.status);
+  const navigate = useNavigate();
+  const [headerSearch, setHeaderSearch] = useState('');
 
   return (
     <header
@@ -63,12 +66,22 @@ export function Header() {
           type="search"
           aria-label="검색"
           placeholder="🔍 게임, 장르, 태그 검색"
+          value={headerSearch}
+          onChange={(e) => setHeaderSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && headerSearch.trim()) {
+              navigate(`/search?q=${encodeURIComponent(headerSearch.trim())}`);
+              setHeaderSearch('');
+            }
+          }}
+          onClick={() => navigate('/search')}
           className={css({
             minW: '280px',
             w: '280px',
             borderRadius: 'full',
             fontFamily: 'mono',
             fontSize: 'md',
+            cursor: 'text',
           })}
         />
 
