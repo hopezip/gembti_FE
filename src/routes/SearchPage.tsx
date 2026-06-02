@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { css } from 'styled-system/css';
+import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { GameSearchCard } from '@/features/game/components/GameSearchCard';
 import {
@@ -533,18 +534,7 @@ export function SearchPage() {
               )}
             </div>
           ) : sortedGames.length === 0 ? (
-            <div
-              className={css({
-                textAlign: 'center',
-                py: '20',
-                color: 'fg.muted',
-                fontSize: 'sm',
-              })}
-            >
-              {query
-                ? `"${query}"에 해당하는 게임이 없어요`
-                : '검색어를 입력해보세요'}
-            </div>
+            <EmptyState type="search" target={query || undefined} />
           ) : (
             <div
               className={css({
