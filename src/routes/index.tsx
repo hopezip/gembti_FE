@@ -2,7 +2,9 @@ import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
+import { MyPage } from './MyPage';
 import { NotFoundPage } from './NotFoundPage';
+import { ProfileEditPage } from './ProfileEditPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
@@ -65,6 +67,8 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
+  if (path === '/mypage') return <MyPage />;
+  if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 
