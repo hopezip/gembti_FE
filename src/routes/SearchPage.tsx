@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { css } from 'styled-system/css';
+import {
+  PageContainer,
+  pageContainer,
+  pageGutter,
+} from '@/components/layout/PageContainer';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { GameSearchCard } from '@/features/game/components/GameSearchCard';
@@ -212,15 +217,14 @@ export function SearchPage() {
     <main>
       {/* 검색 바 영역 */}
       <div
-        className={css({
+        className={css(pageGutter, {
           bg: 'bg.subtle',
           borderBottom: '1px solid',
           borderColor: 'border.default',
-          px: { base: '7', '2xl': '8' },
           py: '5',
         })}
       >
-        <div className={css({ maxW: 'containerLg', mx: 'auto' })}>
+        <div className={css(pageContainer)}>
           <form onSubmit={handleSearchSubmit}>
             <div className={css({ position: 'relative' })}>
               <Input
@@ -333,12 +337,9 @@ export function SearchPage() {
         </div>
       </div>
 
-      {/* 메인 레이아웃: 사이드바 + 결과 */}
-      <div
+      {/* 메인 레이아웃: 사이드바 + 결과 (거터/폭은 PageContainer로 통일 — 검색바와 좌우 라인 정렬) */}
+      <PageContainer
         className={css({
-          maxW: 'containerLg',
-          mx: 'auto',
-          px: { base: '7', '2xl': '8' },
           py: '6',
           display: 'flex',
           gap: '6',
@@ -585,7 +586,7 @@ export function SearchPage() {
             </div>
           )}
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }

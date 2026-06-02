@@ -1,5 +1,6 @@
 import { css } from 'styled-system/css';
 import { LogoMark } from './Logo';
+import { pageContainer, pageGutter } from './PageContainer';
 
 // 글로벌 셸 푸터 (DESIGN_SYSTEM 4.1 + Figma g-footer).
 // 레이아웃: [G 마크 + GAMBITI 워드마크(muted) · © 2026 GAMBITI] ...(spacer)... [⚙ 설정 버튼]
@@ -7,19 +8,16 @@ import { LogoMark } from './Logo';
 export function Footer() {
   return (
     <footer
-      className={css({
+      className={css(pageGutter, {
         borderTop: '1px solid',
         borderColor: 'border.default',
         bg: 'bg.canvas',
-        // 콘텐츠 컨테이너와 동일한 가로 정렬(max-w containerLg + 좌우 패딩).
-        px: { base: '7', '2xl': '8' },
+        // 콘텐츠 컨테이너와 동일한 가로 정렬(거터는 pageGutter, 폭은 pageContainer).
         py: '6',
       })}
     >
       <div
-        className={css({
-          maxW: 'containerLg',
-          mx: 'auto',
+        className={css(pageContainer, {
           display: 'flex',
           alignItems: 'center',
           gap: '4',
