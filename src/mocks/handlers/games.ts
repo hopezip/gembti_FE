@@ -24,11 +24,6 @@ export interface GamesSearchResponse {
   hasMore: boolean;
 }
 
-// MAIN-FE-001 메인 추천 배너용 응답. 메인 페이지는 첫 1건만 배경으로 사용한다.
-export interface RecommendedGamesResponse {
-  games: MockGame[];
-}
-
 const MOCK_GAMES: MockGame[] = [
   {
     id: '1',
@@ -323,13 +318,49 @@ export const gameHandlers = [
     });
   }),
 
-  // MAIN-FE-001 메인 추천 배너 — 평점 내림차순 상위 6개를 추천으로 제공한다.
-  // 한시적 수동 핸들러(백엔드 계약 확정 후 /api-sync 자동 생성물로 교체).
-  http.get('*/api/games/recommended', () => {
-    const games = [...MOCK_GAMES]
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 6);
+  // MAIN-FE-003 비로그인 홈 — 배너 + 신규 + 인기를 한 응답으로 제공한다.
+  // 백엔드 계약(GET /api/v1/home/guest, 인증 불필요, snake_case)에 맞춘 한시적 수동 핸들러.
+  // 백엔드 계약 확정 후 /api-sync 자동 생성물로 교체.
+  http.get('*/api/v1/home/guest', () => {
+    // 평점이 있는 게임만 추천 풀로 사용(★ 0.0 placeholder 방지) + 평점 내림차순.
+    const byRating = MOCK_GAMES.filter((g) => g.rating != null).sort(
+      (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
+    );
 
-    return HttpResponse.json<RecommendedGamesResponse>({ games });
+    // 인기(trending) — 더 보기(12개씩) 시연을 위해 36건 합성(평점순 순환).
+    const trending_games = Array.from({ length: 36 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: i + 1,
+        title: `게임 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? '',
+        genres: base.genres,
+        rating: base.rating ?? 0,
+      };
+    });
+
+    // 신규(new_releases) — 화면 구현은 후속(MAIN-FE-004)이나 계약 충실을 위해 포함.
+    const new_releases = byRating.slice(0, 8).map((g, i) => ({
+      game_id: 200 + i + 1,
+      title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
+      thumbnail_url: g.coverImageUrl ?? '',
+      genres: g.genres,
+      rating: g.rating ?? 0,
+      is_new: true,
+    }));
+
+    return HttpResponse.json({
+      status: 'SUCCESS',
+      data: {
+        curation_banner: {
+          main_copy: '당신의 다음 인생 게임을 찾아보세요',
+          sub_copy: 'AI가 당신의 취향을 분석해 완벽한 게임을 추천해드려요',
+          button_text: '게임 찾기',
+          background_image_url: '',
+        },
+        new_releases,
+        trending_games,
+      },
+    });
   }),
 ];
