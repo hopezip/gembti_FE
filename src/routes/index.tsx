@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
+import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
@@ -87,6 +88,7 @@ const extraRoutes: RouteDef[] = [
 // 대부분의 경로는 아직 공통 PlaceholderPage를 공유하지만,
 // 구현된 화면은 path별로 실제 페이지를 매핑한다(LOGIN-FE-001: /login → LoginPage).
 function pageElement({ title, path, access }: RouteDef) {
+  if (path === '/') return <MainPage />;
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
