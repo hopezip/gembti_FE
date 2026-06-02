@@ -19,7 +19,7 @@ interface HomeGameRaw {
   title: string;
   thumbnail_url: string;
   genres: string[];
-  rating: number;
+  rating: number | null;
   is_new?: boolean;
 }
 
@@ -45,7 +45,7 @@ export interface HomeGameSummary {
   title: string;
   thumbnailUrl: string;
   genres: string[];
-  rating: number;
+  rating: number | null;
   isNew: boolean;
 }
 

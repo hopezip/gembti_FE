@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { css } from 'styled-system/css';
-import { GameSummaryCard } from '@/components/game/GameSummaryCard';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { GameSummaryCard } from '@/features/game/components/GameSummaryCard';
 import { useGuestHome } from '@/features/main/api/guestHome';
 
 const PAGE_SIZE = 12;

@@ -2,15 +2,16 @@ import { css } from 'styled-system/css';
 
 export interface GameSummaryCardProps {
   genres: string[];
-  rating: number;
+  /** 평점. 백엔드가 무평점 게임을 줄 수 있어 null 허용 — null이면 ★를 숨긴다. */
+  rating?: number | null;
   /** 커버 이미지 URL. 없으면 surfaceRaised placeholder로 대체. */
   thumbnailUrl?: string | null;
 }
 
-// 공통 게임 카드 — Figma 비회원 카드(4003:1404) 기준. 메인 추천/인기 그리드에서 공유(추후 검색도 이전 예정).
+// 공통 게임 카드(게임 도메인) — Figma 비회원 카드(4003:1404) 기준. 메인 추천/인기 그리드에서 공유(추후 검색도 이전 예정).
 // 테두리/배경(card chrome) 없이 둥근 이미지 + 바로 아래 장르·평점 행(이미지 양끝에 flush). 타이틀 없음.
 // 글씨 sm(≈12.5px) / 장르 fg.subtle(#7a7a82) / ★ accent(주황 #ef5a2c) Regular.
-// 이미지→텍스트 간격 mt 48px(원래 타이틀 자리) — Figma 세로 리듬. semantic token만 사용.
+// 이미지→텍스트 간격 mt 48px(원래 타이틀 자리) — Figma 세로 리듬. semantic token만 사용, 다른 도메인 import 없음.
 export function GameSummaryCard({
   genres,
   rating,
@@ -56,16 +57,18 @@ export function GameSummaryCard({
         >
           {genres.slice(0, 2).join(' · ')}
         </span>
-        <span
-          className={css({
-            fontSize: 'sm',
-            color: 'accent.default',
-            fontWeight: 'normal',
-            flexShrink: 0,
-          })}
-        >
-          ★ {rating.toFixed(1)}
-        </span>
+        {rating != null && (
+          <span
+            className={css({
+              fontSize: 'sm',
+              color: 'accent.default',
+              fontWeight: 'normal',
+              flexShrink: 0,
+            })}
+          >
+            ★ {rating.toFixed(1)}
+          </span>
+        )}
       </div>
     </div>
   );
