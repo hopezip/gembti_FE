@@ -50,21 +50,16 @@ src/
 
 ### 추가기능 라우트
 
+> 커뮤니티 라우트(`/community*` 7개: 구 13~19번 — 커뮤니티 메인 / 게시글·리뷰·파티 상세 및 작성)는 **MVP 구현 생략(보류, scaffold 유지)**으로 코드(`src/routes/index.tsx`)에서 제거했다(TASK-DEVEX-016). "취소"가 아니라 추후 보류 성격이며 `src/features/community/` scaffold는 유지한다. 추후 복원 시 아래 표에 다시 추가한다.
+
 | No | 화면명 | Route | 권한 | 비고 |
 |---:|---|---|---|---|
-| 13 | 커뮤니티 | `/community` | Public | 커뮤니티 메인 / 게시글 목록 |
-| 14 | 게시글 상세 - 일반 | `/community/posts/:postId` | Public | 일반 게시글 상세 |
-| 15 | 게시글 상세 - 리뷰 | `/community/reviews/:reviewId` | Public | 리뷰 게시글 상세 |
-| 16 | 게시글 상세 - 파티 | `/community/parties/:partyId` | Public | 파티 모집글 상세 |
-| 17 | 게시글 작성 - 일반 | `/community/posts/new` | Auth | 일반 게시글 작성 |
-| 18 | 게시글 작성 - 리뷰 | `/community/reviews/new` | Auth | 리뷰 게시글 작성 |
-| 19 | 게시글 작성 - 파티 | `/community/parties/new` | Auth | 파티 모집글 작성 |
 | 20 | 마이페이지 | `/mypage` | Auth | 본인 프로필 / 라이브러리 / 성향 정보 |
 | 21 | 프로필 편집 | `/mypage/edit` | Auth | 닉네임, 소개, 프로필 이미지 수정 |
 | 22 | 팔로우 리스트 | `/mypage/follow` | Auth | 팔로잉 / 팔로워 목록 |
 | 23 | 타인 프로필 | `/users/:userId` | Public | 다른 유저 공개 프로필 |
 
-> `/community/posts/new` 등 `new`는 정적 세그먼트라 `:postId` 동적 세그먼트보다 우선 매칭된다(React Router ranked matching). 충돌 없음.
+> (참고) 커뮤니티 복원 시: `/community/posts/new` 등 `new`는 정적 세그먼트라 `:postId` 동적 세그먼트보다 우선 매칭된다(React Router ranked matching). 충돌 없음.
 
 ### 라우팅 제외 항목 (컴포넌트 상태로 처리)
 
@@ -86,8 +81,8 @@ src/
 | 3 | 설문/성향 | `/survey/intro`, `/survey`, `/survey/result` |
 | 4 | 게임 탐색 | `/search`, `/recommendations`, `/games/:gameId` |
 | 5 | 마이페이지 | `/mypage`, `/mypage/edit`, `/mypage/follow` |
-| 6 | 커뮤니티 | `/community`, `/community/posts/:postId`, `/community/reviews/:reviewId`, `/community/parties/:partyId` |
-| 7 | 게시글 작성 | `/community/posts/new`, `/community/reviews/new`, `/community/parties/new` |
+| ~~6~~ | ~~커뮤니티~~ | MVP 구현 생략(보류, scaffold 유지) — TASK-DEVEX-016 |
+| ~~7~~ | ~~게시글 작성~~ | MVP 구현 생략(보류, scaffold 유지) — TASK-DEVEX-016 |
 | 8 | 타인 프로필 | `/users/:userId` |
 
 ### 확정 전 확인 필요 (백엔드 연동 시점에 재검토)

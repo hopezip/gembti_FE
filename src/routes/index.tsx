@@ -44,39 +44,9 @@ const mvpRoutes: RouteDef[] = [
   { title: '게임별 상세', path: '/games/:gameId', access: 'Public' },
 ];
 
-// 추가기능 라우트 11개 (routing.md 추가기능 표)
+// 추가기능 라우트 4개 (routing.md 추가기능 표)
+// 커뮤니티(`/community*` 7개)는 MVP 구현 생략(보류, scaffold 유지)으로 라우트 미노출 — TASK-DEVEX-016.
 const extraRoutes: RouteDef[] = [
-  { title: '커뮤니티', path: '/community', access: 'Public' },
-  {
-    title: '게시글 작성 - 일반',
-    path: '/community/posts/new',
-    access: 'Auth',
-  },
-  {
-    title: '게시글 상세 - 일반',
-    path: '/community/posts/:postId',
-    access: 'Public',
-  },
-  {
-    title: '게시글 작성 - 리뷰',
-    path: '/community/reviews/new',
-    access: 'Auth',
-  },
-  {
-    title: '게시글 상세 - 리뷰',
-    path: '/community/reviews/:reviewId',
-    access: 'Public',
-  },
-  {
-    title: '게시글 작성 - 파티',
-    path: '/community/parties/new',
-    access: 'Auth',
-  },
-  {
-    title: '게시글 상세 - 파티',
-    path: '/community/parties/:partyId',
-    access: 'Public',
-  },
   { title: '마이페이지', path: '/mypage', access: 'Auth' },
   { title: '프로필 편집', path: '/mypage/edit', access: 'Auth' },
   { title: '팔로우 리스트', path: '/mypage/follow', access: 'Auth' },
