@@ -155,9 +155,11 @@ describe('라우트 골격', () => {
   it('/login은 로그인 상태면 PublicOnlyRoute가 홈(/)으로 리다이렉트한다', () => {
     // data router(createMemoryRouter)는 jsdom에서 Navigate 시 fetch/AbortSignal 비호환 이슈가 있어,
     // ProtectedRoute 테스트와 동일하게 MemoryRouter(non-data) + PublicOnlyRoute로 가드만 검증한다.
-    useAuthStore
-      .getState()
-      .setAuthenticated({ id: 'u_1', nickname: '테스트유저' });
+    useAuthStore.getState().setAuthenticated({
+      id: 'u_1',
+      nickname: '테스트유저',
+      hasCompletedSurvey: false,
+    });
 
     render(
       <MemoryRouter initialEntries={['/login']}>

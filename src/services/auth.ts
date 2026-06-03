@@ -15,6 +15,31 @@ import { api } from '@/lib/ky';
 export interface AuthUser {
   id: string;
   nickname: string;
+  // 설문 완료 여부 — 메인 진입 분기(개인화 홈 vs 게스트 홈)에 사용한다(MAIN-FE-006).
+  // ⚠️ 백엔드 계약에 아직 없는 가정 필드다. 응답에 없으면 false로 기본 처리하며,
+  //    백엔드에 `has_completed_survey` 추가를 요청한다(docs/03-api/backend-requests.md).
+  hasCompletedSurvey: boolean;
+}
+
+// 백엔드 원시 응답의 user(snake_case 일부 가정 필드 포함) — 매핑 전 형태.
+interface AuthUserRaw {
+  id: string;
+  nickname: string;
+  // 백엔드가 추가 예정인 설문 완료 플래그(현재 mock만 제공). 없으면 매핑에서 false.
+  has_completed_survey?: boolean;
+}
+
+interface AuthResponseRaw {
+  user: AuthUserRaw;
+}
+
+// 원시 user → 도메인 AuthUser. 설문 플래그는 없으면 false로 안전 기본 처리한다.
+function mapAuthUser(raw: AuthUserRaw): AuthUser {
+  return {
+    id: raw.id,
+    nickname: raw.nickname,
+    hasCompletedSurvey: raw.has_completed_survey ?? false,
+  };
 }
 
 export interface LoginResponse {
@@ -43,9 +68,10 @@ export class LoginError extends Error {
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   try {
-    return await api
+    const raw = await api
       .post('api/auth/login', { json: payload })
-      .json<LoginResponse>();
+      .json<AuthResponseRaw>();
+    return { user: mapAuthUser(raw.user) };
   } catch (error) {
     // 401은 잘못된 자격증명, 그 외는 일반 오류로 정규화한다.
     if (error instanceof HTTPError && error.response.status === 401) {
@@ -89,9 +115,10 @@ export async function signupWithEmail(
   payload: SignupPayload,
 ): Promise<SignupResponse> {
   try {
-    return await api
+    const raw = await api
       .post('api/auth/signup', { json: payload })
-      .json<SignupResponse>();
+      .json<AuthResponseRaw>();
+    return { user: mapAuthUser(raw.user) };
   } catch (error) {
     // 409는 이메일 중복, 그 외는 일반 오류로 정규화한다.
     if (error instanceof HTTPError && error.response.status === 409) {

@@ -12,6 +12,12 @@ import { http, HttpResponse } from 'msw';
 const MOCK_EMAIL = 'test@gambti.com';
 const MOCK_PASSWORD = 'password123';
 
+// 설문 완료 데모 계정(MAIN-FE-006). 이 계정으로 로그인하면 has_completed_survey=true가 되어
+// 메인(/)에서 개인화 홈(GET /api/v1/home/personalized)이 렌더된다.
+// 기존 test@gambti.com은 설문 미완(false)으로 두어 게스트 홈 회귀 데모도 함께 가능하게 한다.
+// 비밀번호는 두 계정 모두 동일(MOCK_PASSWORD)하다.
+const MOCK_SURVEY_DONE_EMAIL = 'survey@gambti.com';
+
 interface LoginBody {
   email?: string;
   password?: string;
@@ -40,9 +46,39 @@ export const authHandlers = [
   http.post('*/api/auth/login', async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as LoginBody;
 
+    // 설문 완료 데모 계정 → has_completed_survey=true(개인화 홈 진입).
+    if (
+      body.email === MOCK_SURVEY_DONE_EMAIL &&
+      body.password === MOCK_PASSWORD
+    ) {
+      return HttpResponse.json(
+        {
+          user: {
+            id: 'u_2',
+            nickname: '설문완료유저',
+            has_completed_survey: true,
+          },
+        },
+        {
+          status: 200,
+          headers: {
+            'Set-Cookie':
+              'gambti_session=mock-session; HttpOnly; Path=/; SameSite=Lax',
+          },
+        },
+      );
+    }
+
     if (body.email === MOCK_EMAIL && body.password === MOCK_PASSWORD) {
       return HttpResponse.json(
-        { user: { id: 'u_1', nickname: '테스트유저' } },
+        // 설문 미완 계정 → has_completed_survey=false(게스트 홈 유지).
+        {
+          user: {
+            id: 'u_1',
+            nickname: '테스트유저',
+            has_completed_survey: false,
+          },
+        },
         {
           status: 200,
           headers: {

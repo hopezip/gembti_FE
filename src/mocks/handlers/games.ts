@@ -367,4 +367,75 @@ export const gameHandlers = [
       },
     });
   }),
+
+  // MAIN-FE-006 개인화 홈(로그인+설문완료) — 1순위 추천 + 성향태그 + 추천 그리드 + 신규를 한 응답으로 제공한다.
+  // 백엔드 계약(GET /api/v1/home/personalized, 인증✅, snake_case)에 맞춘 한시적 수동 핸들러.
+  // ⚠️ 설문 완료 플래그(has_completed_survey)는 로그인/회원가입 응답에 가정한 필드다(auth 핸들러 참고).
+  //    이 핸들러 자체는 인증 가드를 두지 않는다(mock 단순화) — 진입 분기는 프론트 authStore가 담당한다.
+  // 백엔드 계약 확정 후 /api-sync 자동 생성물로 교체.
+  http.get('*/api/v1/home/personalized', () => {
+    // 평점이 있는 게임만 추천 풀로 사용(★ 0.0 placeholder 방지) + 평점 내림차순.
+    const byRating = MOCK_GAMES.filter((g) => g.rating != null).sort(
+      (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
+    );
+
+    // 매칭률 데모용 reason 태그라인 풀(유사 게임 비교 톤).
+    const reasonPool = [
+      '엘든 링 ★5와 유사',
+      '발더스 게이트 취향과 일치',
+      '다크 판타지 톤이 비슷해요',
+      '오픈월드 RPG 선호도 반영',
+      '스토리 중심 취향과 맞아요',
+    ];
+
+    // 추천 그리드 — 더 보기(12개씩) 시연을 위해 30건 합성. 매칭률은 96%에서 1%씩 하강(현실적 분포).
+    const recommended_games = Array.from({ length: 30 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: 300 + i + 1,
+        title: `추천 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? '',
+        genres: base.genres,
+        rating: base.rating ?? 0,
+        match_rate: Math.max(60, 96 - i),
+        reason_tagline: reasonPool[i % reasonPool.length],
+      };
+    });
+
+    // 신규 — 비회원과 동일 형태(매칭률·태그라인 없음). 더 보기 시연 위해 24건 합성.
+    const new_releases = Array.from({ length: 24 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: 400 + i + 1,
+        title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? '',
+        genres: base.genres,
+        rating: base.rating ?? 0,
+        is_new: true,
+      };
+    });
+
+    return HttpResponse.json({
+      status: 'SUCCESS',
+      data: {
+        top_recommendation: {
+          game_id: 301,
+          title: '추천 타이틀 01',
+          match_rate: 94,
+          reason_summary:
+            '오픈월드 RPG · 다크 판타지 취향에 기반. ★5점 게임 3개와 톤이 가장 유사해요.',
+          background_url: '',
+        },
+        user_interest_tags: [
+          '오픈월드',
+          'RPG',
+          '다크 판타지',
+          '스토리 중심',
+          '싱글플레이어',
+        ],
+        recommended_games,
+        new_releases,
+      },
+    });
+  }),
 ];

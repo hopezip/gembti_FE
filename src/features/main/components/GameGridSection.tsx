@@ -1,11 +1,12 @@
 import { type ReactNode, useState } from 'react';
 import { css } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
-import type { HomeGameSummary } from '@/features/main/api/guestHome';
 
-// MAIN-FE-005 비로그인 홈 그리드 섹션 공유 컴포넌트.
+// MAIN-FE-005 홈 그리드 섹션 공유 컴포넌트.
 // 추천(003)·신규(004) 섹션이 grid/skeleton/4상태/더보기/PAGE_SIZE를 거의 동일하게 복제하던 것을
 // 한 곳으로 모은다. 섹션별 차이(제목·데이터·카드·폴백 문구)만 props로 받는다.
+// MAIN-FE-006에서 개인화 카드(PersonalizedGameSummary)도 같은 그리드를 재사용하도록
+// items 타입을 제네릭 <T>로 일반화했다. 게스트 호출부는 제네릭 추론으로 무변경이다.
 // 데스크탑 전용 규칙의 1100px 미만 1열 fallback도 여기서 단일 출처로 처리한다.
 
 // 더보기 클릭당 추가 노출 개수. 추천·신규 공통 단일 출처.
@@ -66,22 +67,22 @@ const styles = {
   }),
 };
 
-interface GameGridSectionProps {
+interface GameGridSectionProps<T> {
   /** 섹션 제목 (예: "추천 게임" / "이번 주 신규 게임") */
   title: string;
-  /** 표시할 게임 목록 (camelCase 도메인 타입) */
-  items: HomeGameSummary[];
+  /** 표시할 게임 목록 (camelCase 도메인 타입). 게스트=HomeGameSummary, 개인화=PersonalizedGameSummary 등. */
+  items: T[];
   isLoading: boolean;
   isError: boolean;
-  /** 카드 렌더링 — 섹션별 카드 차이(추천=title만 / 신규=title+isNew)를 표현한다. key는 renderCard가 부여한다. */
-  renderCard: (game: HomeGameSummary) => ReactNode;
+  /** 카드 렌더링 — 섹션별 카드 차이(추천=title만 / 신규=title+isNew / 개인화=매칭률)를 표현한다. key는 renderCard가 부여한다. */
+  renderCard: (item: T) => ReactNode;
   /** 에러 상태 문구 */
   errorText: string;
   /** 빈 상태 문구 */
   emptyText: string;
 }
 
-export function GameGridSection({
+export function GameGridSection<T>({
   title,
   items,
   isLoading,
@@ -89,7 +90,7 @@ export function GameGridSection({
   renderCard,
   errorText,
   emptyText,
-}: GameGridSectionProps) {
+}: GameGridSectionProps<T>) {
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const shown = items.slice(0, visible);
