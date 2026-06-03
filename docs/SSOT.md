@@ -147,3 +147,5 @@ docs/
 9. 에러/예외처리 (`ERROR-FE-001~003`)
 
 **P1/P2 = 추가기능 (scaffold만)**: 네비/프로필 팝업, 마이페이지, 유저페이지, 팔로우, 커뮤니티, 게시글, 댓글, 파티 모집, 챗봇
+
+> 커뮤니티(게시글/리뷰/파티/댓글: `COMMU-FE-001~007`, `POST-FE-001~005`, `PARTY-FE-013~015`)는 **MVP 구현 생략(보류, scaffold만 유지)** 상태다(TASK-DEVEX-016). "취소"가 아니라 추후 보류 성격이며, 헤더 Nav 진입점과 `/community*` 라우트는 제거했고 `src/features/community/` scaffold(.gitkeep + README)는 유지한다.
