@@ -122,9 +122,10 @@ function mapPersonalizedHome(
 export function usePersonalizedHome() {
   return useQuery({
     queryKey: ['home', 'personalized'],
-    queryFn: () =>
+    // TanStack Query가 주는 signal을 ky에 연결 — 언마운트/리페치 시 진행 중 요청 취소.
+    queryFn: ({ signal }) =>
       api
-        .get('api/v1/home/personalized')
+        .get('api/v1/home/personalized', { signal })
         .json<PersonalizedHomeResponseRaw>()
         .then(mapPersonalizedHome),
   });
