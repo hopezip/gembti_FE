@@ -91,13 +91,15 @@ export function NewReleases() {
         <>
           <div className={styles.grid}>
             {shown.map((game) => (
+              // 이 섹션은 정의상 모두 신규작이므로 NEW 뱃지를 고정 표시한다.
+              // (API의 per-item is_new가 optional이라 생략돼도 섹션 의미가 깨지지 않도록 데이터에 의존하지 않음)
               <GameSummaryCard
                 key={game.gameId}
                 title={game.title}
                 thumbnailUrl={game.thumbnailUrl}
                 genres={game.genres}
                 rating={game.rating}
-                isNew={game.isNew}
+                isNew
               />
             ))}
           </div>
