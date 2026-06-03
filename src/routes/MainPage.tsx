@@ -1,17 +1,45 @@
 import { HeroBanner } from '@/features/main/components/HeroBanner';
 import { NewReleases } from '@/features/main/components/NewReleases';
+import { PersonalizedHeroBanner } from '@/features/main/components/PersonalizedHeroBanner';
+import { PersonalizedNewReleases } from '@/features/main/components/PersonalizedNewReleases';
+import { PersonalizedRecommendedGames } from '@/features/main/components/PersonalizedRecommendedGames';
 import { RecommendedGames } from '@/features/main/components/RecommendedGames';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
-// 메인 페이지 (라우트 '/'·Public). 비로그인 홈은 단일 GET /api/v1/home/guest로 데이터를 받는다.
-// 구현 범위: MAIN-FE-001 Hero 배너 + MAIN-FE-003 추천(인기) 게임 그리드 + MAIN-FE-004 신규 게임 그리드.
-// 성향 태그 필터(002)는 취소.
+// 메인 페이지 (라우트 '/'·Public). 2상태로 분기한다.
+//  ① 게스트 홈: 비로그인 OR 설문 미완 — 단일 GET /api/v1/home/guest (MAIN-FE-001/003/004).
+//  ② 개인화 홈: 로그인 AND 설문완료 — 단일 GET /api/v1/home/personalized (MAIN-FE-006).
+// 로그인했어도 설문 미완(hasCompletedSurvey=false)이면 게스트 홈으로 떨어진다.
 // <main> landmark는 페이지가 소유한다(GlobalShell은 Outlet 래퍼 div).
-export function MainPage() {
+
+// 게스트 홈(비로그인 또는 설문 미완) — Hero + 추천(인기) + 신규.
+function GuestHome() {
   return (
-    <main>
+    <>
       <HeroBanner />
       <RecommendedGames />
       <NewReleases />
-    </main>
+    </>
   );
+}
+
+// 개인화 홈(로그인+설문완료) — 개인화 Hero + 당신을 위한 추천 + 신규(비회원과 동일 카드).
+function PersonalizedHome() {
+  return (
+    <>
+      <PersonalizedHeroBanner />
+      <PersonalizedRecommendedGames />
+      <PersonalizedNewReleases />
+    </>
+  );
+}
+
+export function MainPage() {
+  const status = useAuthStore((s) => s.status);
+  const hasCompletedSurvey = useAuthStore(
+    (s) => s.user?.hasCompletedSurvey ?? false,
+  );
+  const showPersonalized = status === 'authenticated' && hasCompletedSurvey;
+
+  return <main>{showPersonalized ? <PersonalizedHome /> : <GuestHome />}</main>;
 }

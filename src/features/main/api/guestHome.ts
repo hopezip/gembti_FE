@@ -84,9 +84,10 @@ function mapGuestHome(raw: GuestHomeResponseRaw): GuestHome {
 export function useGuestHome() {
   return useQuery({
     queryKey: ['home', 'guest'],
-    queryFn: () =>
+    // TanStack Query가 주는 signal을 ky에 연결 — 언마운트/리페치 시 진행 중 요청 취소.
+    queryFn: ({ signal }) =>
       api
-        .get('api/v1/home/guest')
+        .get('api/v1/home/guest', { signal })
         .json<GuestHomeResponseRaw>()
         .then(mapGuestHome),
   });
