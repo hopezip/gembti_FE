@@ -121,8 +121,12 @@ export function GameGridSection({
             <div className={styles.moreRow}>
               <button
                 type="button"
-                onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                // items가 비동기로 줄어드는 경우까지 대비해 visible이 길이를 넘지 않게 clamp.
+                onClick={() =>
+                  setVisible((v) => Math.min(v + PAGE_SIZE, items.length))
+                }
                 className={styles.moreButton}
+                aria-label={`${title} 더 보기`}
               >
                 더 보기 ↓
               </button>
