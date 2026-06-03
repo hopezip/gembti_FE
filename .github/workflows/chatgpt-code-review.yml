@@ -22,8 +22,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
 
-          # 추천 모델: 비용/성능 균형
-          MODEL: gpt-5.4-mini
+          # 추천 모델: 비용/성능 균형 (OpenAI 공식 API 모델)
+          MODEL: gpt-4.1-mini
 
           LANGUAGE: Korean
 
@@ -102,8 +102,9 @@ jobs:
           # diff가 너무 크면 비용/품질 둘 다 나빠지므로 제한
           MAX_PATCH_LENGTH: 12000
 
-          # 리뷰 제외 파일
-          IGNORE_PATTERNS: /node_modules/**/*,dist/**/*,build/**/*,coverage/**/*,*.lock,*.md,*.json
+          # 리뷰 제외 파일 (값이 * / 콤마 포함이라 YAML alias 오인 방지 위해 따옴표 필수)
+          IGNORE_PATTERNS: "/node_modules/**/*,dist/**/*,build/**/*,coverage/**/*,*.lock,*.md,*.json"
 
           # 프론트엔드 코드만 리뷰하고 싶으면 유지
-          INCLUDE_PATTERNS: *.js,*.jsx,*.ts,*.tsx,*.css,*.scss,*.yml,*.yaml
+          # ⚠️ '*'로 시작하면 YAML이 alias로 해석해 워크플로 startup failure → 반드시 따옴표로 감싼다
+          INCLUDE_PATTERNS: "*.js,*.jsx,*.ts,*.tsx,*.css,*.scss,*.yml,*.yaml"
