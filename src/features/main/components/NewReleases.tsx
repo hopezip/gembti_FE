@@ -91,8 +91,7 @@ export function NewReleases() {
         <>
           <div className={styles.grid}>
             {shown.map((game) => (
-              // 이 섹션은 정의상 모두 신규작이므로 NEW 뱃지를 고정 표시한다.
-              // (API의 per-item is_new가 optional이라 생략돼도 섹션 의미가 깨지지 않도록 데이터에 의존하지 않음)
+              // "신규 게임" 섹션이므로 데이터 is_new 유무와 무관하게 항상 NEW 뱃지 표시(섹션 자체가 곧 신규).
               <GameSummaryCard
                 key={game.gameId}
                 title={game.title}

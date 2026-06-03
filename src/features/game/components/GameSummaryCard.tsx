@@ -29,6 +29,8 @@ export function GameSummaryCard({
 }: GameSummaryCardProps) {
   const hasCover = Boolean(thumbnailUrl);
   const hasTitle = Boolean(title);
+  // 장르행 상단 간격: 타이틀 있으면 타이틀 아래 14px(Figma), 없으면 이미지 아래 48px(타이틀 자리)
+  const metaRowSpacing = hasTitle ? css({ mt: '3.5' }) : css({ mt: '12' });
 
   return (
     <div>
@@ -88,7 +90,7 @@ export function GameSummaryCard({
         </div>
       )}
 
-      {/* 장르 · 평점 행 — 양끝 정렬. 타이틀 있으면 타이틀 아래 14px(Figma), 없으면 이미지에서 48px. */}
+      {/* 장르 · 평점 행 — 양끝 정렬. 상단 간격은 metaRowSpacing(타이틀 유무로 분기). */}
       <div
         className={cx(
           css({
@@ -97,7 +99,7 @@ export function GameSummaryCard({
             justifyContent: 'space-between',
             gap: '2',
           }),
-          hasTitle ? css({ mt: '3.5' }) : css({ mt: '12' }), // 14px / 48px
+          metaRowSpacing,
         )}
       >
         <span
