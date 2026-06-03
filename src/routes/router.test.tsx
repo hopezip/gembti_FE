@@ -48,6 +48,45 @@ describe('라우트 골격', () => {
     ).toBeInTheDocument();
   });
 
+  it('로그인+설문완료 시 메인(/)이 개인화 홈을 렌더한다(MAIN-FE-006)', () => {
+    // 개인화 분기: status==='authenticated' && hasCompletedSurvey일 때만 개인화 홈.
+    // 데이터 로딩과 무관하게 개인화 Hero 카피·추천 섹션 제목은 항상 렌더되므로 그것으로 검증한다.
+    useAuthStore.getState().setAuthenticated({
+      id: 'u_2',
+      nickname: '설문완료유저',
+      hasCompletedSurvey: true,
+    });
+    renderAt('/');
+    // 개인화 Hero 헤드라인 + 개인화 추천 섹션 제목이 보인다.
+    expect(
+      screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '당신을 위한 추천' }),
+    ).toBeInTheDocument();
+    // 게스트 홈 Hero(비로그인 카피)는 렌더되지 않는다(분기가 개인화로 갔음).
+    expect(
+      screen.queryByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('로그인했어도 설문 미완이면 메인(/)이 게스트 홈으로 떨어진다(MAIN-FE-006)', () => {
+    // hasCompletedSurvey=false면 로그인 상태라도 개인화가 아닌 게스트 홈을 렌더한다.
+    useAuthStore.getState().setAuthenticated({
+      id: 'u_1',
+      nickname: '테스트유저',
+      hasCompletedSurvey: false,
+    });
+    renderAt('/');
+    // 게스트 Hero 카피가 보이고, 개인화 Hero/추천 제목은 없다.
+    expect(
+      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: '당신을 위한 추천' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('GlobalShell layout 라우트가 모든 경로에 Header/Footer 셸을 렌더한다', () => {
     // 중첩 구조에서 페이지(Outlet)와 함께 셸 landmark(banner/nav/contentinfo)가 보여야 한다.
     renderAt('/search');

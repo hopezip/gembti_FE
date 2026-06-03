@@ -76,7 +76,7 @@ export function PersonalizedGameCard({
           fontSize: 'xl', // 16px
           fontWeight: 'bold',
           color: 'fg.default',
-          letterSpacing: '-0.1px',
+          // 음수 letterSpacing은 30px↑ 헤딩에만(DESIGN_SYSTEM 1.2.4) — 16px 타이틀엔 미적용(GameSummaryCard와 일관).
           overflow: 'hidden',
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
