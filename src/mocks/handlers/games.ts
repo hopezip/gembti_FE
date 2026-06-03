@@ -339,15 +339,19 @@ export const gameHandlers = [
       };
     });
 
-    // 신규(new_releases) — 화면 구현은 후속(MAIN-FE-004)이나 계약 충실을 위해 포함.
-    const new_releases = byRating.slice(0, 8).map((g, i) => ({
-      game_id: 200 + i + 1,
-      title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
-      thumbnail_url: g.coverImageUrl ?? '',
-      genres: g.genres,
-      rating: g.rating ?? 0,
-      is_new: true,
-    }));
+    // 신규(new_releases) — 더 보기(12개씩) 시연을 위해 36건 합성(평점순 순환).
+    // ⚠️ 실제 "이번 주 신규"는 소수일 수 있음 — 백엔드 연결 시 실제 건수로 대체된다.
+    const new_releases = Array.from({ length: 36 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: 200 + i + 1,
+        title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? '',
+        genres: base.genres,
+        rating: base.rating ?? 0,
+        is_new: true,
+      };
+    });
 
     return HttpResponse.json({
       status: 'SUCCESS',
