@@ -54,3 +54,7 @@ docs/tickets/**/*.md
 # Storybook (빌드 산출물·디버그 로그)
 storybook-static/
 *storybook.log
+
+# Next (*.tsbuildinfo는 위 TypeScript 섹션에서 이미 무시)
+.next/
+next-env.d.ts

@@ -9,7 +9,7 @@
 
 ## Entry Points
 
-- **Vite Entry**: `src/main.tsx`
+- **Next Entry**: `src/app/layout.tsx` + `src/app/providers.tsx` (catch-all: `src/app/[[...slug]]/`)
 - **Root App**: `src/App.tsx`
 - **Route Index**: `src/routes/index.tsx` (React Router)
 - **Mock 초기화**: `src/mocks/browser.ts`

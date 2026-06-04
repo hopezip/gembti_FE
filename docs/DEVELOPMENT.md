@@ -9,8 +9,9 @@
 |------|------|
 | `pnpm install` | 의존성 설치 |
 | `pnpm panda codegen` | 디자인 토큰 → `styled-system/` 생성 |
-| `pnpm dev` | 개발 서버 (장기 실행, 자동 검증에서는 분리) |
-| `pnpm build` | 프로덕션 빌드 |
+| `pnpm dev` | 개발 서버 (next dev, http://localhost:3000 · 장기 실행, 자동 검증에서는 분리) |
+| `pnpm build` | 프로덕션 빌드 (next build) |
+| `pnpm start` | 프로덕션 서버 (next start) |
 | `pnpm type-check` | TypeScript 타입 검증 |
 | `pnpm lint` | Biome 린트 |
 | `pnpm test` | Vitest 단위 테스트 |
@@ -20,14 +21,14 @@
 
 `.env.local`:
 ```
-VITE_USE_MOCK=true   # MSW 사용 (Swagger 미완성 동안 기본값)
-VITE_USE_MOCK=false  # 실서버
+NEXT_PUBLIC_USE_MOCK=true   # MSW 사용 (Swagger 미완성 동안 기본값)
+NEXT_PUBLIC_USE_MOCK=false  # 실서버
 ```
 
 ## 로그 위치
 
 - **브라우저 콘솔**: 클라이언트 사이드 에러
-- **Vite 터미널**: dev 서버/빌드 에러
+- **Next 터미널**: dev 서버/빌드 에러
 - **Network 탭**: API 요청/응답
 - **`docs/logs/`**: 작업 이력 (자동 기록 — WSL 전용, 또는 `/log` 수동)
 - **`docs/logs/sessions/`**: Claude 세션 로그 (Hook 기반, `.gitignore`)

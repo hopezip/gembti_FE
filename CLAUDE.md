@@ -50,11 +50,11 @@ v1과 다릅니다. v2는 **티켓 1개로 자기완결적**입니다.
 > 풀팀 모드라 모든 변경이 티켓+PR을 거치지만, 구현 *중* 불필요한 확인은 최소화하고 cross/위험 변경만 질문한다.
 
 ## 기술 스택 요약
-- Vite + React 19 SPA (TypeScript strict)
+- Next.js(App Router) + React 19 SPA (TypeScript strict) — catch-all로 React Router 앱 호스팅(MIGRATE-FE-001, 1차 최소 이전)
 - 데이터: TanStack Query
 - 상태: Zustand
 - UI: Panda CSS + Park UI (다크 모드·데스크탑 전용)
-- 라우팅: React Router
+- 라우팅: React Router (라우트 SSOT 유지) — Next `src/app/[[...slug]]` catch-all로 클라이언트 마운트(ssr:false)
 - 폼: React Hook Form + Zod
 - 인증: 백엔드 JWT + httpOnly Cookie
 - HTTP: ky
@@ -84,8 +84,9 @@ cross 강제 영역 (무조건 cross):
 
 ## 자주 쓰는 명령
 
-- `pnpm dev` — 개발 서버
-- `pnpm build` — 빌드
+- `pnpm dev` — 개발 서버 (next dev, http://localhost:3000)
+- `pnpm build` — 빌드 (next build)
+- `pnpm start` — 프로덕션 서버 (next start)
 - `pnpm type-check` — 타입 검증
 - `pnpm lint` — 린트 (Biome)
 - `pnpm test` — 테스트 (Vitest)

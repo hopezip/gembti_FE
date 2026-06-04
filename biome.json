@@ -15,7 +15,8 @@
       "!!**/styled-system",
       "!!**/storybook-static",
       "!!docs/design",
-      "!!public/mockServiceWorker.js"
+      "!!public/mockServiceWorker.js",
+      "!!tsconfig.json"
     ]
   },
   "formatter": {
