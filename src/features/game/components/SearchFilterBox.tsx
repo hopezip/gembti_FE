@@ -93,6 +93,7 @@ function FilterRow({ label, options, selected, onToggle }: FilterRowProps) {
         <button
           type="button"
           className={styles.more}
+          aria-expanded={showAll}
           onClick={() => setShowAll((v) => !v)}
         >
           {showAll ? '접기' : '+ 더보기'}

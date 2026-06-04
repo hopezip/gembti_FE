@@ -27,8 +27,8 @@ interface SearchGameRaw {
   thumbnail_url: string;
   genres: string[];
   // ⚠️ 계약 응답엔 genres만 있으나, 클라이언트 태그 필터를 위해 mock이 tags도 내려준다.
-  //    백엔드 search 응답에 tags 필드 추가 필요(미제공 시 optional로 빈 배열 처리).
-  tags?: string[];
+  //    백엔드 search 응답에 tags 필드 추가 필요. 미제공/null 모두 매핑에서 빈 배열로 정규화한다.
+  tags?: string[] | null;
   rating: number | null;
   price_info: PriceInfoRaw;
 }

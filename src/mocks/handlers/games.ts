@@ -302,10 +302,15 @@ export const gameHandlers = [
   http.get('*/api/v1/games/search', ({ request }) => {
     const url = new URL(request.url);
     const q = url.searchParams.get('q')?.toLowerCase().trim() ?? '';
-    const page = Number(url.searchParams.get('page') ?? '1');
-    const limit = Number(
-      url.searchParams.get('limit') ?? String(SEARCH_PAGE_SIZE),
-    );
+    // page/limit는 잘못된 값(빈값·문자·음수)이 들어와도 NaN으로 slice가 깨지지 않게 정규화한다.
+    const pageRaw = Number(url.searchParams.get('page'));
+    const page =
+      Number.isFinite(pageRaw) && pageRaw >= 1 ? Math.floor(pageRaw) : 1;
+    const limitRaw = Number(url.searchParams.get('limit'));
+    const limit =
+      Number.isFinite(limitRaw) && limitRaw >= 1
+        ? Math.floor(limitRaw)
+        : SEARCH_PAGE_SIZE;
 
     // 제목/장르/태그 부분일치. q가 없으면 전체를 매칭 풀로 사용한다.
     const matched = q
