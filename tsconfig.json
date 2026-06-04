@@ -14,14 +14,21 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["vite/client", "vitest/globals"],
+    "jsx": "preserve",
+    "incremental": true,
+    "types": ["vitest/globals"],
+    "plugins": [{ "name": "next" }],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
       "styled-system/*": ["styled-system/*"]
     }
   },
-  "include": ["src", "vite.config.ts", "styled-system"],
-  "references": []
+  "include": [
+    "next-env.d.ts",
+    "src",
+    "styled-system",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
 }
