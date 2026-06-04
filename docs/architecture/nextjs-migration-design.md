@@ -44,7 +44,7 @@ https://nextjs.org/docs/app/guides/migrating/from-vite)
 
 ```
 src/app/
-  layout.tsx              # index.html 대체. <html lang="ko" class="dark">, Panda 글로벌 CSS import
+  layout.tsx              # index.html 대체. <html lang="ko">(dark는 토큰 기본값), Panda 글로벌 CSS import
   providers.tsx           # 'use client'. QueryClientProvider + MSW gate + Devtools (= 기존 main.tsx)
   [[...slug]]/
     page.tsx              # 서버 컴포넌트(얇음). client.tsx 렌더만.
@@ -67,7 +67,7 @@ next-env.d.ts             # vite-env.d.ts 대체
 ## 5. 상세 변경
 
 ### 5.1 엔트리 / Provider
-- `index.html` → `src/app/layout.tsx` (`<html lang="ko" class="dark">`, Panda 글로벌 CSS,
+- `index.html` → `src/app/layout.tsx` (`<html lang="ko">` — dark 클래스 없음(토큰 기본값), Panda 글로벌 CSS,
   `#root` div는 `{children}`으로 대체).
 - `main.tsx` → `src/app/providers.tsx` (`'use client'`): `QueryClientProvider` +
   `ReactQueryDevtools`(dev lazy) 이사.

@@ -55,7 +55,6 @@ docs/tickets/**/*.md
 storybook-static/
 *storybook.log
 
-# Next
+# Next (*.tsbuildinfo는 위 TypeScript 섹션에서 이미 무시)
 .next/
-*.tsbuildinfo
 next-env.d.ts
