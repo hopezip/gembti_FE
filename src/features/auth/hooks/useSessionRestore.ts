@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/lib/ky';
 import {
   applyRefreshedTokens,
@@ -34,13 +34,13 @@ function mapUser(raw: NonNullable<RefreshEnvelopeData['user']>): AuthUser {
 
 export function useSessionRestore(): { ready: boolean } {
   const [ready, setReady] = useState(false);
-  // Strict Mode 이중 실행 방지.
-  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
+    // ⚠️ Strict Mode 대응: 과거 `startedRef`로 effect 1회만 돌게 막았더니,
+    //   dev의 effect 이중 setup에서 [setup①→cleanup①(cancelled=true)→setup②(ref가 true라 즉시 return)]
+    //   순서로 흘러 두 setup 모두 setReady에 도달하지 못해 ready가 영구 false가 됐다(빈 화면, TASK-DEVEX-017).
+    //   ref 가드를 제거하고, 매 setup이 자체 cancelled 플래그로 동작하게 한다. dev에선 refresh가 2번
+    //   호출될 수 있으나 멱등(refresh)이라 무해하고, production은 이중 실행이 없어 1회만 호출된다.
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
       setReady(true);
