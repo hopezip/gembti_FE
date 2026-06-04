@@ -5,10 +5,13 @@ import { expect, test } from '@playwright/test';
 test('루트(/)가 로딩되고 앱이 마운트된다', async ({ page }) => {
   await page.goto('/');
 
-  // index.html의 문서 타이틀(GamBTI)이 그대로 노출되는지
+  // layout.tsx metadata의 문서 타이틀(GamBTI)이 그대로 노출되는지
   await expect(page).toHaveTitle(/GamBTI/);
 
-  // React 앱이 마운트되는 루트 컨테이너가 존재하고 비어있지 않은지
-  const root = page.locator('#root');
-  await expect(root).toBeAttached();
+  // React 앱이 실제로 마운트되어 메인 화면이 렌더되는지 확인한다.
+  // (Next App Router 전환으로 기존 index.html의 #root 컨테이너는 더 이상 없다 →
+  //  구현 디테일 대신 실제 렌더 UI로 마운트를 검증한다.)
+  await expect(
+    page.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+  ).toBeVisible();
 });

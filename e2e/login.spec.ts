@@ -105,7 +105,7 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.password.fill(VALID_PASSWORD);
     await form.submit.click();
 
-    await expect(page).toHaveURL('http://localhost:5173/');
+    await expect(page).toHaveURL('/');
     // '/'는 MainPage(MAIN-FE-001 Hero 배너)를 렌더한다(이전 PlaceholderPage "메인" 대체).
     await expect(
       page.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
@@ -121,7 +121,7 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.password.fill(VALID_PASSWORD);
     await form.submit.click();
 
-    await expect(page).toHaveURL('http://localhost:5173/');
+    await expect(page).toHaveURL('/');
   });
 
   test('👁 토글 클릭 시 비밀번호 입력 type이 password↔text로 바뀐다', async ({

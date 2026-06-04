@@ -10,9 +10,9 @@
   },
   "scripts": {
     "prepare": "panda codegen --silent",
-    "dev": "panda codegen && vite",
-    "build": "panda codegen && tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "dev": "panda codegen && next dev",
+    "build": "panda codegen && next build",
+    "start": "next start",
     "type-check": "panda codegen && tsc --noEmit",
     "lint": "biome check .",
     "format": "biome check --write .",
