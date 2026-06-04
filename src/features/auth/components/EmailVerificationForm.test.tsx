@@ -49,14 +49,10 @@ async function fillOtp(user: ReturnType<typeof userEvent.setup>, code: string) {
 
 async function fillProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/닉네임/), '테스트유저');
-  // 생년월일(date input)
-  const birth = document.querySelector(
-    '#signup-birth',
-  ) as HTMLInputElement | null;
-  if (birth) {
-    await user.clear(birth);
-    await user.type(birth, '2000-01-01');
-  }
+  // 생년월일(date input) — label 연결로 조회한다(없으면 throw해 silent fail을 막는다).
+  const birth = screen.getByLabelText(/생년월일/);
+  await user.clear(birth);
+  await user.type(birth, '2000-01-01');
 }
 
 describe('EmailVerificationForm (STEP2)', () => {
@@ -137,6 +133,20 @@ describe('EmailVerificationForm (STEP2)', () => {
     expect(
       await screen.findByText('이미 사용 중인 닉네임이에요'),
     ).toBeInTheDocument();
+  });
+
+  it('signup 일반 오류는 코드 영역에 일반 에러로 표시한다', async () => {
+    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+    signup.mockRejectedValue(new SignupError('generic'));
+    const user = userEvent.setup();
+    renderForm();
+
+    await fillOtp(user, '123456');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('일시적인 오류가 발생했습니다');
   });
 
   it('재전송 버튼 클릭 시 sendEmailCode 호출 후 쿨다운으로 비활성화된다', async () => {
