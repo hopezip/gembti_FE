@@ -9,9 +9,9 @@ import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/features/auth/components/PasswordInput';
 import { type LoginInput, loginSchema } from '@/lib/schemas/auth';
 import {
-  type AuthUser,
   LoginError,
   type LoginErrorKind,
+  type LoginResponse,
   login,
 } from '@/services/auth';
 
@@ -24,7 +24,8 @@ const FORM_ERROR_MESSAGE: Record<LoginErrorKind, string> = {
 
 interface LoginFormProps {
   // 로그인 성공 시 호출(authStore 갱신 + redirect 이동은 페이지가 담당).
-  onSuccess: (user: AuthUser) => void;
+  //   user + tokens 전체를 넘긴다(페이지가 setSession으로 세션을 연다).
+  onSuccess: (result: LoginResponse) => void;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -43,7 +44,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   // 폼 레벨 에러 분기(401 vs 일반)를 위해 mutation 에러를 보관한다.
   const mutation = useMutation({
     mutationFn: login,
-    onSuccess: (data) => onSuccess(data.user),
+    onSuccess: (data) => onSuccess(data),
   });
 
   // 폼 레벨 에러 메시지(서버 인증 실패/네트워크). 검증 에러는 Field가 담당한다.
