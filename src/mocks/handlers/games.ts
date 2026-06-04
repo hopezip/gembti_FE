@@ -18,12 +18,6 @@ export interface MockGame {
   coverImageUrl?: string;
 }
 
-export interface GamesSearchResponse {
-  total: number;
-  games: MockGame[];
-  hasMore: boolean;
-}
-
 const MOCK_GAMES: MockGame[] = [
   {
     id: '1',
@@ -289,16 +283,32 @@ export const MOCK_TAGS = [
 
 export const MOCK_PLAYER_MODES = ['싱글플레이어', '협동', '온라인 멀티'];
 
-const MOCK_TOTAL = 1247;
-const PAGE_SIZE = 12;
+const SEARCH_PAGE_SIZE = 12;
+// 더 보기(12개씩) 시연을 위해 검색 매칭 풀을 순환해 합성하는 총 결과 수.
+// 12×3 + 4 = 40 → 더 보기 3회 시연 가능. 백엔드 연결 시 실제 total_count로 대체된다.
+const SEARCH_TOTAL = 40;
+
+// price_info.discount_rate 파생값 — salePrice가 있으면 할인율(%), 없으면 0.
+function discountRate(price: number, salePrice: number | null): number {
+  if (salePrice == null || price <= 0) return 0;
+  return Math.round((1 - salePrice / price) * 100);
+}
 
 export const gameHandlers = [
-  http.get('*/api/games/search', ({ request }) => {
+  // SEARCH-FE-001 게임 검색 — 백엔드 계약(GET /api/v1/games/search, 인증 불필요, snake_case).
+  // 응답은 status/data 래핑 + price_info 객체. 한시적 수동 핸들러 — Swagger 확정 후 /api-sync로 교체.
+  // ⚠️ 계약 응답엔 genres만 있으나, FE 클라이언트 필터(장르·태그 AND)를 위해 tags도 함께 내려준다.
+  //    백엔드 search 응답에 tags 필드 추가가 필요하다(회고/PR에 명시).
+  http.get('*/api/v1/games/search', ({ request }) => {
     const url = new URL(request.url);
-    const q = url.searchParams.get('q')?.toLowerCase() ?? '';
+    const q = url.searchParams.get('q')?.toLowerCase().trim() ?? '';
     const page = Number(url.searchParams.get('page') ?? '1');
+    const limit = Number(
+      url.searchParams.get('limit') ?? String(SEARCH_PAGE_SIZE),
+    );
 
-    const filtered = q
+    // 제목/장르/태그 부분일치. q가 없으면 전체를 매칭 풀로 사용한다.
+    const matched = q
       ? MOCK_GAMES.filter(
           (g) =>
             g.title.toLowerCase().includes(q) ||
@@ -307,14 +317,65 @@ export const gameHandlers = [
         )
       : MOCK_GAMES;
 
-    const total = q ? filtered.length : MOCK_TOTAL;
-    const start = (page - 1) * PAGE_SIZE;
-    const games = filtered.slice(start, start + PAGE_SIZE);
+    // 매칭 0건 → 검색 실패(SEARCH-FE-004, EmptyState 시연).
+    if (matched.length === 0) {
+      return HttpResponse.json({
+        status: 'SUCCESS',
+        data: { games: [], total_count: 0, has_more: false },
+      });
+    }
 
-    return HttpResponse.json<GamesSearchResponse>({
-      total,
-      games,
-      hasMore: filtered.length > start + PAGE_SIZE,
+    // 매칭 풀을 순환해 SEARCH_TOTAL건으로 합성(더 보기 시연용).
+    const pool = Array.from({ length: SEARCH_TOTAL }, (_, i) => {
+      const base = matched[i % matched.length];
+      return {
+        game_id: i + 1,
+        title: base.title,
+        thumbnail_url: base.coverImageUrl ?? '',
+        genres: base.genres,
+        tags: base.tags,
+        rating: base.rating,
+        price_info: {
+          original_price: base.price,
+          sale_price: base.salePrice,
+          discount_rate: discountRate(base.price, base.salePrice),
+        },
+      };
+    });
+
+    const start = (page - 1) * limit;
+    const games = pool.slice(start, start + limit);
+
+    return HttpResponse.json({
+      status: 'SUCCESS',
+      data: {
+        games,
+        total_count: SEARCH_TOTAL,
+        has_more: start + limit < SEARCH_TOTAL,
+      },
+    });
+  }),
+
+  // SEARCH-FE-003 검색 필터 옵션 — 백엔드 계약(GET /api/v1/games/filter-options, 인증 불필요).
+  // 장르·태그 목록(+가격대·플레이모드)을 제공. 칩은 장르·태그만 사용하지만 계약 형태는 그대로 둔다.
+  http.get('*/api/v1/games/filter-options', () => {
+    return HttpResponse.json({
+      status: 'SUCCESS',
+      data: {
+        genres: MOCK_GENRES.map((g) => g.label),
+        tags: MOCK_TAGS.map((t) => t.label),
+        price_ranges: [
+          { label: '무료', min: 0, max: 0 },
+          { label: '1만원 이하', min: 1, max: 10000 },
+          { label: '1만원~3만원', min: 10000, max: 30000 },
+          { label: '3만원 이상', min: 30000, max: -1 },
+        ],
+        play_modes: [
+          { value: 'SINGLE', label: '싱글플레이' },
+          { value: 'MULTI', label: '멀티플레이' },
+          { value: 'CO_OP', label: '협동플레이' },
+        ],
+      },
     });
   }),
 
