@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { css } from 'styled-system/css';
 import { Chip } from '@/components/ui/Chip';
 
@@ -67,13 +67,15 @@ interface FilterRowProps {
 
 function FilterRow({ label, options, selected, onToggle }: FilterRowProps) {
   const [showAll, setShowAll] = useState(false);
+  // 더보기 버튼(aria-expanded)이 제어하는 칩 목록을 aria-controls로 연결하기 위한 고유 id.
+  const listId = useId();
   const visible = showAll ? options : options.slice(0, COLLAPSED_COUNT);
   const hasMore = options.length > COLLAPSED_COUNT;
 
   return (
     <div className={styles.row}>
       <span className={styles.rowLabel}>{label}</span>
-      <div className={styles.chips}>
+      <div id={listId} className={styles.chips}>
         {visible.map((option) => {
           const on = selected.includes(option);
           return (
@@ -94,6 +96,7 @@ function FilterRow({ label, options, selected, onToggle }: FilterRowProps) {
           type="button"
           className={styles.more}
           aria-expanded={showAll}
+          aria-controls={listId}
           onClick={() => setShowAll((v) => !v)}
         >
           {showAll ? '접기' : '+ 더보기'}
