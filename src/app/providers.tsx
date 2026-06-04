@@ -23,7 +23,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    mockingPromise.then(() => setReady(true));
+    // mock 초기화가 실패해도 앱은 떠야 한다(빈 화면 방지). 실패 원인은 콘솔에 남기고
+    //   mock 없이라도 렌더를 진행한다(실서버 모드/worker.start 실패 모두 동일 처리).
+    mockingPromise
+      .catch((error) => {
+        console.error('[MSW] 초기화 실패 — mock 없이 진행합니다.', error);
+      })
+      .finally(() => setReady(true));
   }, []);
 
   if (!ready) return null;

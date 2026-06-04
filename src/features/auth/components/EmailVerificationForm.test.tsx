@@ -2,25 +2,28 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VerifyError } from '@/services/auth';
+import { SignupError, VerifyError } from '@/services/auth';
 import { EmailVerificationForm } from './EmailVerificationForm';
 
-// 서비스 레이어를 모킹한다(MSW 미설정 테스트 환경). verify/resend 분기만 검증한다.
+// 서비스 레이어를 모킹한다(MSW 미설정 테스트 환경). verify-code→signup 순차 분기를 검증한다.
 const verifyEmailCode = vi.fn();
-const requestEmailVerification = vi.fn();
+const signup = vi.fn();
+const sendEmailCode = vi.fn();
+const checkNicknameAvailability = vi.fn();
 
 vi.mock('@/services/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/auth')>();
   return {
     ...actual,
     verifyEmailCode: (...args: unknown[]) => verifyEmailCode(...args),
-    requestEmailVerification: (...args: unknown[]) =>
-      requestEmailVerification(...args),
+    signup: (...args: unknown[]) => signup(...args),
+    sendEmailCode: (...args: unknown[]) => sendEmailCode(...args),
+    checkNicknameAvailability: (...args: unknown[]) =>
+      checkNicknameAvailability(...args),
   };
 });
 
-function renderForm(onVerified = vi.fn()) {
-  // 테스트 격리를 위해 retry 비활성 QueryClient를 매번 새로 만든다.
+function renderForm(onSignedUp = vi.fn()) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -28,112 +31,138 @@ function renderForm(onVerified = vi.fn()) {
     <QueryClientProvider client={client}>
       <EmailVerificationForm
         email="new_user@example.com"
-        initialTtlSeconds={300}
-        onVerified={onVerified}
+        password="abcde123"
+        initialExpiresInSeconds={300}
+        onSignedUp={onSignedUp}
       />
     </QueryClientProvider>,
   );
-  return { onVerified };
+  return { onSignedUp };
 }
 
-describe('EmailVerificationForm', () => {
+// 6칸 OTP에 코드를 채운다(첫 칸 입력 후 자동 포커스 이동에 의존).
+async function fillOtp(user: ReturnType<typeof userEvent.setup>, code: string) {
+  const first = screen.getByLabelText('인증 코드 1번째 자리');
+  await user.click(first);
+  await user.keyboard(code);
+}
+
+async function fillProfile(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/닉네임/), '테스트유저');
+  // 생년월일(date input) — label 연결로 조회한다(없으면 throw해 silent fail을 막는다).
+  const birth = screen.getByLabelText(/생년월일/);
+  await user.clear(birth);
+  await user.type(birth, '2000-01-01');
+}
+
+describe('EmailVerificationForm (STEP2)', () => {
   beforeEach(() => {
     verifyEmailCode.mockReset();
-    requestEmailVerification.mockReset();
+    signup.mockReset();
+    sendEmailCode.mockReset();
+    checkNicknameAvailability.mockReset();
+    checkNicknameAvailability.mockResolvedValue({ available: true });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('발송 이메일과 유효시간 타이머(5:00)를 표시한다', () => {
+  it('안내 배너의 이메일과 타이머(05:00)를 표시한다', () => {
     renderForm();
     expect(screen.getByText('new_user@example.com')).toBeInTheDocument();
     expect(screen.getByRole('timer')).toHaveTextContent('05:00');
   });
 
-  it('6자리 코드 제출 시 verifyEmailCode를 호출하고 성공하면 onVerified를 부른다', async () => {
-    verifyEmailCode.mockResolvedValue(undefined);
+  it('6칸 OTP에 코드를 채우면 값이 합쳐진다(붙여넣기 아닌 순차 입력)', async () => {
     const user = userEvent.setup();
-    const { onVerified } = renderForm();
+    renderForm();
+    await fillOtp(user, '123456');
+    expect(screen.getByLabelText('인증 코드 6번째 자리')).toHaveValue('6');
+  });
 
-    await user.type(
-      screen.getByLabelText(/인증 코드/, { selector: 'input' }),
-      '123456',
-    );
-    await user.click(screen.getByRole('button', { name: '인증 완료 →' }));
+  it('가입 완료 시 verify-code→signup 순차 호출 후 onSignedUp을 부른다', async () => {
+    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+    signup.mockResolvedValue({
+      user: { id: 'u_new', nickname: '테스트유저', hasCompletedSurvey: false },
+      tokens: { accessToken: 'a', refreshToken: 'r' },
+    });
+    const user = userEvent.setup();
+    const { onSignedUp } = renderForm();
 
-    // 성공 상태(onVerified 호출)를 먼저 기다린 뒤 호출 인자를 검증한다.
-    // TanStack Query v5는 mutationFn에 (variables, context)를 넘기므로 첫 인자만 검사한다.
-    await waitFor(() => expect(onVerified).toHaveBeenCalledTimes(1));
+    await fillOtp(user, '123456');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
+
+    await waitFor(() => expect(onSignedUp).toHaveBeenCalledTimes(1));
     expect(verifyEmailCode.mock.calls[0][0]).toEqual({
       email: 'new_user@example.com',
       code: '123456',
     });
+    expect(signup.mock.calls[0][0]).toMatchObject({
+      signupToken: 'sgn_1',
+      password: 'abcde123',
+      nickname: '테스트유저',
+    });
   });
 
-  it('형식이 틀린 코드는 제출되지 않고 형식 에러를 보여준다', async () => {
-    const user = userEvent.setup();
-    renderForm();
-
-    await user.type(
-      screen.getByLabelText(/인증 코드/, { selector: 'input' }),
-      '12ab',
-    );
-    await user.click(screen.getByRole('button', { name: '인증 완료 →' }));
-
-    expect(
-      await screen.findByText('6자리 숫자 인증 코드를 입력해주세요'),
-    ).toBeInTheDocument();
-    expect(verifyEmailCode).not.toHaveBeenCalled();
-  });
-
-  it('invalid-code 에러는 코드 오류 안내를 role=alert로 보여준다', async () => {
+  it('코드 오류(invalid-code)는 코드 영역 에러로 표시한다', async () => {
     verifyEmailCode.mockRejectedValue(new VerifyError('invalid-code'));
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/인증 코드/, { selector: 'input' }),
-      '111111',
-    );
-    await user.click(screen.getByRole('button', { name: '인증 완료 →' }));
+    await fillOtp(user, '111111');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('인증 코드가 올바르지 않습니다');
+    expect(signup).not.toHaveBeenCalled();
   });
 
-  it('expired 에러는 만료 안내를 보여준다', async () => {
-    verifyEmailCode.mockRejectedValue(new VerifyError('expired'));
+  it('닉네임 중복(NICKNAME_DUPLICATED)은 닉네임 필드 에러로 표시한다', async () => {
+    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+    signup.mockRejectedValue(new SignupError('nickname-duplicated'));
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByLabelText(/인증 코드/, { selector: 'input' }),
-      '000000',
-    );
-    await user.click(screen.getByRole('button', { name: '인증 완료 →' }));
+    await fillOtp(user, '123456');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
+
+    expect(
+      await screen.findByText('이미 사용 중인 닉네임이에요'),
+    ).toBeInTheDocument();
+  });
+
+  it('signup 일반 오류는 코드 영역에 일반 에러로 표시한다', async () => {
+    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+    signup.mockRejectedValue(new SignupError('generic'));
+    const user = userEvent.setup();
+    renderForm();
+
+    await fillOtp(user, '123456');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('인증 코드가 만료되었습니다');
+    expect(alert).toHaveTextContent('일시적인 오류가 발생했습니다');
   });
 
-  it('재전송 버튼 클릭 시 requestEmailVerification 호출 후 쿨다운으로 비활성화된다', async () => {
-    requestEmailVerification.mockResolvedValue({ ttlSeconds: 300 });
+  it('재전송 버튼 클릭 시 sendEmailCode 호출 후 쿨다운으로 비활성화된다', async () => {
+    sendEmailCode.mockResolvedValue({ expiresInSeconds: 300 });
     const user = userEvent.setup();
     renderForm();
 
-    const resendButton = screen.getByRole('button', { name: '코드 재전송' });
-    await user.click(resendButton);
+    await user.click(screen.getByRole('button', { name: '코드 재전송' }));
 
     await waitFor(() =>
-      expect(requestEmailVerification).toHaveBeenCalledWith(
-        'new_user@example.com',
-      ),
+      expect(sendEmailCode).toHaveBeenCalledWith('new_user@example.com'),
     );
-    // 쿨다운 진입 — 버튼이 비활성화되고 남은 초가 표기된다.
     await waitFor(() => {
-      const cooling = screen.getByRole('button', { name: /재전송 \(\d+s\)/ });
+      const cooling = screen.getByRole('button', {
+        name: /코드 재전송 \(\d+s\)/,
+      });
       expect(cooling).toBeDisabled();
     });
   });

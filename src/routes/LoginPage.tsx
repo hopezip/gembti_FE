@@ -7,7 +7,7 @@ import { LoginForm } from '@/features/auth/components/LoginForm';
 import { SteamButton } from '@/features/auth/components/SteamButton';
 import { safeRedirect } from '@/features/auth/lib/safeRedirect';
 import { useAuthStore } from '@/lib/store/useAuthStore';
-import type { AuthUser } from '@/services/auth';
+import type { LoginResponse } from '@/services/auth';
 
 // /login 페이지 엔트리. Figma auth-modal 구성으로 AuthCard 슬롯을 조립한다:
 //   세그먼트 탭(로그인 active) → 헤딩/부제 → Steam 자리 버튼 → 구분선 → 이메일 로그인 폼.
@@ -18,13 +18,17 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const setAuthenticated = useAuthStore((s) => s.setAuthenticated);
+  const setSession = useAuthStore((s) => s.setSession);
 
   // 다른 화면(예: 회원가입 완료)에서 넘긴 1회성 안내 문구. 가입 직후 로그인 유도에 사용한다.
   const notice = (location.state as { notice?: string } | null)?.notice ?? null;
 
-  const handleSuccess = (user: AuthUser) => {
-    setAuthenticated(user);
+  const handleSuccess = ({ user, tokens }: LoginResponse) => {
+    setSession({
+      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
 
     // querystring redirect 우선, 없으면 가드가 넘긴 state.redirect.
     const stateRedirect =

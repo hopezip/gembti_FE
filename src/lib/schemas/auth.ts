@@ -1,11 +1,10 @@
 import { z } from 'zod';
 
 // 인증 폼 Zod 스키마 모음 (forms.md: 스키마는 src/lib/schemas/에 모으고 컴포넌트 인라인 정의 금지).
-// 에러 메시지는 한국어로 정의한다.
+// 에러 메시지는 한국어로 정의한다. (LOGIN-FE-005: 비번 8자/닉네임 규칙/STEP1·STEP2 분리)
 
 // 로그인 폼 스키마 (screens/login.md Zod 안 그대로).
-// 비밀번호는 "필수"만 검증한다 — 형식(10자/영문+숫자)은 회원가입(LOGIN-FE-003)에서만 강제하고,
-// 로그인은 잘못된 자격증명을 서버 401(ERROR-FE-003)로 판별한다(기존 계정 호환성).
+// 비밀번호는 "필수"만 검증한다 — 형식은 회원가입에서만 강제하고, 로그인은 서버 401로 판별한다.
 export const loginSchema = z.object({
   email: z
     .string()
@@ -16,17 +15,32 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-// 회원가입(LOGIN-FE-003) 비밀번호 규칙 — 화면(PasswordRules)과 스키마가 같은 출처를 보도록 공유한다.
-// 필수: 10자 이상 / 영문 포함 / 숫자 포함 (REQ 9.1 LOGIN-FE-003). 특수문자는 권장(선택)이라 검증 안 함.
-export const PASSWORD_MIN_LENGTH = 10;
+// 회원가입 비밀번호 규칙 — 화면(PasswordRules)과 스키마가 같은 출처를 보도록 공유한다.
+// 필수: 8자 이상 / 영문 포함 / 숫자 포함 (LOGIN-FE-005, 백엔드 계약 8자). 특수문자는 권장(선택).
+export const PASSWORD_MIN_LENGTH = 8;
 export const hasLetter = (v: string) => /[A-Za-z]/.test(v);
 export const hasDigit = (v: string) => /\d/.test(v);
 export const hasSpecial = (v: string) => /[^A-Za-z0-9]/.test(v);
 
-// 회원가입 폼 스키마 (Figma auth-modal STEP1 · 계정정보).
-// 닉네임/생년월일/성별은 이 프레임에 없어 후속 단계로 미룬다. 약관은 [필수]만14세·이용약관·개인정보 + [선택]마케팅.
-// 이메일 실시간 중복확인은 LOGIN-FE-004(백엔드 의존)로 분리하고, 여기선 형식만 검증한다.
-export const signupSchema = z
+// 닉네임 규칙 — 2~12자, 특수기호 불가(한글/영문/숫자만). PasswordRules처럼 화면과 출처를 공유한다.
+export const NICKNAME_MIN_LENGTH = 2;
+export const NICKNAME_MAX_LENGTH = 12;
+// 한글(완성형/자모) + 영문 + 숫자만 허용. 공백/특수기호 불가.
+export const NICKNAME_PATTERN = /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]+$/;
+
+// 닉네임 단일 필드 스키마(STEP2에서 재사용).
+export const nicknameSchema = z
+  .string()
+  .min(
+    NICKNAME_MIN_LENGTH,
+    `닉네임은 ${NICKNAME_MIN_LENGTH}자 이상이어야 합니다`,
+  )
+  .max(NICKNAME_MAX_LENGTH, `닉네임은 ${NICKNAME_MAX_LENGTH}자 이하여야 합니다`)
+  .regex(NICKNAME_PATTERN, '닉네임에 특수기호는 쓸 수 없어요');
+
+// ── STEP1 (계정정보) ─────────────────────────────────────────────────────────
+// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 14세 이상 한 줄 동의. (약관 그룹 제거)
+export const signupStep1Schema = z
   .object({
     email: z
       .string()
@@ -41,28 +55,38 @@ export const signupSchema = z
       .refine(hasLetter, '영문을 포함해야 합니다')
       .refine(hasDigit, '숫자를 포함해야 합니다'),
     passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요'),
-    // 약관 필수 동의 — RHF defaultValues(false) 친화 위해 literal 대신 boolean + refine 사용.
+    // 만 14세 이상 한 줄 동의 — boolean + refine(true).
     ageOver14: z.boolean().refine((v) => v, '만 14세 이상만 가입할 수 있어요'),
-    termsOfService: z.boolean().refine((v) => v, '이용약관에 동의해주세요'),
-    privacy: z.boolean().refine((v) => v, '개인정보 수집·이용에 동의해주세요'),
-    marketing: z.boolean(),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     path: ['passwordConfirm'],
     message: '비밀번호가 일치하지 않습니다',
   });
 
-export type SignupInput = z.infer<typeof signupSchema>;
+export type SignupStep1Input = z.infer<typeof signupStep1Schema>;
 
-// 이메일 인증(LOGIN-FE-004 STEP2) 코드 입력 스키마.
-// 6자리 숫자 인증 코드만 허용한다. 코드의 실제 유효성(만료/오답)은 서버(verify)가 판별하고,
-// 여기선 형식(자릿수·숫자)만 검증한다. 메시지는 한국어.
+// ── STEP2 (인증 + 프로필) ────────────────────────────────────────────────────
+// OTP 코드 + 닉네임 + 생년월일 + 성별.
 export const VERIFY_CODE_LENGTH = 6;
-export const verifyCodeSchema = z.object({
+
+export type Gender = 'male' | 'female' | 'unspecified';
+
+export const signupStep2Schema = z.object({
   code: z
     .string()
     .min(1, '인증 코드를 입력해주세요')
     .regex(/^\d{6}$/, '6자리 숫자 인증 코드를 입력해주세요'),
+  nickname: nicknameSchema,
+  // 생년월일(YYYY-MM-DD, <input type=date> 값). 미입력 차단.
+  birth: z.string().min(1, '생년월일을 선택해주세요'),
+  gender: z.enum(['male', 'female', 'unspecified']),
+});
+
+export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
+
+// 인증 코드 단독 스키마 — 코드만 검증해야 하는 곳(레거시/테스트 호환)에서 사용.
+export const verifyCodeSchema = z.object({
+  code: signupStep2Schema.shape.code,
 });
 
 export type VerifyCodeInput = z.infer<typeof verifyCodeSchema>;

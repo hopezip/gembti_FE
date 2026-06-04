@@ -1,35 +1,52 @@
 import { HTTPError } from 'ky';
 import { api } from '@/lib/ky';
 
-// 인증 도메인 서비스 레이어.
+// 인증 도메인 서비스 레이어 (LOGIN-FE-005 백엔드 계약 정합화).
 // ⏳ Swagger 미완 상태라 한시적으로 lib/ky로 직접 호출한다(api_client.md).
-//   백엔드 계약 확정 후 /api-sync로 생성되는 src/lib/api/auth 조합으로 교체한다
-//   (이 파일에 저수준 호출을 남기지 않는다).
+//   백엔드 계약 확정 후 /api-sync로 생성되는 src/lib/api/auth 조합으로 교체한다.
 //
-// 인증은 httpOnly Cookie 전제(auth.md): 토큰 문자열을 직접 다루지 않는다.
-//   ky 인스턴스(src/lib/ky.ts)가 credentials:'include'로 쿠키를 자동 전송/수신하며,
-//   Authorization 헤더를 클라이언트에서 조립하지 않는다.
+// 인증 방식(LOGIN-FE-005): access_token(메모리) + refresh_token(localStorage) + Bearer 헤더.
+//   ky 인스턴스(src/lib/ky.ts)가 Authorization 헤더 부착과 401 refresh 재시도를 전담한다.
+//   서비스는 엔드포인트(`/api/v1/auth/*`)와 응답 래퍼(`{status,data,message,error_code}`) 매핑만 담당한다.
 
+// ── 응답 래퍼 ────────────────────────────────────────────────────────────────
+// 백엔드 공통 응답: { status:'SUCCESS'|'FAIL', data, message?, error_code? }.
+export interface ApiEnvelope<T> {
+  status: 'SUCCESS' | 'FAIL';
+  data: T;
+  message?: string;
+  error_code?: string;
+}
+
+// ── 사용자/토큰 ──────────────────────────────────────────────────────────────
 // 로그인 응답 사용자 — 자동 생성물(src/types/api.ts) 직접 편집 금지라 한시적 로컬 정의.
-// 계약 확정 시 생성 타입으로 교체한다.
 export interface AuthUser {
   id: string;
   nickname: string;
-  // 설문 완료 여부 — 메인 진입 분기(개인화 홈 vs 게스트 홈)에 사용한다(MAIN-FE-006).
-  // ⚠️ 백엔드 계약에 아직 없는 가정 필드다. 응답에 없으면 false로 기본 처리하며,
-  //    백엔드에 `has_completed_survey` 추가를 요청한다(docs/03-api/backend-requests.md).
+  // 설문 완료 여부 — 메인 진입 분기(개인화 홈 vs 게스트 홈)에 사용(MAIN-FE-006).
+  // ⚠️ 백엔드 명세에 아직 없는 가정 필드. 응답에 없으면 false로 기본 처리(mock만 제공).
   hasCompletedSurvey: boolean;
 }
 
-// 백엔드 원시 응답의 user(snake_case 일부 가정 필드 포함) — 매핑 전 형태.
+// 토큰 묶음(도메인). 백엔드 토큰 바디를 store로 전달할 때 사용한다.
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
 interface AuthUserRaw {
   id: string;
   nickname: string;
-  // 백엔드가 추가 예정인 설문 완료 플래그(현재 mock만 제공). 없으면 매핑에서 false.
   has_completed_survey?: boolean;
 }
 
-interface AuthResponseRaw {
+// 토큰 바디(snake_case) — 로그인/가입/refresh 응답 data에 실린다.
+interface AuthTokenRaw {
+  access_token: string;
+  refresh_token: string;
+}
+
+interface AuthSessionRaw extends AuthTokenRaw {
   user: AuthUserRaw;
 }
 
@@ -42,8 +59,17 @@ function mapAuthUser(raw: AuthUserRaw): AuthUser {
   };
 }
 
+function mapTokens(raw: AuthTokenRaw): AuthTokens {
+  return {
+    accessToken: raw.access_token,
+    refreshToken: raw.refresh_token,
+  };
+}
+
+// ── 로그인 ───────────────────────────────────────────────────────────────────
 export interface LoginResponse {
   user: AuthUser;
+  tokens: AuthTokens;
 }
 
 export interface LoginPayload {
@@ -51,9 +77,9 @@ export interface LoginPayload {
   password: string;
 }
 
-// 로그인 실패 유형 — 폼 레벨 에러 메시지 분기에 사용한다.
-// - 'invalid-credentials': 401(ERROR-FE-003) — 잘못된 자격증명
-// - 'generic': 그 외 4xx/5xx/네트워크 — 재시도 가능한 일반 오류
+// 로그인 실패 유형 — 폼 레벨 에러 메시지 분기.
+// - 'invalid-credentials': 401({status:'FAIL'}) — 잘못된 자격증명
+// - 'generic': 그 외 4xx/5xx/네트워크
 export type LoginErrorKind = 'invalid-credentials' | 'generic';
 
 export class LoginError extends Error {
@@ -68,12 +94,14 @@ export class LoginError extends Error {
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   try {
-    const raw = await api
-      .post('api/auth/login', { json: payload })
-      .json<AuthResponseRaw>();
-    return { user: mapAuthUser(raw.user) };
+    const env = await api
+      .post('api/v1/auth/login', { json: payload })
+      .json<ApiEnvelope<AuthSessionRaw>>();
+    return {
+      user: mapAuthUser(env.data.user),
+      tokens: mapTokens(env.data),
+    };
   } catch (error) {
-    // 401은 잘못된 자격증명, 그 외는 일반 오류로 정규화한다.
     if (error instanceof HTTPError && error.response.status === 401) {
       throw new LoginError('invalid-credentials');
     }
@@ -81,75 +109,37 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   }
 }
 
-// 회원가입(LOGIN-FE-003) 요청 페이로드 — Figma STEP1 계정정보 + 약관 동의.
-// 비밀번호 확인(passwordConfirm)은 클라 검증용이라 서버로 보내지 않는다.
-export interface SignupPayload {
-  email: string;
-  password: string;
-  ageOver14: boolean;
-  termsOfService: boolean;
-  privacy: boolean;
-  marketing: boolean;
+// ── 인증 코드 발송(STEP2 진입 시) ────────────────────────────────────────────
+// 발송 응답의 expires_in(초)을 카운트다운 타이머 초기값으로 쓴다.
+export interface SendCodeResponse {
+  expiresInSeconds: number;
 }
 
-export interface SignupResponse {
-  user: AuthUser;
+interface SendCodeRaw {
+  expires_in: number;
 }
 
-// 회원가입 실패 유형 — 폼 레벨 에러 분기에 사용한다.
-// - 'email-taken': 409 — 이미 가입된 이메일
-// - 'generic': 그 외 4xx/5xx/네트워크
-export type SignupErrorKind = 'email-taken' | 'generic';
-
-export class SignupError extends Error {
-  readonly kind: SignupErrorKind;
-
-  constructor(kind: SignupErrorKind) {
-    super(kind);
-    this.name = 'SignupError';
-    this.kind = kind;
-  }
+// 인증 코드 발송(최초/재전송 공용). 재전송 쿨다운은 클라이언트가 제어한다.
+export async function sendEmailCode(email: string): Promise<SendCodeResponse> {
+  const env = await api
+    .post('api/v1/auth/email/send-code', { json: { email } })
+    .json<ApiEnvelope<SendCodeRaw>>();
+  return { expiresInSeconds: env.data.expires_in };
 }
 
-export async function signupWithEmail(
-  payload: SignupPayload,
-): Promise<SignupResponse> {
-  try {
-    const raw = await api
-      .post('api/auth/signup', { json: payload })
-      .json<AuthResponseRaw>();
-    return { user: mapAuthUser(raw.user) };
-  } catch (error) {
-    // 409는 이메일 중복, 그 외는 일반 오류로 정규화한다.
-    if (error instanceof HTTPError && error.response.status === 409) {
-      throw new SignupError('email-taken');
-    }
-    throw new SignupError('generic');
-  }
+// ── 인증 코드 검증 → signup_token 발급 ───────────────────────────────────────
+export interface VerifyCodeResult {
+  signupToken: string;
 }
 
-// ── 이메일 인증(LOGIN-FE-004 STEP2) ──────────────────────────────────────────
-// 인증 코드 발송/검증·이메일 실시간 중복확인. 전부 httpOnly Cookie 전제(토큰 미조립)이며
-// Swagger 미완 동안 한시적 수동 호출이다(/api-sync 후 생성물 조합으로 교체).
-
-// 인증 코드 발송 응답 — 유효시간(초). 클라 카운트다운 타이머의 초기값으로 쓴다.
-export interface EmailVerificationResponse {
-  ttlSeconds: number;
+interface VerifyCodeRaw {
+  signup_token: string;
 }
 
-// 인증 코드 발송(최초/재전송 공용). 재전송 쿨다운은 클라이언트가 제어한다(서버는 동일 엔드포인트).
-export async function requestEmailVerification(
-  email: string,
-): Promise<EmailVerificationResponse> {
-  return await api
-    .post('api/auth/email/verification', { json: { email } })
-    .json<EmailVerificationResponse>();
-}
-
-// 인증 코드 검증 실패 유형 — 폼 레벨 에러 분기에 사용한다.
+// 인증 코드 검증 실패 유형.
 // - 'invalid-code': 400/422 — 코드 불일치
-// - 'expired': 410 — 코드 만료(타이머 0 또는 서버 만료)
-// - 'generic': 그 외 4xx/5xx/네트워크
+// - 'expired': 410 — 코드 만료
+// - 'generic': 그 외
 export type VerifyErrorKind = 'invalid-code' | 'expired' | 'generic';
 
 export class VerifyError extends Error {
@@ -167,13 +157,16 @@ export interface VerifyEmailCodePayload {
   code: string;
 }
 
+// 코드 검증 성공 시 signup_token을 반환한다. signup 호출에 이 토큰을 사용한다.
 export async function verifyEmailCode(
   payload: VerifyEmailCodePayload,
-): Promise<void> {
+): Promise<VerifyCodeResult> {
   try {
-    await api.post('api/auth/email/verify', { json: payload });
+    const env = await api
+      .post('api/v1/auth/email/verify-code', { json: payload })
+      .json<ApiEnvelope<VerifyCodeRaw>>();
+    return { signupToken: env.data.signup_token };
   } catch (error) {
-    // 410=만료, 400/422=코드 불일치, 그 외=일반 오류로 정규화한다.
     if (error instanceof HTTPError) {
       const status = error.response.status;
       if (status === 410) throw new VerifyError('expired');
@@ -184,16 +177,87 @@ export async function verifyEmailCode(
   }
 }
 
-// 이메일 중복확인 — STEP1 이메일 필드 실시간 표시용.
-// 네트워크/4xx 등 실패는 호출부에서 "확인 불가"로 degrade한다(가입을 막지 않는다).
-export interface EmailAvailability {
+// ── 닉네임 중복확인 ──────────────────────────────────────────────────────────
+export interface NicknameAvailability {
   available: boolean;
 }
 
-export async function checkEmailAvailability(
-  email: string,
-): Promise<EmailAvailability> {
-  return await api
-    .get('api/auth/email/check', { searchParams: { email } })
-    .json<EmailAvailability>();
+interface NicknameAvailabilityRaw {
+  available: boolean;
+}
+
+// 닉네임 실시간 중복확인 — STEP2 닉네임 필드 표시용.
+// 네트워크/4xx 등 실패는 호출부에서 "확인 불가"로 degrade한다(가입을 막지 않는다).
+export async function checkNicknameAvailability(
+  nickname: string,
+): Promise<NicknameAvailability> {
+  const env = await api
+    .get('api/v1/auth/check-nickname', { searchParams: { nickname } })
+    .json<ApiEnvelope<NicknameAvailabilityRaw>>();
+  return { available: env.data.available };
+}
+
+// ── 회원가입(signup_token + 프로필) ──────────────────────────────────────────
+// signup_token + password + nickname이 필수. birth/gender는 백엔드 명세엔 아직 없어
+//   mock에만 전송한다(REQ-002로 추가 요청). 응답은 토큰 바디 + user(자동 로그인 가능).
+export interface SignupPayload {
+  signupToken: string;
+  password: string;
+  nickname: string;
+  // 생년월일(YYYY-MM-DD) — 명세 외 추가 요청 필드(REQ-002).
+  birth: string;
+  // 성별 — 명세 외 추가 요청 필드(REQ-002).
+  gender: 'male' | 'female' | 'unspecified';
+}
+
+export interface SignupResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
+}
+
+// 회원가입 실패 유형.
+// - 'nickname-duplicated': error_code 'NICKNAME_DUPLICATED' — 닉네임 중복
+// - 'generic': 그 외
+export type SignupErrorKind = 'nickname-duplicated' | 'generic';
+
+export class SignupError extends Error {
+  readonly kind: SignupErrorKind;
+
+  constructor(kind: SignupErrorKind) {
+    super(kind);
+    this.name = 'SignupError';
+    this.kind = kind;
+  }
+}
+
+export async function signup(payload: SignupPayload): Promise<SignupResponse> {
+  try {
+    const env = await api
+      .post('api/v1/auth/signup', {
+        json: {
+          signup_token: payload.signupToken,
+          password: payload.password,
+          nickname: payload.nickname,
+          // 명세 외 필드(REQ-002) — 백엔드 미수용 시 무시되어도 안전하다.
+          birth: payload.birth,
+          gender: payload.gender,
+        },
+      })
+      .json<ApiEnvelope<AuthSessionRaw>>();
+    return {
+      user: mapAuthUser(env.data.user),
+      tokens: mapTokens(env.data),
+    };
+  } catch (error) {
+    // 닉네임 중복은 error_code로 식별한다(HTTP 상태와 무관하게 본문 우선).
+    if (error instanceof HTTPError) {
+      const body = await error.response
+        .json<ApiEnvelope<unknown>>()
+        .catch(() => null);
+      if (body?.error_code === 'NICKNAME_DUPLICATED') {
+        throw new SignupError('nickname-duplicated');
+      }
+    }
+    throw new SignupError('generic');
+  }
 }

@@ -1,8 +1,9 @@
 import { type Page, expect, test } from '@playwright/test';
 
-// LOGIN-FE-001 이메일 로그인 E2E.
-// 전제: webServer(pnpm dev)가 VITE_USE_MOCK=true로 기동되어 MSW(src/mocks/handlers/auth.ts)가
-//   POST /api/auth/login을 가로챈다. mock 정상 자격증명은 test@gambti.com / password123.
+// LOGIN-FE-001/005 이메일 로그인 E2E.
+// 전제: webServer(pnpm dev)가 mock 모드로 기동되어 MSW(src/mocks/handlers/auth.ts)가
+//   POST /api/v1/auth/login을 가로챈다(LOGIN-FE-005 계약: /api/v1/auth/*, {status,data} 래퍼, 토큰 바디).
+//   mock 정상 자격증명은 test@gambti.com / password123.
 // 로컬에서 Playwright 브라우저 바이너리가 없으면 실행되지 않을 수 있다(프로젝트 정책상 미설치).
 //
 // 셸 주의(GlobalShell): /login 페이지에도 글로벌 Header가 함께 렌더된다.
@@ -47,7 +48,7 @@ test.describe('이메일 로그인 (/login)', () => {
   }) => {
     let loginCalled = false;
     page.on('request', (req) => {
-      if (req.url().includes('/api/auth/login')) loginCalled = true;
+      if (req.url().includes('/api/v1/auth/login')) loginCalled = true;
     });
 
     await page.goto('/login');
