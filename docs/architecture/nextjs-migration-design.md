@@ -81,12 +81,17 @@ next-env.d.ts             # vite-env.d.ts 대체
   `worker.start()`가 **이중 호출**된다.
 - → **모듈 레벨 promise**(`let mockingPromise = enableMocking()`)를 두고, providers는 그
   promise가 resolve될 때까지 `children` 렌더를 보류한다. effect 안에서 매번 start하지 않는다.
+- `enableMocking()` 안에 **`typeof window === 'undefined'` 가드**를 명시한다. `providers.tsx`가
+  `'use client'`여도 Next 빌드/프리렌더 경계에서 모듈 평가가 걸릴 수 있어, `msw/browser` 동적
+  import은 브라우저에서만 실행되게 막는다(서버에서 즉시 return).
 - 1차에서 MSW는 **유지**한다(테스트/E2E가 mock 기반, 백엔드 계약 과도기 → 동일기능 검증에 필수).
 
 ### 5.3 환경변수
-- `import.meta.env.VITE_USE_MOCK` → `process.env.NEXT_PUBLIC_USE_MOCK`
-- `import.meta.env.DEV` → `process.env.NODE_ENV === 'development'`
-- 전역 치환.
+`src` 전체 sweep 결과 env 사용처는 아래 3개뿐(전수). 전부 치환한다.
+- `import.meta.env.VITE_USE_MOCK` (`main.tsx`) → `process.env.NEXT_PUBLIC_USE_MOCK`
+- `import.meta.env.VITE_API_BASE_URL` (`src/lib/ky.ts:3`) → `process.env.NEXT_PUBLIC_API_BASE_URL`
+- `import.meta.env.DEV` (`main.tsx`) → `process.env.NODE_ENV === 'development'`
+- **`.env.local.example` 도 함께 갱신**(`VITE_*` 키명을 `NEXT_PUBLIC_*`로).
 
 ### 5.4 빌드 / 설정
 - `package.json` scripts: `dev: next dev` / `build: next build` / `start: next start`.
@@ -118,6 +123,14 @@ next-env.d.ts             # vite-env.d.ts 대체
 ### 5.8 LangChain 서버 자리
 - `src/app/api/ai/health/route.ts` — Node 런타임, 1차엔 헬스체크 응답만. 실제 체인 연결은
   후속 티켓.
+
+### 5.9 .gitignore / next-env.d.ts
+- 현재 `.gitignore`에 `.next`가 **없다**(확인됨). 구현 시 빌드 산출물이 추적되므로 다음을 추가:
+  - `.next/`
+  - `*.tsbuildinfo`
+  - `next-env.d.ts`
+- **`next-env.d.ts` 추적 정책: 비추적(gitignore).** Next가 자동 생성하는 파일이라
+  create-next-app 기본 정책과 동일하게 커밋하지 않는다.
 
 ## 6. 검증 기준 (1차 성공 = "동일 기능 유지")
 - 기존 **Vitest 단위테스트 전부 통과**(router.test 등 react-router 테스트 무변경).
