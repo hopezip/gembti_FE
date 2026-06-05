@@ -7,7 +7,7 @@ import { hstack, vstack } from 'styled-system/patterns';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
-import { useNicknameAvailability } from '@/features/auth/hooks/useNicknameAvailability';
+import { EMAIL_CODE_TTL_SECONDS } from '@/config/auth';
 import { useResendCooldown } from '@/features/auth/hooks/useResendCooldown';
 import {
   NICKNAME_MAX_LENGTH,
@@ -15,23 +15,24 @@ import {
   signupStep2Schema,
 } from '@/lib/schemas/auth';
 import {
-  type AuthTokens,
-  type AuthUser,
+  type AuthSession,
   SignupError,
   sendEmailCode,
   signup,
   VerifyError,
   type VerifyErrorKind,
-  verifyEmailCode,
+  verifyEmail,
 } from '@/services/auth';
 import { CountdownTimer } from './CountdownTimer';
 import { GenderSelect } from './GenderSelect';
 import { OtpInput } from './OtpInput';
 
-// 회원가입 STEP2 (인증 + 프로필) — LOGIN-FE-005, Figma auth-modal node 4003:2117.
-// 구성: 안내배너(✉) → 6칸 OTP + 타이머/재전송 → divider → 닉네임(실시간 확인) → 생년월일/성별 2열 → 가입 완료.
-// "가입 완료"는 순차 처리한다: ① verify-code(code)→signup_token, ② signup(signup_token+password+nickname; birth/gender).
-//   코드 오류는 OTP 영역 에러로, 닉네임 중복(NICKNAME_DUPLICATED)은 닉네임 필드 에러로 표시한다.
+// 회원가입 STEP2 (인증 + 프로필) — LOGIN-FE-006 실서버(GEMBTI_API) 계약 정합.
+// 구성: 안내배너(✉) → 6칸 OTP + 타이머/재전송 → divider → 닉네임 → 생년월일/성별 2열 → 가입 완료.
+// "가입 완료"는 순차 처리한다: ① verify(email, code) — 검증만, ② signup(전체 필드 직접 전송).
+//   verify를 통과해야 signup이 200(미통과 시 403). 코드 오류는 OTP 영역 에러로,
+//   닉네임 중복은 닉네임 필드 에러로 표시한다.
+// ⚠️ signup_token 흐름 폐기 · 닉네임 실시간 중복확인 제거(백엔드 엔드포인트 없음) · 타이머는 상수 TTL.
 
 // 코드 검증 실패 메시지 매핑.
 const CODE_ERROR_MESSAGE: Record<VerifyErrorKind, string> = {
@@ -40,31 +41,29 @@ const CODE_ERROR_MESSAGE: Record<VerifyErrorKind, string> = {
   generic: '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
 };
 
-// 닉네임 실시간 확인 상태 표시.
-const NICKNAME_HINT: Record<
-  'checking' | 'available' | 'taken',
-  { message: string; color: string }
-> = {
-  checking: { message: '확인 중…', color: 'fg.subtle' },
-  available: { message: '✓ 사용 가능한 닉네임이에요', color: 'success.fg' },
-  taken: { message: '이미 사용 중인 닉네임이에요', color: 'danger.fg' },
-};
-
 interface EmailVerificationFormProps {
   /** STEP1에서 전달된 가입 이메일. */
   email: string;
   /** STEP1에서 전달된 비밀번호(최종 signup까지 페이지 state로 보관). */
   password: string;
-  /** send-code 응답의 유효시간(초). 카운트다운 초기값. */
-  initialExpiresInSeconds: number;
+  /** STEP1 비밀번호 확인(서버 password_confirm으로 전송). */
+  passwordConfirm: string;
+  /** STEP1 약관 동의(서버 terms_agreed/privacy_agreed로 전송). */
+  termsAgreed: boolean;
+  privacyAgreed: boolean;
+  /** 카운트다운 초기값(초). 미지정 시 상수 TTL. (백엔드 send-code에 expires_in이 없다.) */
+  initialExpiresInSeconds?: number;
   /** 가입 완료 시 호출(자동 로그인 세션 정보 전달, 이동은 페이지가 담당). */
-  onSignedUp: (result: { user: AuthUser; tokens: AuthTokens }) => void;
+  onSignedUp: (result: AuthSession) => void;
 }
 
 export function EmailVerificationForm({
   email,
   password,
-  initialExpiresInSeconds,
+  passwordConfirm,
+  termsAgreed,
+  privacyAgreed,
+  initialExpiresInSeconds = EMAIL_CODE_TTL_SECONDS,
   onSignedUp,
 }: EmailVerificationFormProps) {
   const {
@@ -82,37 +81,34 @@ export function EmailVerificationForm({
       code: '',
       nickname: '',
       birth: '',
-      gender: 'unspecified',
+      gender: 'other',
     },
   });
 
-  // 타이머 ttl/재시작 제어 — 재전송 시 ttl 갱신으로 카운트다운 리셋.
-  const [expiresIn, setExpiresIn] = useState(initialExpiresInSeconds);
+  // 타이머 ttl/재시작 제어 — 재전송 시 restartKey 갱신으로 카운트다운 리셋.
   const [restartKey, setRestartKey] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
-  // 코드 영역 에러(verify-code 실패) — RHF 필드 에러와 별개로 둔다.
+  // 코드 영역 에러(verify 실패) — RHF 필드 에러와 별개로 둔다.
   const [codeError, setCodeError] = useState<string | null>(null);
   const cooldown = useResendCooldown();
 
   const nickname = watch('nickname') ?? '';
-  const { status: nicknameStatus, isTaken: nicknameTaken } =
-    useNicknameAvailability(nickname);
 
-  // 가입 완료 — verify-code → signup 순차 처리.
+  // 가입 완료 — verify → signup 순차 처리.
   const submitMutation = useMutation({
     mutationFn: async (values: SignupStep2Input) => {
-      // ① 코드 검증 → signup_token
-      const { signupToken } = await verifyEmailCode({
-        email,
-        code: values.code,
-      });
-      // ② signup_token + 프로필로 가입(자동 로그인 세션 발급)
+      // ① 코드 검증(검증만, 토큰 없음).
+      await verifyEmail({ email, code: values.code });
+      // ② 전체 필드로 가입(자동 로그인 세션 발급).
       return await signup({
-        signupToken,
+        email,
         password,
+        passwordConfirm,
         nickname: values.nickname,
-        birth: values.birth,
         gender: values.gender,
+        birthDate: values.birth,
+        termsAgreed,
+        privacyAgreed,
       });
     },
     onSuccess: (result) => onSignedUp(result),
@@ -129,21 +125,21 @@ export function EmailVerificationForm({
       ) {
         setError('nickname', {
           type: 'server',
-          message: '이미 사용 중인 닉네임이에요',
+          message: error.detail ?? '이미 사용 중인 닉네임이에요',
         });
         setFocus('nickname');
         return;
       }
-      // 그 외 → 코드 영역에 일반 에러 표시.
-      setCodeError(CODE_ERROR_MESSAGE.generic);
+      // 그 외 → 코드 영역에 일반(또는 서버 detail) 에러 표시.
+      const detail = error instanceof SignupError ? error.detail : null;
+      setCodeError(detail ?? CODE_ERROR_MESSAGE.generic);
     },
   });
 
   // 재전송 — send-code 재호출. 쿨다운/타이머/만료/코드에러 갱신.
   const resendMutation = useMutation({
     mutationFn: () => sendEmailCode(email),
-    onSuccess: (data) => {
-      setExpiresIn(data.expiresInSeconds);
+    onSuccess: () => {
       setRestartKey((k) => k + 1);
       setIsExpired(false);
       setCodeError(null);
@@ -161,14 +157,6 @@ export function EmailVerificationForm({
   };
 
   const onValid = (values: SignupStep2Input) => {
-    if (nicknameTaken) {
-      setError('nickname', {
-        type: 'server',
-        message: '이미 사용 중인 닉네임이에요',
-      });
-      setFocus('nickname');
-      return;
-    }
     setCodeError(null);
     submitMutation.mutate(values);
   };
@@ -245,7 +233,7 @@ export function EmailVerificationForm({
         <span className={css({ textStyle: 'body.sm', color: 'fg.subtle' })}>
           남은 시간 ·{' '}
           <CountdownTimer
-            seconds={expiresIn}
+            seconds={initialExpiresInSeconds}
             restartKey={restartKey}
             onExpire={() => setIsExpired(true)}
           />
@@ -285,7 +273,7 @@ export function EmailVerificationForm({
         </p>
       )}
 
-      {/* 코드 검증 실패(verify-code 단계 에러) */}
+      {/* 코드 검증 실패(verify 단계 에러) */}
       {codeError && (
         <p
           role="alert"
@@ -313,7 +301,7 @@ export function EmailVerificationForm({
         })}
       />
 
-      {/* 닉네임 — 실시간 중복확인 + 글자수 카운터 */}
+      {/* 닉네임 — 글자수 카운터(실시간 중복확인 없음) */}
       <Field
         label={`닉네임 (${NICKNAME_MAX_LENGTH}자 이내)`}
         id="signup-nickname"
@@ -329,7 +317,7 @@ export function EmailVerificationForm({
               id="signup-nickname"
               type="text"
               autoComplete="nickname"
-              placeholder="2~12자, 특수기호 불가"
+              placeholder="2~8자, 특수기호 불가"
               maxLength={NICKNAME_MAX_LENGTH}
               aria-invalid={Boolean(errors.nickname) || undefined}
               disabled={isSubmitting}
@@ -342,22 +330,6 @@ export function EmailVerificationForm({
           )}
         />
       </Field>
-
-      {/* 닉네임 실시간 확인 상태(필드 에러가 없을 때만 표시) */}
-      {!errors.nickname &&
-        nicknameStatus !== 'idle' &&
-        nicknameStatus !== 'error' && (
-          <p
-            role="status"
-            className={css({
-              textStyle: 'body.sm',
-              color: NICKNAME_HINT[nicknameStatus].color,
-              mt: '-3',
-            })}
-          >
-            {NICKNAME_HINT[nicknameStatus].message}
-          </p>
-        )}
 
       {/* 생년월일 + 성별 2열 */}
       <div
@@ -416,7 +388,7 @@ export function EmailVerificationForm({
       <Button
         type="submit"
         variant="primary"
-        disabled={isSubmitting || nicknameTaken}
+        disabled={isSubmitting}
         aria-busy={isSubmitting || undefined}
       >
         {isSubmitting ? '가입 처리 중…' : '가입 완료 →'}

@@ -5,6 +5,8 @@ import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
+import { SteamCallbackPage } from './SteamCallbackPage';
+import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
 import { SurveyPage } from './SurveyPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
@@ -66,6 +68,9 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
+  if (path === '/onboarding/steam') return <SteamOnboardingPage />;
+  if (path === '/auth/steam/callback') return <SteamCallbackPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
   if (path === '/survey') return <SurveyPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;

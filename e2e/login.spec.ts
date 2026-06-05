@@ -1,9 +1,10 @@
 import { type Page, expect, test } from '@playwright/test';
 
-// LOGIN-FE-001/005 이메일 로그인 E2E.
-// 전제: webServer(pnpm dev)가 mock 모드로 기동되어 MSW(src/mocks/handlers/auth.ts)가
-//   POST /api/v1/auth/login을 가로챈다(LOGIN-FE-005 계약: /api/v1/auth/*, {status,data} 래퍼, 토큰 바디).
-//   mock 정상 자격증명은 test@gambti.com / password123.
+// LOGIN-FE-006 이메일 로그인 E2E.
+// auth(/api/v1/auth/*)는 실서버(gembti.cloud) passthrough라 MSW가 가로채지 않으므로,
+//   E2E 결정성을 위해 Playwright route로 auth 엔드포인트를 새 계약(GEMBTI_API)에 맞게 스텁한다.
+//   계약: envelope 없음 — login은 AuthResponse({access_token, token_type, user}) + Set-Cookie(refresh),
+//         실패는 {detail} 401. refresh/me는 세션 없으면 401(anonymous 복원).
 // 로컬에서 Playwright 브라우저 바이너리가 없으면 실행되지 않을 수 있다(프로젝트 정책상 미설치).
 //
 // 셸 주의(GlobalShell): /login 페이지에도 글로벌 Header가 함께 렌더된다.
@@ -11,8 +12,77 @@ import { type Page, expect, test } from '@playwright/test';
 //   카드 헤딩·폼 조작 셀렉터는 AuthCard 영역(role=main)으로 한정해 strict mode 충돌을 피한다.
 //   (LOGIN-FE-001b: Figma auth-modal 재구성 — 헤딩 "로그인"(main 한정), 제출 버튼 "로그인 →".)
 
+// ⚠️ 서비스워커(MSW) 차단: MSW가 떠 있으면 bypass 재발행 요청이 SW 컨텍스트라
+//   page.route가 가로채지 못한다(auth는 passthrough라 MSW 핸들러도 없음). SW를 끄면
+//   MSW가 안 뜨고(앱은 mock 실패를 graceful 처리해 그대로 부팅) page.route가 모든 요청을 가로챈다.
+test.use({ serviceWorkers: 'block' });
+
 const VALID_EMAIL = 'test@gambti.com';
 const VALID_PASSWORD = 'password123';
+
+// GEMBTI_API UserResponse 형태(스팀 필드 포함). 로그인 성공 응답 user.
+const MOCK_USER = {
+  id: 1,
+  email: VALID_EMAIL,
+  nickname: '테스트유저',
+  bio: null,
+  login_provider: 'email',
+  status: 'active',
+  steam_linked: false,
+  steam_id_64: null,
+  steam_avatar_url: null,
+  steam_sync_status: null,
+  last_synced_at: null,
+};
+
+// auth 엔드포인트를 새 계약으로 스텁한다(실서버 passthrough 대체).
+//   ⚠️ glob `**/...`은 cross-origin(예: https://gembti.cloud/...)을 가로채지 못한다.
+//   정규식으로 매칭해 origin 무관하게(같은 오리진/실서버 둘 다) 가로챈다.
+async function stubAuth(page: Page) {
+  await page.route(/\/api\/v1\/auth\/login(\?|$)/, async (route) => {
+    // postDataJSON()은 ky 요청 바디 파싱이 불안정해 가끔 null을 반환한다(유효 자격증명인데 401로 빠짐).
+    //   raw 문자열 매칭으로 견고하게 판별한다.
+    const raw = route.request().postData() ?? '';
+    if (raw.includes(VALID_EMAIL) && raw.includes(VALID_PASSWORD)) {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'set-cookie':
+            'refresh_token=e2e-refresh; HttpOnly; Path=/; SameSite=None; Secure',
+        },
+        contentType: 'application/json',
+        body: JSON.stringify({
+          access_token: 'e2e-access',
+          token_type: 'bearer',
+          user: MOCK_USER,
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        detail: '이메일 또는 비밀번호가 올바르지 않습니다',
+      }),
+    });
+  });
+  // 세션 복원(부팅 시 /refresh, 이후 /me) — E2E는 쿠키 세션이 없으므로 401(anonymous)로 둔다.
+  await page.route(/\/api\/v1\/auth\/refresh(\?|$)/, (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ detail: 'no session' }),
+    }),
+  );
+  await page.route(/\/api\/v1\/auth\/me(\?|$)/, (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ detail: 'no session' }),
+    }),
+  );
+}
 
 // AuthCard(=<main>) 범위로 한정한 로컬 셀렉터 모음. 셸 Header/Footer 영향에서 격리한다.
 function loginCard(page: Page) {
@@ -35,6 +105,10 @@ function loginCard(page: Page) {
 }
 
 test.describe('이메일 로그인 (/login)', () => {
+  test.beforeEach(async ({ page }) => {
+    await stubAuth(page);
+  });
+
   test('진입 시 빈 로그인 폼이 보인다', async ({ page }) => {
     await page.goto('/login');
     const form = loginCard(page);
