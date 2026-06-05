@@ -7,9 +7,9 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
 
 function daysInMonth(year: string, month: string): number {
-  const y = Number(year);
   const m = Number(month);
-  if (!y || !m) return 31;
+  if (!m) return 0;
+  const y = Number(year) || 2000;
   return new Date(y, m, 0).getDate();
 }
 
