@@ -90,8 +90,14 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     const res = await api
       .post('api/v1/auth/login', { json: payload satisfies LoginRequest })
       .json<AuthResponse>();
+    // ky가 비정상 응답에 throw하지 않은 경우 방어(에러 바디를 200처럼 파싱한 상황 등):
+    //   토큰/유저가 없으면 자격증명 실패로 본다.
+    if (!res?.access_token || !res.user) {
+      throw new LoginError('invalid-credentials');
+    }
     return { user: mapAuthUser(res.user), accessToken: res.access_token };
   } catch (error) {
+    if (error instanceof LoginError) throw error;
     if (error instanceof HTTPError && error.response.status === 401) {
       throw new LoginError('invalid-credentials');
     }
@@ -194,8 +200,12 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
     const res = await api
       .post('api/v1/auth/signup', { json: body })
       .json<AuthResponse>();
+    if (!res?.access_token || !res.user) {
+      throw new SignupError('generic');
+    }
     return { user: mapAuthUser(res.user), accessToken: res.access_token };
   } catch (error) {
+    if (error instanceof SignupError) throw error;
     const detail = await parseDetail(error);
     // error_code가 없으므로 detail 문구로 닉네임 중복을 추정한다(백엔드 메시지 변경 시 generic으로 폴백).
     if (detail && /nickname|닉네임/i.test(detail)) {

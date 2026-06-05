@@ -56,6 +56,16 @@ export const api = ky.create({
       async (request, _options, response) => {
         if (response.status !== 401) return response;
 
+        // 인증 없이 호출하는 auth 엔드포인트(login/signup/logout/email)의 401은
+        //   "토큰 만료"가 아니라 자격증명/요청 자체의 실패다 → refresh 재시도 대상에서 제외하고
+        //   원래 401을 그대로 흘려보내 서비스가 도메인 에러로 매핑하게 한다.
+        //   (/me 등 보호 리소스의 401만 refresh 재시도한다. /refresh는 분리 인스턴스라 이 훅을 안 탄다.)
+        if (
+          /\/api\/v1\/auth\/(login|signup|logout|email\/)/.test(request.url)
+        ) {
+          return response;
+        }
+
         // 요청당 1회만 재시도(무한루프 금지). 재시도 요청에는 플래그 헤더를 단다.
         if (request.headers.get('x-retried') === '1') return response;
 

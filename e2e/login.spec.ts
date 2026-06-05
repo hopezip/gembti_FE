@@ -12,6 +12,11 @@ import { type Page, expect, test } from '@playwright/test';
 //   카드 헤딩·폼 조작 셀렉터는 AuthCard 영역(role=main)으로 한정해 strict mode 충돌을 피한다.
 //   (LOGIN-FE-001b: Figma auth-modal 재구성 — 헤딩 "로그인"(main 한정), 제출 버튼 "로그인 →".)
 
+// ⚠️ 서비스워커(MSW) 차단: MSW가 떠 있으면 bypass 재발행 요청이 SW 컨텍스트라
+//   page.route가 가로채지 못한다(auth는 passthrough라 MSW 핸들러도 없음). SW를 끄면
+//   MSW가 안 뜨고(앱은 mock 실패를 graceful 처리해 그대로 부팅) page.route가 모든 요청을 가로챈다.
+test.use({ serviceWorkers: 'block' });
+
 const VALID_EMAIL = 'test@gambti.com';
 const VALID_PASSWORD = 'password123';
 
@@ -31,13 +36,14 @@ const MOCK_USER = {
 };
 
 // auth 엔드포인트를 새 계약으로 스텁한다(실서버 passthrough 대체).
+//   ⚠️ glob `**/...`은 cross-origin(예: https://gembti.cloud/...)을 가로채지 못한다.
+//   정규식으로 매칭해 origin 무관하게(같은 오리진/실서버 둘 다) 가로챈다.
 async function stubAuth(page: Page) {
-  await page.route('**/api/v1/auth/login', async (route) => {
-    const body = route.request().postDataJSON() as {
-      email?: string;
-      password?: string;
-    };
-    if (body?.email === VALID_EMAIL && body?.password === VALID_PASSWORD) {
+  await page.route(/\/api\/v1\/auth\/login(\?|$)/, async (route) => {
+    // postDataJSON()은 ky 요청 바디 파싱이 불안정해 가끔 null을 반환한다(유효 자격증명인데 401로 빠짐).
+    //   raw 문자열 매칭으로 견고하게 판별한다.
+    const raw = route.request().postData() ?? '';
+    if (raw.includes(VALID_EMAIL) && raw.includes(VALID_PASSWORD)) {
       await route.fulfill({
         status: 200,
         headers: {
@@ -62,14 +68,14 @@ async function stubAuth(page: Page) {
     });
   });
   // 세션 복원(부팅 시 /refresh, 이후 /me) — E2E는 쿠키 세션이 없으므로 401(anonymous)로 둔다.
-  await page.route('**/api/v1/auth/refresh', (route) =>
+  await page.route(/\/api\/v1\/auth\/refresh(\?|$)/, (route) =>
     route.fulfill({
       status: 401,
       contentType: 'application/json',
       body: JSON.stringify({ detail: 'no session' }),
     }),
   );
-  await page.route('**/api/v1/auth/me', (route) =>
+  await page.route(/\/api\/v1\/auth\/me(\?|$)/, (route) =>
     route.fulfill({
       status: 401,
       contentType: 'application/json',
