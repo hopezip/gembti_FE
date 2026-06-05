@@ -6,6 +6,7 @@ import { NotFoundPage } from './NotFoundPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
+import { SurveyPage } from './SurveyPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -39,7 +40,8 @@ const mvpRoutes: RouteDef[] = [
   },
   // SURVEY-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
   { title: '설문 인트로', path: '/survey/intro', access: 'Public' },
-  { title: '설문 진행', path: '/survey', access: 'Auth' },
+  // SURVEY-FE-002 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
+  { title: '설문 진행', path: '/survey', access: 'Public' },
   { title: '설문 결과', path: '/survey/result', access: 'Auth' },
   { title: '검색', path: '/search', access: 'Public' },
   { title: '게임 추천', path: '/recommendations', access: 'Public' },
@@ -65,6 +67,7 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
+  if (path === '/survey') return <SurveyPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 
