@@ -23,8 +23,11 @@ export interface AuthUser {
   email: string;
   nickname: string;
   // 설문 완료 여부 — 메인 진입 분기(개인화 홈 vs 게스트 홈, MAIN-FE-006)에 사용.
-  // ⚠️ 백엔드 UserResponse에 아직 없는 가정 필드(project_personalized_home 갭). 항상 false로 둔다.
-  //    이 티켓 범위 밖이라 분기 코드는 건드리지 않고 격리만 한다(LOGIN-FE-006 R4).
+  // ⚠️ KNOWN BLOCKER(LOGIN-FE-006 R4): 백엔드 UserResponse에 이 필드가 없어 항상 false로 고정된다.
+  //    → 실서버 로그인 사용자는 설문을 완료했어도 개인화 홈(/api/v1/home/personalized)에
+  //      진입하지 못하고 게스트 홈으로 폴백한다. FE는 필드 없이 완료 여부를 알 수 없어 false가
+  //      유일한 안전값이다. 백엔드가 has_completed_survey를 추가하면(backend-requests REQ-008 인접)
+  //      mapAuthUser에서 매핑을 살린다. 그 전까지 개인화 홈은 dark.
   hasCompletedSurvey: boolean;
 }
 

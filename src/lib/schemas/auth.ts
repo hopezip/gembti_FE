@@ -26,7 +26,10 @@ export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 100;
 export const hasLetter = (v: string) => /[A-Za-z]/.test(v);
 export const hasDigit = (v: string) => /\d/.test(v);
-export const hasSpecial = (v: string) => /[^A-Za-z0-9]/.test(v);
+// 특수문자 = ASCII 문장부호/기호만 인정한다. `[^A-Za-z0-9]`로 두면 공백·한글도 통과해
+//   FE는 통과하지만 서버(문장부호 기대)가 거절하는 불일치가 생긴다(LOGIN-FE-006 리뷰 반영).
+export const hasSpecial = (v: string) =>
+  /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(v);
 
 // 닉네임 규칙 — 2~8자, 특수기호 불가(한글/영문/숫자만). (GEMBTI_API: minLength 2 / maxLength 8)
 export const NICKNAME_MIN_LENGTH = 2;

@@ -56,13 +56,14 @@ export const api = ky.create({
       async (request, _options, response) => {
         if (response.status !== 401) return response;
 
-        // 인증 없이 호출하는 auth 엔드포인트(login/signup/logout/email)의 401은
-        //   "토큰 만료"가 아니라 자격증명/요청 자체의 실패다 → refresh 재시도 대상에서 제외하고
-        //   원래 401을 그대로 흘려보내 서비스가 도메인 에러로 매핑하게 한다.
-        //   (/me 등 보호 리소스의 401만 refresh 재시도한다. /refresh는 분리 인스턴스라 이 훅을 안 탄다.)
-        if (
-          /\/api\/v1\/auth\/(login|signup|logout|email\/)/.test(request.url)
-        ) {
+        // 인증 없이 호출하는(=Bearer 비보호) auth 엔드포인트의 401은 "토큰 만료"가 아니라
+        //   자격증명/요청 자체의 실패다 → refresh 재시도 대상에서 제외하고 원래 401을 흘려보내
+        //   서비스가 도메인 에러로 매핑하게 한다.
+        //   대상(openapi security 없음): login / signup / email/send-code / email/verify.
+        //   ⚠️ logout·me는 Bearer 보호(security: HTTPBearer)라 제외하지 않는다 — access 만료 시
+        //      refresh 후 재시도해야 logout이 실제로 쿠키를 무효화한다(미재시도 시 재로그인 회귀).
+        //   (/refresh는 분리 인스턴스라 이 훅을 안 탄다.)
+        if (/\/api\/v1\/auth\/(login|signup|email\/)/.test(request.url)) {
           return response;
         }
 
