@@ -5,24 +5,28 @@ const accentBorder =
 const canvasOverlay =
   'color-mix(in srgb, token(colors.bg.canvas) 68%, transparent)';
 
+// TODO(SURVEY-FE-001/002): 인트로/진행 화면이 공유하는 배경 스타일.
+// 추후 survey 공통 layout/style 파일로 분리해 intro 전용 styles 파일의 책임을 정리한다.
+export const surveyBackgroundPageStyle = css({
+  position: 'relative',
+  flex: '1',
+  overflow: 'hidden',
+  bg: 'bg.canvas',
+  backgroundImage: 'url("/images/survey_bg.png")',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: 'cover',
+  _before: {
+    content: '""',
+    position: 'absolute',
+    inset: '0',
+    background: `radial-gradient(circle at center, transparent, ${canvasOverlay} 66%)`,
+    pointerEvents: 'none',
+  },
+});
+
 export const surveyIntroStyles = {
-  page: css({
-    position: 'relative',
-    flex: '1',
-    overflow: 'hidden',
-    bg: 'bg.canvas',
-    backgroundImage: 'url("/images/survey_bg.png")',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: 'cover',
-    _before: {
-      content: '""',
-      position: 'absolute',
-      inset: '0',
-      background: `radial-gradient(circle at center, transparent, ${canvasOverlay} 66%)`,
-      pointerEvents: 'none',
-    },
-  }),
+  page: surveyBackgroundPageStyle,
   content: css({
     position: 'relative',
     zIndex: 'raised',

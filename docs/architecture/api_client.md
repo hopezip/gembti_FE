@@ -4,8 +4,8 @@
 
 - 컴포넌트에서 fetch/ky 직접 호출 금지. 기본 호출 경로는 자동 생성된 `src/lib/api/` 함수. `src/services/`는 필요 시 도메인 단위로 조합하는 **선택 레이어**(없어도 됨)
 - `docs/03-api/openapi.json`, `src/types/api.ts`, `src/lib/api/*.ts`, `src/mocks/handlers/*.ts`는 자동 생성 → 직접 편집 금지
-- HTTP 클라이언트는 ky 단일 인스턴스(`src/lib/ky.ts`), `credentials: 'include'`로 쿠키 자동 전송
-- MSW로 개발 (`VITE_USE_MOCK=true`), 실서버 전환 시 false
+- HTTP 클라이언트는 ky 단일 인스턴스(`src/lib/ky.ts`), `credentials: 'include'`로 쿠키 자동 전송 + access는 `Authorization: Bearer` 부착(하이브리드, auth.md)
+- MSW로 개발 (`NEXT_PUBLIC_USE_MOCK=true`). ⚠️ **auth(`/api/v1/auth/*`)는 실서버(gembti.cloud) passthrough**(LOGIN-FE-006, 핸들러 미등록 + `onUnhandledRequest:'bypass'`). steam/games/home은 mock. `NEXT_PUBLIC_API_BASE_URL`로 대상 지정.
 
 ## 폴더/파일 위치
 
@@ -59,7 +59,7 @@ const data = await fetch('/api/users').then(r => r.json());
 
 // ❌ 자동 생성 파일 직접 편집 (src/lib/api/users.ts 손수 수정)
 
-// ❌ Authorization 헤더를 클라이언트에서 임의 조립 (쿠키 인증이므로 불필요)
+// ❌ 컴포넌트에서 Authorization 헤더를 임의 조립 (access Bearer 부착은 ky boundary 전담)
 ```
 
 ## 관련 문서

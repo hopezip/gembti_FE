@@ -23,12 +23,8 @@ export function LoginPage() {
   // 다른 화면(예: 회원가입 완료)에서 넘긴 1회성 안내 문구. 가입 직후 로그인 유도에 사용한다.
   const notice = (location.state as { notice?: string } | null)?.notice ?? null;
 
-  const handleSuccess = ({ user, tokens }: LoginResponse) => {
-    setSession({
-      user,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    });
+  const handleSuccess = ({ user, accessToken }: LoginResponse) => {
+    setSession({ user, accessToken });
 
     // querystring redirect 우선, 없으면 가드가 넘긴 state.redirect.
     const stateRedirect =
