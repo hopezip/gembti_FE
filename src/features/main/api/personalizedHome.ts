@@ -53,7 +53,9 @@ interface PersonalizedHomeResponseRaw {
     user_interest_tags: string[];
     recommended_games: PersonalizedGameRaw[];
     new_releases: HomeGameRaw[];
-    recommendation_profile: RecommendationProfileRaw;
+    // 기존 실서버 계약엔 없는 추가 필드(REC-FE-002 mock 보강). 실서버가 옛 형태로 내려와도
+    // 매핑이 깨지지 않도록 optional로 둔다(없으면 매핑에서 기본값으로 채움).
+    recommendation_profile?: RecommendationProfileRaw;
   };
 }
 
@@ -136,11 +138,14 @@ function mapPersonalizedHome(
     userInterestTags: user_interest_tags,
     recommendedGames: recommended_games.map(mapPersonalizedGame),
     newReleases: new_releases.map(mapHomeGame),
+    // recommendation_profile은 실서버 옛 계약엔 없을 수 있다(optional). 없으면 기본값으로 채워
+    // 매핑 예외를 방지한다 — 이 쿼리를 공유하는 MainPage 개인화 홈까지 동반 에러로 떨어지지 않도록.
+    // 빈 값은 Hero가 조건부 렌더로 자연히 숨긴다(빈 칩 그룹·캡션 미노출).
     recommendationProfile: {
-      likedMeta: recommendation_profile.liked_meta,
-      challengeTags: recommendation_profile.challenge_tags,
-      challengeMeta: recommendation_profile.challenge_meta,
-      lastUpdatedText: recommendation_profile.last_updated_text,
+      likedMeta: recommendation_profile?.liked_meta ?? '',
+      challengeTags: recommendation_profile?.challenge_tags ?? [],
+      challengeMeta: recommendation_profile?.challenge_meta ?? '',
+      lastUpdatedText: recommendation_profile?.last_updated_text ?? '',
     },
   };
 }
