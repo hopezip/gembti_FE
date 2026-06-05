@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Image from 'next/image';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
@@ -386,11 +385,15 @@ export function ProfileEditPage() {
                 })}
               >
                 {profile.avatarUrl ? (
-                  <Image
+                  // biome-ignore lint/performance/noImgElement: 아바타는 외부 URL로 next/image 도메인 설정 불가
+                  <img
                     src={profile.avatarUrl}
                     alt="preview"
-                    fill
-                    className={css({ objectFit: 'cover' })}
+                    className={css({
+                      w: 'full',
+                      h: 'full',
+                      objectFit: 'cover',
+                    })}
                   />
                 ) : (
                   initials

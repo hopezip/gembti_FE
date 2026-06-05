@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Image from 'next/image';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import { useAuthStore } from '@/lib/store/useAuthStore';
@@ -95,11 +94,11 @@ export function ProfileHeader({ profile }: Props) {
         })}
       >
         {avatarUrl ? (
-          <Image
+          // biome-ignore lint/performance/noImgElement: 아바타는 외부 URL로 next/image 도메인 설정 불가
+          <img
             src={avatarUrl}
             alt={nickname}
-            fill
-            className={css({ objectFit: 'cover' })}
+            className={css({ w: 'full', h: 'full', objectFit: 'cover' })}
           />
         ) : (
           <>
