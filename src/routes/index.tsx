@@ -5,6 +5,7 @@ import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
+import { SurveyIntroPage } from './SurveyIntroPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -36,7 +37,8 @@ const mvpRoutes: RouteDef[] = [
     path: '/onboarding/steam/result',
     access: 'Auth',
   },
-  { title: '설문 인트로', path: '/survey/intro', access: 'Auth' },
+  // SURVEY-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
+  { title: '설문 인트로', path: '/survey/intro', access: 'Public' },
   { title: '설문 진행', path: '/survey', access: 'Auth' },
   { title: '설문 결과', path: '/survey/result', access: 'Auth' },
   { title: '검색', path: '/search', access: 'Public' },
@@ -62,6 +64,7 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  if (path === '/survey/intro') return <SurveyIntroPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 
