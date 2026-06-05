@@ -59,68 +59,57 @@ describe('loginSchema', () => {
   });
 });
 
-describe('signupStep1Schema', () => {
+describe('signupStep1Schema (LOGIN-FE-006: 10자+특수문자, 약관 2개)', () => {
   // 모든 필드가 유효한 기준 입력(각 케이스에서 일부만 덮어쓴다).
   const valid: SignupStep1Input = {
     email: 'new_user@example.com',
-    password: 'abcde123', // 8자 + 영문 + 숫자
-    passwordConfirm: 'abcde123',
-    ageOver14: true,
+    password: 'abcde1234!', // 10자 + 특수문자
+    passwordConfirm: 'abcde1234!',
+    termsAgreed: true,
+    privacyAgreed: true,
   };
 
   it('유효한 입력을 통과시킨다', () => {
     expect(signupStep1Schema.safeParse(valid).success).toBe(true);
   });
 
-  it('비밀번호가 정확히 8자면 통과한다(경계)', () => {
+  it('비밀번호가 정확히 10자 + 특수문자면 통과한다(경계)', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      password: 'abcdef12', // 8자
-      passwordConfirm: 'abcdef12',
+      password: 'abcd1234!@', // 10자
+      passwordConfirm: 'abcd1234!@',
     });
     expect(result.success).toBe(true);
   });
 
-  it('비밀번호가 7자면 실패한다(경계 아래)', () => {
+  it('비밀번호가 9자면 실패한다(경계 아래)', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      password: 'abcde12', // 7자
-      passwordConfirm: 'abcde12',
+      password: 'abc1234!@', // 9자(특수문자 있음)
+      passwordConfirm: 'abc1234!@',
     });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
         result.error.issues.some(
-          (i) => i.message === '비밀번호는 8자 이상이어야 합니다',
+          (i) => i.message === '비밀번호는 10자 이상이어야 합니다',
         ),
       ).toBe(true);
     }
   });
 
-  it('비밀번호에 영문이 없으면 실패한다', () => {
+  it('비밀번호에 특수문자가 없으면 실패한다', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      password: '12345678',
-      passwordConfirm: '12345678',
+      password: 'abcdefghij', // 10자지만 특수문자 없음
+      passwordConfirm: 'abcdefghij',
     });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
-        result.error.issues.some((i) => i.message === '영문을 포함해야 합니다'),
-      ).toBe(true);
-    }
-  });
-
-  it('비밀번호에 숫자가 없으면 실패한다', () => {
-    const result = signupStep1Schema.safeParse({
-      ...valid,
-      password: 'abcdefgh',
-      passwordConfirm: 'abcdefgh',
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(
-        result.error.issues.some((i) => i.message === '숫자를 포함해야 합니다'),
+        result.error.issues.some(
+          (i) => i.message === '특수문자를 1개 이상 포함해야 합니다',
+        ),
       ).toBe(true);
     }
   });
@@ -128,7 +117,7 @@ describe('signupStep1Schema', () => {
   it('비밀번호 확인이 다르면 실패한다', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      passwordConfirm: 'different12',
+      passwordConfirm: 'different1!',
     });
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -140,24 +129,39 @@ describe('signupStep1Schema', () => {
     }
   });
 
-  it('만 14세 미동의 시 실패한다', () => {
+  it('이용약관 미동의 시 실패한다', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      ageOver14: false,
+      termsAgreed: false,
     });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
         result.error.issues.some(
-          (i) => i.message === '만 14세 이상만 가입할 수 있어요',
+          (i) => i.message === '이용약관에 동의해주세요',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('개인정보 처리방침 미동의 시 실패한다', () => {
+    const result = signupStep1Schema.safeParse({
+      ...valid,
+      privacyAgreed: false,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.message === '개인정보 처리방침에 동의해주세요',
         ),
       ).toBe(true);
     }
   });
 });
 
-describe('nicknameSchema', () => {
-  it('한글 2~12자를 통과시킨다', () => {
+describe('nicknameSchema (2~8자)', () => {
+  it('한글 2~8자를 통과시킨다', () => {
     expect(nicknameSchema.safeParse('게임러버').success).toBe(true);
   });
 
@@ -175,12 +179,12 @@ describe('nicknameSchema', () => {
     }
   });
 
-  it('13자는 실패한다(경계 위)', () => {
-    const result = nicknameSchema.safeParse('가나다라마바사아자차카타파');
+  it('9자는 실패한다(경계 위)', () => {
+    const result = nicknameSchema.safeParse('가나다라마바사아자');
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0].message).toBe(
-        '닉네임은 12자 이하여야 합니다',
+        '닉네임은 8자 이하여야 합니다',
       );
     }
   });
@@ -198,7 +202,7 @@ describe('nicknameSchema', () => {
   });
 
   it('공백이 들어가면 실패한다', () => {
-    expect(nicknameSchema.safeParse('game over').success).toBe(false);
+    expect(nicknameSchema.safeParse('game ovr').success).toBe(false);
   });
 });
 
@@ -207,7 +211,7 @@ describe('signupStep2Schema', () => {
     code: '123456',
     nickname: '테스트유저',
     birth: '2000-01-01',
-    gender: 'unspecified',
+    gender: 'other',
   };
 
   it('유효한 입력을 통과시킨다', () => {
@@ -232,14 +236,14 @@ describe('signupStep2Schema', () => {
     }
   });
 
-  it('성별 enum 외 값은 실패한다', () => {
+  it('성별 enum 외 값(unspecified)은 실패한다', () => {
     expect(
-      signupStep2Schema.safeParse({ ...valid, gender: 'other' }).success,
+      signupStep2Schema.safeParse({ ...valid, gender: 'unspecified' }).success,
     ).toBe(false);
   });
 
-  it('male/female/unspecified를 모두 통과시킨다', () => {
-    for (const gender of ['male', 'female', 'unspecified'] as const) {
+  it('male/female/other를 모두 통과시킨다', () => {
+    for (const gender of ['male', 'female', 'other'] as const) {
       expect(signupStep2Schema.safeParse({ ...valid, gender }).success).toBe(
         true,
       );

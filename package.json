@@ -9,11 +9,12 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "prepare": "panda codegen --silent",
-    "dev": "panda codegen && next dev",
-    "build": "panda codegen && next build",
+    "codegen": "panda codegen && openapi-typescript docs/03-api/openapi.json -o src/types/api.ts",
+    "prepare": "pnpm codegen",
+    "dev": "pnpm codegen && next dev",
+    "build": "pnpm codegen && next build",
     "start": "next start",
-    "type-check": "panda codegen && tsc --noEmit",
+    "type-check": "pnpm codegen && tsc --noEmit",
     "lint": "biome check .",
     "format": "biome check --write .",
     "test": "vitest run --passWithNoTests",

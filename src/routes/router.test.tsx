@@ -52,9 +52,13 @@ describe('라우트 골격', () => {
     // 개인화 분기: status==='authenticated' && hasCompletedSurvey일 때만 개인화 홈.
     // 데이터 로딩과 무관하게 개인화 Hero 카피·추천 섹션 제목은 항상 렌더되므로 그것으로 검증한다.
     useAuthStore.getState().setSession({
-      user: { id: 'u_2', nickname: '설문완료유저', hasCompletedSurvey: true },
+      user: {
+        id: 2,
+        email: 'survey@gambti.com',
+        nickname: '설문완료유저',
+        hasCompletedSurvey: true,
+      },
       accessToken: 'mock-access',
-      refreshToken: 'mock-refresh',
     });
     renderAt('/');
     // 개인화 Hero 헤드라인 + 개인화 추천 섹션 제목이 보인다.
@@ -73,9 +77,13 @@ describe('라우트 골격', () => {
   it('로그인했어도 설문 미완이면 메인(/)이 게스트 홈으로 떨어진다(MAIN-FE-006)', () => {
     // hasCompletedSurvey=false면 로그인 상태라도 개인화가 아닌 게스트 홈을 렌더한다.
     useAuthStore.getState().setSession({
-      user: { id: 'u_1', nickname: '테스트유저', hasCompletedSurvey: false },
+      user: {
+        id: 1,
+        email: 'test@gambti.com',
+        nickname: '테스트유저',
+        hasCompletedSurvey: false,
+      },
       accessToken: 'mock-access',
-      refreshToken: 'mock-refresh',
     });
     renderAt('/');
     // 게스트 Hero 카피가 보이고, 개인화 Hero/추천 제목은 없다.
@@ -182,7 +190,7 @@ describe('라우트 골격', () => {
     // 필수표시 `*`/"비밀번호 확인" 중복으로 label 매칭이 취약해 placeholder로 입력을 한정한다.
     expect(screen.getByPlaceholderText('name@example.com')).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText('영문·숫자 포함 8자 이상'),
+      screen.getByPlaceholderText('특수문자 포함 10자 이상'),
     ).toBeInTheDocument();
     expect(screen.getByPlaceholderText('비밀번호 재입력')).toBeInTheDocument();
     // 제출 버튼(STEP1)
@@ -195,9 +203,13 @@ describe('라우트 골격', () => {
     // data router(createMemoryRouter)는 jsdom에서 Navigate 시 fetch/AbortSignal 비호환 이슈가 있어,
     // ProtectedRoute 테스트와 동일하게 MemoryRouter(non-data) + PublicOnlyRoute로 가드만 검증한다.
     useAuthStore.getState().setSession({
-      user: { id: 'u_1', nickname: '테스트유저', hasCompletedSurvey: false },
+      user: {
+        id: 1,
+        email: 'test@gambti.com',
+        nickname: '테스트유저',
+        hasCompletedSurvey: false,
+      },
       accessToken: 'mock-access',
-      refreshToken: 'mock-refresh',
     });
 
     render(
