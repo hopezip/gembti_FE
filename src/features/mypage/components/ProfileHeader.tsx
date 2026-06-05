@@ -14,12 +14,10 @@ export function ProfileHeader({ profile }: Props) {
 
   const statItems = [
     { label: '보유', value: stats.following },
-    { label: '플레이중', value: stats.followers },
     {
       label: '총 플레이 시간(시간)',
       value: stats.totalPlayHours.toLocaleString(),
     },
-    { label: '리뷰', value: stats.reviewCount },
   ];
 
   return (
