@@ -4,40 +4,26 @@ import ky from 'ky';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
-import { Tag } from '@/components/ui/Tag';
 import type { MockLibraryItem } from '@/mocks/handlers/mypage';
 
-type LibraryTab = 'all' | 'playing' | 'rated';
-type LibrarySort = 'recent' | 'playtime' | 'rating';
-
-const TABS: { key: LibraryTab; label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'playing', label: '플레이중' },
-  { key: 'rated', label: '내 별점' },
-];
+type LibrarySort = 'recent' | 'oldest';
 
 const SORT_OPTIONS: { key: LibrarySort; label: string }[] = [
   { key: 'recent', label: '최근 플레이순' },
-  { key: 'playtime', label: '플레이 시간순' },
-  { key: 'rating', label: '별점순' },
+  { key: 'oldest', label: '오래된 순' },
 ];
 
 interface LibraryResponse {
   total: number;
   items: MockLibraryItem[];
   hasMore: boolean;
+  allGenres: string[];
 }
 
 function LibraryGameCard({ item }: { item: MockLibraryItem }) {
-  const statusLabel: Record<MockLibraryItem['status'], string> = {
-    playing: '플레이 중',
-    cleared: '클리어',
-    unplayed: '미플레이',
-    dropped: '중단',
-  };
-
   return (
     <GameCard padding="none" interactive>
       <div
@@ -55,21 +41,17 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
       >
         카버쥬얼
       </div>
-
       <div className={css({ px: '3', pt: '2.5', pb: '3' })}>
-        <div
+        <span
           className={css({
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            fontSize: 'xs',
+            color: 'fg.subtle',
+            display: 'block',
             mb: '1',
           })}
         >
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-            {item.genres.join(' · ')}
-          </span>
-          <Tag tone="guide">Steam</Tag>
-        </div>
+          {item.genres.join(' · ')}
+        </span>
         <p
           className={css({
             fontWeight: 'semibold',
@@ -86,8 +68,8 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
         <div
           className={css({
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
+            alignItems: 'center',
             mb: '0.5',
           })}
         >
@@ -106,34 +88,18 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
             </span>
           )}
         </div>
-        <div
-          className={css({
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          })}
-        >
-          <span
-            className={css({
-              fontSize: 'xs',
-              color: item.status === 'playing' ? 'accent.fg' : 'fg.subtle',
-            })}
-          >
-            {statusLabel[item.status]}
+        {item.lastPlayedAt && (
+          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+            {item.lastPlayedAt}
           </span>
-          {item.lastPlayedAt && (
-            <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-              {item.lastPlayedAt}
-            </span>
-          )}
-        </div>
+        )}
       </div>
     </GameCard>
   );
 }
 
 export function LibrarySection() {
-  const [activeTab, setActiveTab] = useState<LibraryTab>('all');
+  const [genre, setGenre] = useState('');
   const [sort, setSort] = useState<LibrarySort>('recent');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -141,11 +107,11 @@ export function LibrarySection() {
   const [allItems, setAllItems] = useState<MockLibraryItem[]>([]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['mypage', 'library', activeTab, sort, search, page],
+    queryKey: ['mypage', 'library', genre, sort, search, page],
     queryFn: () =>
       ky
         .get('/api/mypage/library', {
-          searchParams: { tab: activeTab, sort, search, page },
+          searchParams: { genre, sort, search, page },
         })
         .json<LibraryResponse>(),
     placeholderData: (prev) => prev,
@@ -164,12 +130,9 @@ export function LibrarySection() {
     });
   }, [data, page]);
 
-  function handleTabChange(tab: LibraryTab) {
-    if (tab === activeTab) return;
-    setActiveTab(tab);
+  function handleGenreChange(g: string) {
+    setGenre(g);
     setPage(1);
-    setSearch('');
-    setSearchInput('');
   }
 
   function handleSortChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -182,6 +145,8 @@ export function LibrarySection() {
     setSearch(searchInput.trim());
     setPage(1);
   }
+
+  const genres = data?.allGenres ?? [];
 
   return (
     <section>
@@ -230,42 +195,39 @@ export function LibrarySection() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
           mb: '4',
+          gap: '3',
+          flexWrap: 'wrap',
         })}
       >
-        {/* 탭 + 정렬 */}
-        <div className={css({ display: 'flex', alignItems: 'center' })}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => handleTabChange(tab.key)}
-              className={css({
-                px: '3',
-                py: '2',
-                fontSize: 'sm',
-                fontWeight: activeTab === tab.key ? 'semibold' : 'normal',
-                color: activeTab === tab.key ? 'accent.fg' : 'fg.subtle',
-                bg: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid',
-                borderColor:
-                  activeTab === tab.key ? 'accent.default' : 'transparent',
-                cursor: 'pointer',
-                mb: '-1px',
-                _hover: { color: 'fg.default' },
-              })}
+        {/* 장르 Chip + 정렬 */}
+        <div
+          className={css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2',
+            flexWrap: 'wrap',
+          })}
+        >
+          <Chip
+            data-state={genre === '' ? 'on' : undefined}
+            onClick={() => handleGenreChange('')}
+          >
+            전체
+          </Chip>
+          {genres.map((g) => (
+            <Chip
+              key={g}
+              data-state={genre === g ? 'on' : undefined}
+              onClick={() => handleGenreChange(g)}
             >
-              {tab.label}
-            </button>
+              {g}
+            </Chip>
           ))}
           <select
             value={sort}
             onChange={handleSortChange}
             className={css({
-              ml: '3',
               px: '2',
               py: '1',
               fontSize: 'xs',
@@ -276,7 +238,6 @@ export function LibrarySection() {
               borderRadius: 'md',
               cursor: 'pointer',
               outline: 'none',
-              mb: '2',
             })}
           >
             {SORT_OPTIONS.map((o) => (
@@ -290,12 +251,7 @@ export function LibrarySection() {
         {/* 검색 */}
         <form
           onSubmit={handleSearch}
-          className={css({
-            display: 'flex',
-            gap: '1',
-            alignItems: 'center',
-            mb: '2',
-          })}
+          className={css({ display: 'flex', gap: '1', alignItems: 'center' })}
         >
           <Input
             size="sm"
