@@ -33,9 +33,11 @@ export function BasicInfoCard({ profile }: Props) {
 
   function startEdit(field: EditableField) {
     setEditingField(field);
-    setFieldValue(
-      field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? ''),
-    );
+    let initial =
+      field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? '');
+    // date input은 YYYY-MM-DD 형식 필요 (저장값은 YYYY.MM.DD)
+    if (field === 'birthdate') initial = initial.replace(/\./g, '-');
+    setFieldValue(initial);
     setNicknameCheck('idle');
   }
 
@@ -56,10 +58,15 @@ export function BasicInfoCard({ profile }: Props) {
 
   function handleSave() {
     if (!editingField) return;
-    const value =
-      editingField === 'gender'
-        ? fieldValue || null
-        : fieldValue.trim() || null;
+    let value: string | null;
+    if (editingField === 'gender') {
+      value = fieldValue || null;
+    } else if (editingField === 'birthdate') {
+      // date input → YYYY.MM.DD 형식으로 복원
+      value = fieldValue ? fieldValue.replace(/-/g, '.') : null;
+    } else {
+      value = fieldValue.trim() || null;
+    }
     mutation.mutate({ [editingField]: value });
   }
 
@@ -132,16 +139,6 @@ export function BasicInfoCard({ profile }: Props) {
     py: '0.5',
     flexShrink: 0,
     _hover: { opacity: '0.7' },
-  });
-  const badgeCss = css({
-    fontSize: 'xs',
-    px: '2',
-    py: '0.5',
-    bg: 'bg.surfaceRaised',
-    border: '1px solid',
-    borderColor: 'border.emphasized',
-    borderRadius: 'sm',
-    color: 'fg.default',
   });
 
   return (
@@ -320,9 +317,9 @@ export function BasicInfoCard({ profile }: Props) {
           {editingField === 'birthdate' ? (
             <>
               <input
+                type="date"
                 value={fieldValue}
                 onChange={(e) => setFieldValue(e.target.value)}
-                placeholder="YYYY.MM.DD"
                 className={inputCss}
                 // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
                 autoFocus
@@ -417,15 +414,6 @@ export function BasicInfoCard({ profile }: Props) {
               )}
             </>
           )}
-        </div>
-
-        {/* 인증 */}
-        <div className={rowCss}>
-          <span className={labelCss}>인증</span>
-          <div className={css({ display: 'flex', gap: '2', flex: 1 })}>
-            <span className={badgeCss}>이메일</span>
-            {profile.steamConnected && <span className={badgeCss}>Steam</span>}
-          </div>
         </div>
       </div>
     </div>

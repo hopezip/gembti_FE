@@ -5,8 +5,8 @@ interface Props {
   personality: MockUserProfile['personality'];
 }
 
-const CX = 110;
-const CY = 110;
+const CX = 128;
+const CY = 128;
 const R = 82;
 const LEVELS = [0.33, 0.67, 1.0];
 
