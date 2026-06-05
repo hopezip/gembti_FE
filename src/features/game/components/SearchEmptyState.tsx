@@ -1,6 +1,6 @@
 import { css } from 'styled-system/css';
 import type { MockGame } from '@/mocks/handlers/games';
-import { GameSearchCard } from './GameSearchCard';
+import { GameSummaryCard } from './GameSummaryCard';
 
 interface Props {
   query: string;
@@ -131,7 +131,13 @@ export function SearchEmptyState({
             })}
           >
             {altGames.slice(0, 4).map((game) => (
-              <GameSearchCard key={game.id} game={game} />
+              <GameSummaryCard
+                key={game.id}
+                title={game.title}
+                genres={game.genres}
+                rating={game.rating}
+                thumbnailUrl={game.coverImageUrl}
+              />
             ))}
           </div>
         </div>
