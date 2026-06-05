@@ -41,14 +41,16 @@ src/
 | 2 | 로그인 | `/login` | Public only | 로그인 사용자는 `/`로 리다이렉트 |
 | 3 | 회원가입 | `/signup` | Public only | 이메일 회원가입 / 이메일 인증 / 닉네임 중복확인 |
 | 4 | Steam OAuth 콜백 | `/auth/steam/callback` | Technical | 백엔드 OAuth 처리 방식 확정 전까지 후보 라우트 |
-| 5 | 스팀 연동 | `/onboarding/steam` | Auth | Steam 연동 안내 / 연동하기 / 건너뛰기 |
-| 6 | 스팀 연동 결과 | `/onboarding/steam/result` | Auth | 연동 성공 / 실패 / 비공개 상태 안내 |
+| 5 | 스팀 연동 | `/onboarding/steam` | Auth | **단일 플로우** — 연동 안내 / 연동하기 / 로딩 / 결과(성공·비공개·실패)를 한 페이지 step으로 처리 |
+| ~~6~~ | ~~스팀 연동 결과~~ | ~~`/onboarding/steam/result`~~ | — | **제거**(STEAM-INTER-FE-001) — 결과는 별도 라우트가 아니라 `/onboarding/steam`의 result step으로 통합. cross-route 왕복이 냈던 되돌이 버그 제거 |
 | 7 | 설문 인트로 | `/survey/intro` | Auth | 설문 시작 안내 |
 | 8 | 설문 진행 | `/survey` | Auth | 설문 문항 진행 |
 | 9 | 설문 결과 | `/survey/result` | Auth | 성향 분석 결과 / 추천 게임 |
 | 10 | 검색 | `/search` | Public | 검색창 / 최근 검색 / 필터 / 검색 실패 처리 |
 | 11 | 게임 추천 | `/recommendations` | Public | 추천 게임 목록 / 인기 게임 / 세일 게임 |
 | 12 | 게임별 상세 | `/games/:gameId` | Public | 게임 정보 / 리뷰 / 위시리스트 / 구매 링크 |
+
+> **구현 메모(STEAM-INTER-FE-001)**: `/onboarding/steam`(단일 플로우 intro/syncing/result·SteamOnboardingPage)과 `/auth/steam/callback`(콜백·SteamCallbackPage) 2개 호스트가 `src/routes/index.tsx` `pageElement()`에 배선됨. `/onboarding/steam/result`는 제거(결과를 result step으로 통합). 컴포넌트 6 + 훅 3은 `src/features/onboarding/`, 서비스/설정/mock은 `src/services/steam.ts`·`src/config/steam.ts`·`src/mocks/handlers/steam.ts`. 화면 전이·`?scenario` mock·REQ 갭(003~006,008)은 `src/features/onboarding/README.md` 참조. **진입 배선 적용됨**: 회원가입 완료(`SignupPage`) → `setSession`(자동 로그인) → `/onboarding/steam`(origin='steamSignup'). LOGIN-FE-005의 "가입 후 /login" 결정을 자동 로그인으로 전환(auth 영역 변경).
 
 ### 추가기능 라우트
 
@@ -79,7 +81,7 @@ src/
 | 순서 | 단계 | 라우트 |
 |---:|---|---|
 | 1 | 기본 라우터 + 가드 | `/`, `/login` |
-| 2 | 인증/온보딩 | `/signup`, `/auth/steam/callback`, `/onboarding/steam`, `/onboarding/steam/result` |
+| 2 | 인증/온보딩 | `/signup`, `/auth/steam/callback`, `/onboarding/steam` |
 | 3 | 설문/성향 | `/survey/intro`, `/survey`, `/survey/result` |
 | 4 | 게임 탐색 | `/search`, `/recommendations`, `/games/:gameId` |
 | 5 | 마이페이지 | `/mypage`, `/mypage/edit`, `/mypage/follow` |

@@ -5,6 +5,8 @@ import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
+import { SteamCallbackPage } from './SteamCallbackPage';
+import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -31,11 +33,6 @@ const mvpRoutes: RouteDef[] = [
     access: 'Technical',
   },
   { title: '스팀 연동', path: '/onboarding/steam', access: 'Auth' },
-  {
-    title: '스팀 연동 결과',
-    path: '/onboarding/steam/result',
-    access: 'Auth',
-  },
   { title: '설문 인트로', path: '/survey/intro', access: 'Auth' },
   { title: '설문 진행', path: '/survey', access: 'Auth' },
   { title: '설문 결과', path: '/survey/result', access: 'Auth' },
@@ -62,6 +59,9 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
+  if (path === '/onboarding/steam') return <SteamOnboardingPage />;
+  if (path === '/auth/steam/callback') return <SteamCallbackPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 
