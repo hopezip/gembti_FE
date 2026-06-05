@@ -3,6 +3,7 @@ import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
 import { MyPage } from './MyPage';
+import { ProfileEditPage } from './ProfileEditPage';
 import { NotFoundPage } from './NotFoundPage';
 import { ProfileEditPage } from './ProfileEditPage';
 import { SearchPage } from './SearchPage';

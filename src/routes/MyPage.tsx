@@ -3,11 +3,6 @@ import ky from 'ky';
 import { css } from 'styled-system/css';
 import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
-import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
-import { PersonalityRadar } from '@/features/mypage/components/PersonalityRadar';
-import { WishlistSection } from '@/features/mypage/components/WishlistSection';
-import { LibrarySection } from '@/features/mypage/components/LibrarySection';
-import { ActivitySection } from '@/features/mypage/components/ActivitySection';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 export function MyPage() {
@@ -102,30 +97,8 @@ export function MyPage() {
         gap: '8',
       })}
     >
-      {/* 프로필 헤더 */}
       <ProfileHeader profile={profile} />
-
-      {/* 정보 3컬럼 */}
-      <div
-        className={css({
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '4',
-        })}
-      >
-        <BasicInfoCard profile={profile} />
-        <SteamConnectCard profile={profile} />
-        <PersonalityRadar personality={profile.personality} />
-      </div>
-
-      {/* 위시리스트 */}
-      <WishlistSection />
-
-      {/* 라이브러리 */}
-      <LibrarySection />
-
-      {/* 활동 */}
-      <ActivitySection />
+      <BasicInfoCard profile={profile} />
     </div>
   );
 }
