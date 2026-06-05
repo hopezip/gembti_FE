@@ -328,6 +328,16 @@ const MOCK_FOLLOWERS: MockFollowUser[] = [
 ];
 
 export const mypageHandlers = [
+  http.get('/api/users/check-nickname', ({ request }) => {
+    const url = new URL(request.url);
+    const nickname = url.searchParams.get('nickname') ?? '';
+    // 현재 사용 중인 닉네임은 중복으로 처리
+    const takenNicknames = [MOCK_PROFILE.nickname];
+    const available =
+      nickname.trim().length >= 2 && !takenNicknames.includes(nickname.trim());
+    return HttpResponse.json({ available });
+  }),
+
   http.get('/api/mypage/profile', () => {
     return HttpResponse.json(MOCK_PROFILE);
   }),

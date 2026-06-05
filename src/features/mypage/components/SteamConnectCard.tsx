@@ -195,16 +195,6 @@ export function SteamConnectCard({ profile }: Props) {
               연동 해제
             </button>
           </div>
-
-          <p
-            className={css({
-              fontSize: '11px',
-              color: 'fg.subtle',
-              fontFamily: 'mono',
-            })}
-          >
-            USER-1 · Steam 닉/아바타/허브 동기화/재갱신
-          </p>
         </>
       ) : (
         <div

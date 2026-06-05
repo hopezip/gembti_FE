@@ -105,10 +105,7 @@ export function MyPage() {
       >
         <BasicInfoCard profile={profile} />
         <SteamConnectCard profile={profile} />
-        <PersonalityRadar
-          personality={profile.personality}
-          syncedAt={profile.steamSyncedAt}
-        />
+        <PersonalityRadar personality={profile.personality} />
       </div>
     </div>
   );

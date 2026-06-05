@@ -3,7 +3,6 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
   personality: MockUserProfile['personality'];
-  syncedAt?: string | null;
 }
 
 const CX = 110;
@@ -44,19 +43,11 @@ const ACCENT_COLOR = '#e8622a';
 const GRID_COLOR = 'rgba(255,255,255,0.12)';
 const AXIS_COLOR = 'rgba(255,255,255,0.08)';
 
-export function PersonalityRadar({ personality, syncedAt }: Props) {
+export function PersonalityRadar({ personality }: Props) {
   const valuePts = personality
     .map((p, i) => pt(i, p.value / 10))
     .map((p) => `${p.x},${p.y}`)
     .join(' ');
-
-  const syncedStr = syncedAt
-    ? new Date(syncedAt).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-    : null;
 
   return (
     <div
@@ -220,22 +211,6 @@ export function PersonalityRadar({ personality, syncedAt }: Props) {
           ))}
         </div>
       </div>
-
-      {/* 하단 메타 */}
-      {syncedStr && (
-        <p
-          className={css({
-            fontSize: '11px',
-            color: 'fg.subtle',
-            mt: '3',
-            pt: '3',
-            borderTop: '1px solid',
-            borderColor: 'border.default',
-          })}
-        >
-          user_stats 최신 레코드 · 갱신 {syncedStr} — USER-1
-        </p>
-      )}
     </div>
   );
 }

@@ -4,6 +4,8 @@ import ky from 'ky';
 import { css } from 'styled-system/css';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
+type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
+
 interface Props {
   profile: MockUserProfile;
 }
@@ -17,6 +19,8 @@ export function BasicInfoCard({ profile }: Props) {
   // 현재 인라인 편집 중인 필드
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [fieldValue, setFieldValue] = useState('');
+  const [nicknameCheck, setNicknameCheck] =
+    useState<NicknameCheckStatus>('idle');
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<MockUserProfile>) =>
@@ -32,6 +36,22 @@ export function BasicInfoCard({ profile }: Props) {
     setFieldValue(
       field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? ''),
     );
+    setNicknameCheck('idle');
+  }
+
+  async function checkNickname() {
+    if (!fieldValue.trim()) return;
+    setNicknameCheck('checking');
+    try {
+      const res = await ky
+        .get('/api/users/check-nickname', {
+          searchParams: { nickname: fieldValue.trim() },
+        })
+        .json<{ available: boolean }>();
+      setNicknameCheck(res.available ? 'available' : 'taken');
+    } catch {
+      setNicknameCheck('idle');
+    }
   }
 
   function handleSave() {
@@ -212,17 +232,60 @@ export function BasicInfoCard({ profile }: Props) {
           <span className={labelCss}>닉네임</span>
           {editingField === 'nickname' ? (
             <>
-              <input
-                value={fieldValue}
-                onChange={(e) => setFieldValue(e.target.value)}
-                className={inputCss}
-                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
-                autoFocus
-              />
+              <div
+                className={css({
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flex: 1,
+                  minW: 0,
+                  gap: '1',
+                })}
+              >
+                <input
+                  value={fieldValue}
+                  onChange={(e) => {
+                    setFieldValue(e.target.value);
+                    setNicknameCheck('idle');
+                  }}
+                  className={inputCss}
+                  // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
+                  autoFocus
+                />
+                {nicknameCheck === 'available' && (
+                  <span className={css({ fontSize: 'xs', color: 'green.500' })}>
+                    사용 가능한 닉네임입니다
+                  </span>
+                )}
+                {nicknameCheck === 'taken' && (
+                  <span className={css({ fontSize: 'xs', color: 'danger.fg' })}>
+                    이미 사용 중인 닉네임입니다
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={checkNickname}
+                disabled={nicknameCheck === 'checking' || !fieldValue.trim()}
+                className={css({
+                  fontSize: 'xs',
+                  color: 'fg.default',
+                  bg: 'bg.surfaceRaised',
+                  border: '1px solid',
+                  borderColor: 'border.emphasized',
+                  borderRadius: 'md',
+                  px: '2',
+                  py: '1',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  _disabled: { opacity: '0.5', cursor: 'not-allowed' },
+                })}
+              >
+                {nicknameCheck === 'checking' ? '확인 중...' : '중복 확인'}
+              </button>
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || nicknameCheck !== 'available'}
                 className={saveBtnCss}
               >
                 저장
