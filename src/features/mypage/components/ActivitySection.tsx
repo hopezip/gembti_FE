@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import type {
   MockReviewItem,
   MockChatItem,
@@ -311,16 +312,7 @@ export function ActivitySection() {
           {data?.reviews.length ? (
             <ReviewList reviews={data.reviews} />
           ) : (
-            <p
-              className={css({
-                fontSize: 'xs',
-                color: 'fg.subtle',
-                textAlign: 'center',
-                py: '4',
-              })}
-            >
-              작성한 리뷰가 없습니다
-            </p>
+            <EmptyState type="review" />
           )}
         </ActivityCard>
 
@@ -332,16 +324,7 @@ export function ActivitySection() {
           {data?.chats.length ? (
             <ChatList chats={data.chats} />
           ) : (
-            <p
-              className={css({
-                fontSize: 'xs',
-                color: 'fg.subtle',
-                textAlign: 'center',
-                py: '4',
-              })}
-            >
-              참여 중인 채팅이 없습니다
-            </p>
+            <EmptyState type="party" />
           )}
         </ActivityCard>
 
@@ -353,16 +336,7 @@ export function ActivitySection() {
           {data?.notifications.length ? (
             <NotificationList notifications={data.notifications} />
           ) : (
-            <p
-              className={css({
-                fontSize: 'xs',
-                color: 'fg.subtle',
-                textAlign: 'center',
-                py: '4',
-              })}
-            >
-              새로운 알림이 없습니다
-            </p>
+            <EmptyState type="notification" />
           )}
         </ActivityCard>
       </div>
