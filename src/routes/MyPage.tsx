@@ -5,9 +5,7 @@ import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
 import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
 import { PersonalityRadar } from '@/features/mypage/components/PersonalityRadar';
-import { WishlistSection } from '@/features/mypage/components/WishlistSection';
 import { LibrarySection } from '@/features/mypage/components/LibrarySection';
-import { ActivitySection } from '@/features/mypage/components/ActivitySection';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 export function MyPage() {
@@ -111,9 +109,7 @@ export function MyPage() {
         <PersonalityRadar personality={profile.personality} />
       </div>
 
-      <WishlistSection />
       <LibrarySection />
-      <ActivitySection />
     </div>
   );
 }
