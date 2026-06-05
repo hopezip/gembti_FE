@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Tag } from '@/components/ui/Tag';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
@@ -122,50 +125,6 @@ export function BasicInfoCard({ profile }: Props) {
     flex: 1,
     minW: 0,
   });
-  const inputCss = css({
-    flex: 1,
-    minW: 0,
-    bg: 'bg.surfaceRaised',
-    border: '1px solid',
-    borderColor: 'accent.default',
-    borderRadius: 'md',
-    px: '2',
-    py: '1',
-    fontSize: 'sm',
-    color: 'fg.default',
-    outline: 'none',
-  });
-  const saveBtnCss = css({
-    fontSize: 'xs',
-    color: 'white',
-    bg: 'accent.default',
-    border: 'none',
-    borderRadius: 'md',
-    px: '2',
-    py: '1',
-    cursor: 'pointer',
-    flexShrink: 0,
-    _disabled: { opacity: '0.5', cursor: 'not-allowed' },
-  });
-  const cancelBtnCss = css({
-    fontSize: 'xs',
-    color: 'fg.subtle',
-    bg: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    flexShrink: 0,
-  });
-  const changeBtnCss = css({
-    fontSize: 'xs',
-    color: 'accent.fg',
-    bg: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    px: '1.5',
-    py: '0.5',
-    flexShrink: 0,
-    _hover: { opacity: '0.7' },
-  });
 
   return (
     <div
@@ -197,35 +156,13 @@ export function BasicInfoCard({ profile }: Props) {
           기본 정보
         </span>
         {!isEditMode ? (
-          <button
-            type="button"
-            onClick={() => setIsEditMode(true)}
-            className={css({
-              fontSize: 'xs',
-              color: 'accent.fg',
-              bg: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              _hover: { opacity: '0.7' },
-            })}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsEditMode(true)}>
             편집 &rsaquo;
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            onClick={handleClose}
-            className={css({
-              fontSize: 'xs',
-              color: 'fg.subtle',
-              bg: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              _hover: { opacity: '0.7' },
-            })}
-          >
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             닫기
-          </button>
+          </Button>
         )}
       </div>
 
@@ -234,20 +171,7 @@ export function BasicInfoCard({ profile }: Props) {
         <div className={rowCss}>
           <span className={labelCss}>이메일</span>
           <span className={valueCss}>{profile.email}</span>
-          <span
-            className={css({
-              fontSize: 'xs',
-              color: 'fg.subtle',
-              px: '1.5',
-              py: '0.5',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'sm',
-              flexShrink: 0,
-            })}
-          >
-            잠금
-          </span>
+          <Tag tone="neutral">잠금</Tag>
         </div>
 
         {/* 닉네임 */}
@@ -264,13 +188,14 @@ export function BasicInfoCard({ profile }: Props) {
                   gap: '1',
                 })}
               >
-                <input
+                <Input
+                  size="sm"
                   value={fieldValue}
                   onChange={(e) => {
                     setFieldValue(e.target.value);
                     setNicknameCheck('idle');
                   }}
-                  className={inputCss}
+                  className={css({ flex: 1, minW: 0 })}
                   // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
                   autoFocus
                 />
@@ -285,53 +210,41 @@ export function BasicInfoCard({ profile }: Props) {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={checkNickname}
                 disabled={nicknameCheck === 'checking' || !fieldValue.trim()}
-                className={css({
-                  fontSize: 'xs',
-                  color: 'fg.default',
-                  bg: 'bg.surfaceRaised',
-                  border: '1px solid',
-                  borderColor: 'border.emphasized',
-                  borderRadius: 'md',
-                  px: '2',
-                  py: '1',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  _disabled: { opacity: '0.5', cursor: 'not-allowed' },
-                })}
               >
                 {nicknameCheck === 'checking' ? '확인 중...' : '중복 확인'}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSave}
                 disabled={mutation.isPending || nicknameCheck !== 'available'}
-                className={saveBtnCss}
               >
                 저장
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setEditingField(null)}
-                className={cancelBtnCss}
               >
                 취소
-              </button>
+              </Button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.nickname}</span>
               {isEditMode && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => startEdit('nickname')}
-                  className={changeBtnCss}
                 >
                   변경
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -436,8 +349,9 @@ export function BasicInfoCard({ profile }: Props) {
                   ))}
                 </select>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSave}
                 disabled={
                   mutation.isPending ||
@@ -445,29 +359,28 @@ export function BasicInfoCard({ profile }: Props) {
                   !birthParts.month ||
                   !birthParts.day
                 }
-                className={saveBtnCss}
               >
                 저장
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setEditingField(null)}
-                className={cancelBtnCss}
               >
                 취소
-              </button>
+              </Button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
               {isEditMode && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => startEdit('birthdate')}
-                  className={changeBtnCss}
                 >
                   변경
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -501,33 +414,33 @@ export function BasicInfoCard({ profile }: Props) {
                 <option value="여성">여성</option>
                 <option value="기타">기타</option>
               </select>
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSave}
                 disabled={mutation.isPending}
-                className={saveBtnCss}
               >
                 저장
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setEditingField(null)}
-                className={cancelBtnCss}
               >
                 취소
-              </button>
+              </Button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.gender ?? '미설정'}</span>
               {isEditMode && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => startEdit('gender')}
-                  className={changeBtnCss}
                 >
                   변경
-                </button>
+                </Button>
               )}
             </>
           )}

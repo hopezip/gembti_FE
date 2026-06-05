@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { Button } from '@/components/ui/Button';
+import { Tag } from '@/components/ui/Tag';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -66,21 +68,7 @@ export function SteamConnectCard({ profile }: Props) {
         >
           Steam 연동
         </span>
-        {profile.steamConnected && (
-          <span
-            className={css({
-              fontSize: 'xs',
-              px: '2',
-              py: '0.5',
-              color: 'accent.fg',
-              border: '1px solid',
-              borderColor: 'accent.default',
-              borderRadius: 'full',
-            })}
-          >
-            CONNECTED
-          </span>
-        )}
+        {profile.steamConnected && <Tag tone="party">CONNECTED</Tag>}
       </div>
 
       {profile.steamConnected && profile.steamId ? (
@@ -136,26 +124,11 @@ export function SteamConnectCard({ profile }: Props) {
 
           {/* 버튼 */}
           <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
-            <button
-              type="button"
+            <Button
+              variant="dangerSolid"
+              size="sm"
               onClick={() => syncMutation.mutate()}
               disabled={isSyncing}
-              className={css({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1.5',
-                px: '3',
-                py: '2',
-                fontSize: 'sm',
-                fontWeight: 'medium',
-                color: 'white',
-                bg: 'danger.default',
-                border: 'none',
-                borderRadius: 'md',
-                cursor: 'pointer',
-                _hover: { opacity: '0.9' },
-                _disabled: { opacity: '0.7', cursor: 'not-allowed' },
-              })}
             >
               {isSyncing ? (
                 <>
@@ -173,27 +146,15 @@ export function SteamConnectCard({ profile }: Props) {
               ) : (
                 <>↻ 수동 재갱신</>
               )}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
               onClick={() => disconnectMutation.mutate()}
               disabled={disconnectMutation.isPending}
-              className={css({
-                px: '3',
-                py: '2',
-                fontSize: 'sm',
-                color: 'fg.subtle',
-                bg: 'transparent',
-                border: '1px solid',
-                borderColor: 'border.emphasized',
-                borderRadius: 'md',
-                cursor: 'pointer',
-                _hover: { borderColor: 'danger.default', color: 'danger.fg' },
-                _disabled: { opacity: '0.5', cursor: 'not-allowed' },
-              })}
             >
               연동 해제
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -215,22 +176,9 @@ export function SteamConnectCard({ profile }: Props) {
           >
             Steam 계정이 연동되지 않았습니다
           </p>
-          <button
-            type="button"
-            className={css({
-              px: '4',
-              py: '2',
-              fontSize: 'sm',
-              color: 'white',
-              bg: 'accent.default',
-              border: 'none',
-              borderRadius: 'md',
-              cursor: 'pointer',
-              _hover: { opacity: '0.9' },
-            })}
-          >
+          <Button variant="primary" size="sm">
             Steam 연동하기
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { css } from 'styled-system/css';
+import { Button } from '@/components/ui/Button';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -77,19 +78,9 @@ export function PersonalityRadar({ personality }: Props) {
         >
           6대 성향 레이더
         </span>
-        <button
-          type="button"
-          className={css({
-            fontSize: 'xs',
-            color: 'accent.fg',
-            bg: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            _hover: { opacity: '0.7' },
-          })}
-        >
+        <Button variant="ghost" size="sm">
           히향 다시 진단
-        </button>
+        </Button>
       </div>
 
       {/* 차트 + 범례 */}

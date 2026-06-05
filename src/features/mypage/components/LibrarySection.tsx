@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
+import { Button } from '@/components/ui/Button';
 import { GameCard } from '@/components/ui/GameCard';
+import { Input } from '@/components/ui/Input';
+import { Tag } from '@/components/ui/Tag';
 import type { MockLibraryItem } from '@/mocks/handlers/mypage';
 
 type LibraryTab = 'all' | 'playing' | 'rated';
@@ -65,18 +68,7 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
           <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
             {item.genres.join(' · ')}
           </span>
-          <span
-            className={css({
-              fontSize: 'xs',
-              color: 'info.fg',
-              bg: 'info.soft',
-              px: '1.5',
-              py: '0.5',
-              borderRadius: 'sm',
-            })}
-          >
-            Steam
-          </span>
+          <Tag tone="guide">Steam</Tag>
         </div>
         <p
           className={css({
@@ -226,23 +218,9 @@ export function LibrarySection() {
           <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
             모두 · Steam · 직접
           </span>
-          <button
-            type="button"
-            className={css({
-              fontSize: 'xs',
-              color: 'fg.muted',
-              bg: 'bg.surfaceRaised',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'md',
-              px: '2',
-              py: '1',
-              cursor: 'pointer',
-              _hover: { borderColor: 'border.emphasized' },
-            })}
-          >
+          <Button variant="secondary" size="sm">
             동기화
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -319,41 +297,16 @@ export function LibrarySection() {
             mb: '2',
           })}
         >
-          <input
+          <Input
+            size="sm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="내 라이브러리에서 검색..."
-            className={css({
-              px: '3',
-              py: '1.5',
-              fontSize: 'xs',
-              color: 'fg.default',
-              bg: 'bg.surfaceRaised',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'md',
-              outline: 'none',
-              w: '52',
-              _focus: { borderColor: 'accent.default' },
-            })}
+            className={css({ w: '52' })}
           />
-          <button
-            type="submit"
-            className={css({
-              px: '2.5',
-              py: '1.5',
-              bg: 'accent.default',
-              border: 'none',
-              borderRadius: 'md',
-              cursor: 'pointer',
-              color: 'white',
-              fontSize: 'sm',
-              lineHeight: '1',
-              _hover: { opacity: '0.9' },
-            })}
-          >
+          <Button variant="primary" size="sm" type="submit">
             🔍
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -404,27 +357,9 @@ export function LibrarySection() {
           </div>
           {data?.hasMore && (
             <div className={css({ textAlign: 'center' })}>
-              <button
-                type="button"
-                onClick={() => setPage((p) => p + 1)}
-                className={css({
-                  px: '6',
-                  py: '2',
-                  fontSize: 'sm',
-                  color: 'fg.muted',
-                  bg: 'bg.surface',
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  borderRadius: 'md',
-                  cursor: 'pointer',
-                  _hover: {
-                    borderColor: 'border.emphasized',
-                    color: 'fg.default',
-                  },
-                })}
-              >
+              <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
                 더 보기 · {data.total - allItems.length}개 남음 ↓
-              </button>
+              </Button>
             </div>
           )}
         </>
