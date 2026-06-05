@@ -113,12 +113,12 @@ const MOCK_PROFILE: MockUserProfile = {
     reviewCount: 12,
   },
   personality: [
-    { label: '탐험', value: 8 },
-    { label: '전략', value: 6 },
-    { label: '액션', value: 9 },
-    { label: '협동', value: 5 },
-    { label: '스토리', value: 7 },
-    { label: '경쟁', value: 4 },
+    { label: '탐험', value: 9 },
+    { label: '액션', value: 8 },
+    { label: '서사', value: 6 },
+    { label: '전략', value: 5 },
+    { label: '도전', value: 4 },
+    { label: '합동', value: 3 },
   ],
 };
 
@@ -335,6 +335,20 @@ export const mypageHandlers = [
   http.patch('/api/mypage/profile', async ({ request }) => {
     const patch = (await request.json()) as Partial<MockUserProfile>;
     Object.assign(MOCK_PROFILE, patch);
+    return HttpResponse.json(MOCK_PROFILE);
+  }),
+
+  http.post('/api/mypage/steam/sync', async () => {
+    await new Promise((r) => setTimeout(r, 1500));
+    MOCK_PROFILE.steamSyncedAt = new Date().toISOString();
+    return HttpResponse.json(MOCK_PROFILE);
+  }),
+
+  http.post('/api/mypage/steam/disconnect', () => {
+    MOCK_PROFILE.steamConnected = false;
+    MOCK_PROFILE.steamId = null;
+    MOCK_PROFILE.steamNickname = null;
+    MOCK_PROFILE.steamSyncedAt = null;
     return HttpResponse.json(MOCK_PROFILE);
   }),
 

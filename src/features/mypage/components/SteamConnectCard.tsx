@@ -1,3 +1,5 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import ky from 'ky';
 import { css } from 'styled-system/css';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
@@ -5,16 +7,36 @@ interface Props {
   profile: MockUserProfile;
 }
 
-export function SteamConnectCard({ profile }: Props) {
-  const { steamConnected, steamId, steamNickname, steamSyncedAt } = profile;
+function relativeTime(isoStr: string): string {
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const minutes = Math.floor(diff / 60_000);
+  if (days > 0) return `${days}일 전`;
+  if (hours > 0) return `${hours}시간 전`;
+  if (minutes > 0) return `${minutes}분 전`;
+  return '방금 전';
+}
 
-  const syncedDate = steamSyncedAt
-    ? new Date(steamSyncedAt).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-    : null;
+export function SteamConnectCard({ profile }: Props) {
+  const queryClient = useQueryClient();
+
+  const syncMutation = useMutation({
+    mutationFn: () => ky.post('/api/mypage/steam/sync').json<MockUserProfile>(),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['mypage', 'profile'], updated);
+    },
+  });
+
+  const disconnectMutation = useMutation({
+    mutationFn: () =>
+      ky.post('/api/mypage/steam/disconnect').json<MockUserProfile>(),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['mypage', 'profile'], updated);
+    },
+  });
+
+  const isSyncing = syncMutation.isPending;
 
   return (
     <div
@@ -23,15 +45,16 @@ export function SteamConnectCard({ profile }: Props) {
         border: '1px solid',
         borderColor: 'border.default',
         borderRadius: 'xl',
-        p: '4',
+        p: '5',
       })}
     >
+      {/* 헤더 */}
       <div
         className={css({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: '3',
+          mb: '4',
         })}
       >
         <span
@@ -43,100 +66,163 @@ export function SteamConnectCard({ profile }: Props) {
         >
           Steam 연동
         </span>
-        <span
-          className={css({
-            fontSize: 'xs',
-            fontWeight: 'semibold',
-            color: steamConnected ? 'success.fg' : 'fg.subtle',
-            bg: steamConnected ? 'success.soft' : 'bg.surfaceRaised',
-            px: '2',
-            py: '0.5',
-            borderRadius: 'sm',
-          })}
-        >
-          {steamConnected ? 'CONNECTED' : 'DISCONNECTED'}
-        </span>
+        {profile.steamConnected && (
+          <span
+            className={css({
+              fontSize: 'xs',
+              px: '2',
+              py: '0.5',
+              color: 'accent.fg',
+              border: '1px solid',
+              borderColor: 'accent.default',
+              borderRadius: 'full',
+            })}
+          >
+            CONNECTED
+          </span>
+        )}
       </div>
 
-      {steamConnected && steamId ? (
+      {profile.steamConnected && profile.steamId ? (
         <>
+          {/* Steam 계정 정보 */}
           <div
             className={css({
               display: 'flex',
               alignItems: 'center',
-              gap: '2',
-              mb: '2',
+              gap: '3',
+              mb: '4',
+              p: '3',
+              bg: 'bg.surfaceRaised',
+              borderRadius: 'lg',
             })}
           >
-            <span
+            <div
               className={css({
-                fontSize: 'sm',
-                fontWeight: 'medium',
-                color: 'fg.default',
-              })}
-            >
-              {steamNickname}
-            </span>
-            <span
-              className={css({
+                w: '10',
+                h: '10',
+                borderRadius: 'md',
+                bg: 'bg.canvas',
+                border: '1px solid',
+                borderColor: 'border.default',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontSize: 'xs',
-                color: 'info.fg',
-                bg: 'info.soft',
-                px: '1.5',
-                py: '0.5',
-                borderRadius: 'sm',
+                color: 'fg.subtle',
               })}
             >
-              Steam 16
-            </span>
+              아바타
+            </div>
+            <div>
+              <p
+                className={css({
+                  fontSize: 'sm',
+                  fontWeight: 'medium',
+                  color: 'fg.default',
+                })}
+              >
+                {profile.steamId}
+              </p>
+              <p className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                최종 동기화 시간:{' '}
+                {profile.steamSyncedAt
+                  ? relativeTime(profile.steamSyncedAt)
+                  : '없음'}
+              </p>
+            </div>
           </div>
 
-          {syncedDate && (
-            <p className={css({ fontSize: 'xs', color: 'fg.subtle', mb: '3' })}>
-              최종 동기화 시간 · {syncedDate} 완
-            </p>
-          )}
-
-          <div className={css({ display: 'flex', gap: '2' })}>
+          {/* 버튼 */}
+          <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
             <button
               type="button"
+              onClick={() => syncMutation.mutate()}
+              disabled={isSyncing}
               className={css({
-                flex: 1,
-                py: '1.5',
-                fontSize: 'xs',
-                color: 'fg.default',
-                bg: 'bg.surfaceRaised',
-                border: '1px solid',
-                borderColor: 'border.emphasized',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1.5',
+                px: '3',
+                py: '2',
+                fontSize: 'sm',
+                fontWeight: 'medium',
+                color: 'white',
+                bg: 'danger.default',
+                border: 'none',
                 borderRadius: 'md',
                 cursor: 'pointer',
-                _hover: { borderColor: 'accent.default' },
+                _hover: { opacity: '0.9' },
+                _disabled: { opacity: '0.7', cursor: 'not-allowed' },
               })}
             >
-              수동 동기화
+              {isSyncing ? (
+                <>
+                  <style>{`@keyframes gambti-spin { to { transform: rotate(360deg); } }`}</style>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      animation: 'gambti-spin 0.8s linear infinite',
+                    }}
+                  >
+                    ↻
+                  </span>
+                  재갱신 중...
+                </>
+              ) : (
+                <>↻ 수동 재갱신</>
+              )}
             </button>
             <button
               type="button"
+              onClick={() => disconnectMutation.mutate()}
+              disabled={disconnectMutation.isPending}
               className={css({
-                flex: 1,
-                py: '1.5',
-                fontSize: 'xs',
-                color: 'danger.fg',
+                px: '3',
+                py: '2',
+                fontSize: 'sm',
+                color: 'fg.subtle',
                 bg: 'transparent',
                 border: '1px solid',
                 borderColor: 'border.emphasized',
                 borderRadius: 'md',
                 cursor: 'pointer',
-                _hover: { borderColor: 'danger.default' },
+                _hover: { borderColor: 'danger.default', color: 'danger.fg' },
+                _disabled: { opacity: '0.5', cursor: 'not-allowed' },
               })}
             >
               연동 해제
             </button>
           </div>
+
+          <p
+            className={css({
+              fontSize: '11px',
+              color: 'fg.subtle',
+              fontFamily: 'mono',
+            })}
+          >
+            USER-1 · Steam 닉/아바타/허브 동기화/재갱신
+          </p>
         </>
       ) : (
-        <div className={css({ textAlign: 'center', py: '4' })}>
-          <p className={css({ fontSize: 'sm', color: 'fg.subtle', mb: '3' })}>
+        <div
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '3',
+            py: '6',
+          })}
+        >
+          <p
+            className={css({
+              fontSize: 'sm',
+              color: 'fg.subtle',
+              textAlign: 'center',
+            })}
+          >
             Steam 계정이 연동되지 않았습니다
           </p>
           <button
@@ -145,12 +231,12 @@ export function SteamConnectCard({ profile }: Props) {
               px: '4',
               py: '2',
               fontSize: 'sm',
-              color: 'fg.onAccent',
+              color: 'white',
               bg: 'accent.default',
               border: 'none',
               borderRadius: 'md',
               cursor: 'pointer',
-              _hover: { bg: 'accent.hover' },
+              _hover: { opacity: '0.9' },
             })}
           >
             Steam 연동하기

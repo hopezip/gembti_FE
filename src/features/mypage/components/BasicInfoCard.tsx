@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
@@ -8,60 +9,55 @@ interface Props {
   profile: MockUserProfile;
 }
 
-type EditState = {
-  nickname: string;
-  email: string;
-  birthdate: string;
-  gender: '남성' | '여성' | '기타' | '';
-};
+type EditableField = 'nickname' | 'birthdate' | 'gender';
 
 export function BasicInfoCard({ profile }: Props) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState<EditState>({
-    nickname: '',
-    email: '',
-    birthdate: '',
-    gender: '',
-  });
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setForm({
-      nickname: profile.nickname,
-      email: profile.email,
-      birthdate: profile.birthdate ?? '',
-      gender: profile.gender ?? '',
-    });
-  }, [profile]);
+  const [editingField, setEditingField] = useState<EditableField | null>(null);
+  const [fieldValue, setFieldValue] = useState('');
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<MockUserProfile>) =>
       ky.patch('/api/mypage/profile', { json: patch }).json<MockUserProfile>(),
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
-      setIsEditing(false);
+      setEditingField(null);
     },
   });
 
+  function startEdit(field: EditableField) {
+    setEditingField(field);
+    setFieldValue(
+      field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? ''),
+    );
+  }
+
   function handleSave() {
-    mutation.mutate({
-      nickname: form.nickname.trim(),
-      email: form.email.trim(),
-      birthdate: form.birthdate.trim(),
-      gender: (form.gender as MockUserProfile['gender']) || null,
-    });
+    if (!editingField) return;
+    const value =
+      editingField === 'gender'
+        ? fieldValue || null
+        : fieldValue.trim() || null;
+    mutation.mutate({ [editingField]: value });
   }
 
-  function handleCancel() {
-    setForm({
-      nickname: profile.nickname,
-      email: profile.email,
-      birthdate: profile.birthdate ?? '',
-      gender: profile.gender ?? '',
-    });
-    setIsEditing(false);
-  }
-
+  const rowCss = css({
+    display: 'flex',
+    alignItems: 'center',
+    py: '2.5',
+    borderBottom: '1px solid',
+    borderColor: 'border.default',
+    gap: '3',
+    _last: { borderBottom: 'none' },
+  });
+  const labelCss = css({
+    fontSize: 'xs',
+    color: 'fg.subtle',
+    minW: '16',
+    flexShrink: 0,
+  });
+  const valueCss = css({ fontSize: 'sm', color: 'fg.default', flex: 1 });
   const inputCss = css({
     flex: 1,
     bg: 'bg.surfaceRaised',
@@ -74,20 +70,68 @@ export function BasicInfoCard({ profile }: Props) {
     color: 'fg.default',
     outline: 'none',
   });
+  const saveBtnCss = css({
+    fontSize: 'xs',
+    color: 'white',
+    bg: 'accent.default',
+    border: 'none',
+    borderRadius: 'md',
+    px: '3',
+    py: '1',
+    cursor: 'pointer',
+    flexShrink: 0,
+    _disabled: { opacity: '0.5', cursor: 'not-allowed' },
+  });
+  const cancelBtnCss = css({
+    fontSize: 'xs',
+    color: 'fg.subtle',
+    bg: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    flexShrink: 0,
+  });
+  const changeBtnCss = css({
+    fontSize: 'xs',
+    color: 'accent.fg',
+    bg: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    px: '2',
+    py: '1',
+    _hover: { opacity: '0.7' },
+  });
+  const badgeCss = css({
+    fontSize: 'xs',
+    px: '2',
+    py: '0.5',
+    bg: 'bg.surfaceRaised',
+    border: '1px solid',
+    borderColor: 'border.emphasized',
+    borderRadius: 'sm',
+    color: 'fg.default',
+  });
 
-  const rows: { label: string; key: keyof EditState }[] = [
-    { label: '이메일', key: 'email' },
-    { label: '닉네임', key: 'nickname' },
-    { label: '생년월일', key: 'birthdate' },
-    { label: '성별', key: 'gender' },
-  ];
-
-  const displayValues: Record<keyof EditState, string> = {
-    email: profile.email,
-    nickname: profile.nickname,
-    birthdate: profile.birthdate ?? '미설정',
-    gender: profile.gender ?? '미설정',
-  };
+  function EditButtons() {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={mutation.isPending}
+          className={saveBtnCss}
+        >
+          저장
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditingField(null)}
+          className={cancelBtnCss}
+        >
+          취소
+        </button>
+      </>
+    );
+  }
 
   return (
     <div
@@ -117,137 +161,150 @@ export function BasicInfoCard({ profile }: Props) {
         >
           기본 정보
         </span>
-        {!isEditing ? (
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className={css({
-              fontSize: 'xs',
-              color: 'accent.fg',
-              bg: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              _hover: { opacity: '0.7' },
-            })}
-          >
-            편집
-          </button>
-        ) : (
-          <div className={css({ display: 'flex', gap: '2' })}>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className={css({
-                fontSize: 'xs',
-                color: 'fg.subtle',
-                bg: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              })}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={mutation.isPending}
-              className={css({
-                fontSize: 'xs',
-                color: 'white',
-                bg: 'accent.default',
-                border: 'none',
-                borderRadius: 'md',
-                px: '3',
-                py: '1',
-                cursor: 'pointer',
-                _disabled: { opacity: '0.5', cursor: 'not-allowed' },
-              })}
-            >
-              저장
-            </button>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => navigate('/mypage/edit')}
+          className={css({
+            fontSize: 'xs',
+            color: 'accent.fg',
+            bg: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            _hover: { opacity: '0.7' },
+          })}
+        >
+          편집 &rsaquo;
+        </button>
       </div>
 
-      {/* 필드 목록 */}
-      <div
-        className={css({ display: 'flex', flexDirection: 'column', gap: '0' })}
-      >
-        {rows.map(({ label, key }) => (
-          <div
-            key={key}
+      <div className={css({ display: 'flex', flexDirection: 'column' })}>
+        {/* 이메일 */}
+        <div className={rowCss}>
+          <span className={labelCss}>이메일</span>
+          <span className={valueCss}>{profile.email}</span>
+          <span
             className={css({
-              display: 'flex',
-              alignItems: 'center',
-              py: '2.5',
-              borderBottom: '1px solid',
+              fontSize: 'xs',
+              color: 'fg.subtle',
+              px: '2',
+              py: '0.5',
+              border: '1px solid',
               borderColor: 'border.default',
-              gap: '3',
-              _last: { borderBottom: 'none' },
+              borderRadius: 'sm',
             })}
           >
-            <span
-              className={css({
-                fontSize: 'xs',
-                color: 'fg.subtle',
-                minW: '16',
-                flexShrink: 0,
-              })}
-            >
-              {label}
-            </span>
-            {isEditing ? (
-              key === 'gender' ? (
-                <select
-                  value={form.gender}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      gender: e.target.value as EditState['gender'],
-                    }))
-                  }
-                  className={css({
-                    flex: 1,
-                    bg: 'bg.surfaceRaised',
-                    border: '1px solid',
-                    borderColor: 'accent.default',
-                    borderRadius: 'md',
-                    px: '3',
-                    py: '1.5',
-                    fontSize: 'sm',
-                    color: 'fg.default',
-                    outline: 'none',
-                    cursor: 'pointer',
-                  })}
-                >
-                  <option value="">미설정</option>
-                  <option value="남성">남성</option>
-                  <option value="여성">여성</option>
-                  <option value="기타">기타</option>
-                </select>
-              ) : (
-                <input
-                  value={form[key]}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, [key]: e.target.value }))
-                  }
-                  readOnly={key === 'email'}
-                  className={`${inputCss}${key === 'email' ? ` ${css({ opacity: '0.6', cursor: 'not-allowed' })}` : ''}`}
-                />
-              )
-            ) : (
-              <span
+            잠금
+          </span>
+        </div>
+
+        {/* 닉네임 */}
+        <div className={rowCss}>
+          <span className={labelCss}>닉네임</span>
+          {editingField === 'nickname' ? (
+            <>
+              <input
+                value={fieldValue}
+                onChange={(e) => setFieldValue(e.target.value)}
+                className={inputCss}
+                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX상 자동 포커스 필요
+                autoFocus
+              />
+              <EditButtons />
+            </>
+          ) : (
+            <>
+              <span className={valueCss}>{profile.nickname}</span>
+              <button
+                type="button"
+                onClick={() => startEdit('nickname')}
+                className={changeBtnCss}
+              >
+                변경
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* 생년월일 */}
+        <div className={rowCss}>
+          <span className={labelCss}>생년월일</span>
+          {editingField === 'birthdate' ? (
+            <>
+              <input
+                value={fieldValue}
+                onChange={(e) => setFieldValue(e.target.value)}
+                placeholder="YYYY.MM.DD"
+                className={inputCss}
+                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX상 자동 포커스 필요
+                autoFocus
+              />
+              <EditButtons />
+            </>
+          ) : (
+            <>
+              <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
+              <button
+                type="button"
+                onClick={() => startEdit('birthdate')}
+                className={changeBtnCss}
+              >
+                변경
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* 성별 */}
+        <div className={rowCss}>
+          <span className={labelCss}>성별</span>
+          {editingField === 'gender' ? (
+            <>
+              <select
+                value={fieldValue}
+                onChange={(e) => setFieldValue(e.target.value)}
                 className={css({
+                  flex: 1,
+                  bg: 'bg.surfaceRaised',
+                  border: '1px solid',
+                  borderColor: 'accent.default',
+                  borderRadius: 'md',
+                  px: '3',
+                  py: '1.5',
                   fontSize: 'sm',
                   color: 'fg.default',
-                  flex: 1,
+                  outline: 'none',
+                  cursor: 'pointer',
                 })}
               >
-                {displayValues[key]}
-              </span>
-            )}
+                <option value="">미설정</option>
+                <option value="남성">남성</option>
+                <option value="여성">여성</option>
+                <option value="기타">기타</option>
+              </select>
+              <EditButtons />
+            </>
+          ) : (
+            <>
+              <span className={valueCss}>{profile.gender ?? '미설정'}</span>
+              <button
+                type="button"
+                onClick={() => startEdit('gender')}
+                className={changeBtnCss}
+              >
+                변경
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* 인증 */}
+        <div className={rowCss}>
+          <span className={labelCss}>인증</span>
+          <div className={css({ display: 'flex', gap: '2', flex: 1 })}>
+            <span className={badgeCss}>이메일</span>
+            {profile.steamConnected && <span className={badgeCss}>Steam</span>}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

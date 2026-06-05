@@ -3,6 +3,8 @@ import ky from 'ky';
 import { css } from 'styled-system/css';
 import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
+import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
+import { PersonalityRadar } from '@/features/mypage/components/PersonalityRadar';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 export function MyPage() {
@@ -17,14 +19,7 @@ export function MyPage() {
 
   if (isLoading) {
     return (
-      <div
-        className={css({
-          maxW: '1200px',
-          mx: 'auto',
-          px: '6',
-          py: '8',
-        })}
-      >
+      <div className={css({ maxW: '1200px', mx: 'auto', px: '6', py: '8' })}>
         <div
           className={css({
             display: 'flex',
@@ -94,11 +89,37 @@ export function MyPage() {
         py: '8',
         display: 'flex',
         flexDirection: 'column',
-        gap: '8',
+        gap: '6',
       })}
     >
       <ProfileHeader profile={profile} />
-      <BasicInfoCard profile={profile} />
+
+      {/* 2컬럼: 기본 정보(왼쪽) + 스팀·레이더(오른쪽) */}
+      <div
+        className={css({
+          display: 'grid',
+          gridTemplateColumns: '1fr 340px',
+          gap: '6',
+          alignItems: 'start',
+        })}
+      >
+        <BasicInfoCard profile={profile} />
+
+        {/* 오른쪽 컬럼: Steam + 레이더 */}
+        <div
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4',
+          })}
+        >
+          <SteamConnectCard profile={profile} />
+          <PersonalityRadar
+            personality={profile.personality}
+            syncedAt={profile.steamSyncedAt}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,37 +3,60 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
   personality: MockUserProfile['personality'];
+  syncedAt?: string | null;
 }
 
-const SIZE = 200;
-const CENTER = SIZE / 2;
-const RADIUS = 80;
+const CX = 110;
+const CY = 110;
+const R = 82;
+const LEVELS = [0.33, 0.67, 1.0];
 
-function polarToXY(angle: number, r: number) {
-  const rad = (angle - 90) * (Math.PI / 180);
+function pt(i: number, ratio: number) {
+  const angle = ((i * 60 - 90) * Math.PI) / 180;
   return {
-    x: CENTER + r * Math.cos(rad),
-    y: CENTER + r * Math.sin(rad),
+    x: CX + R * ratio * Math.cos(angle),
+    y: CY + R * ratio * Math.sin(angle),
   };
 }
 
-function makePath(points: { x: number; y: number }[]): string {
-  const segments = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`);
-  return `${segments.join(' ')} Z`;
+function hexPoints(ratio: number) {
+  return Array.from({ length: 6 }, (_, i) => pt(i, ratio))
+    .map((p) => `${p.x},${p.y}`)
+    .join(' ');
 }
 
-export function PersonalityRadar({ personality }: Props) {
-  const count = personality.length;
-  const angleStep = 360 / count;
+function labelProps(i: number): {
+  textAnchor: 'start' | 'middle' | 'end';
+  dx: number;
+  dy: number;
+} {
+  // 0=top, 1=top-right, 2=bottom-right, 3=bottom, 4=bottom-left, 5=top-left
+  if (i === 0) return { textAnchor: 'middle', dx: 0, dy: -10 };
+  if (i === 1) return { textAnchor: 'start', dx: 8, dy: 4 };
+  if (i === 2) return { textAnchor: 'start', dx: 8, dy: 4 };
+  if (i === 3) return { textAnchor: 'middle', dx: 0, dy: 16 };
+  if (i === 4) return { textAnchor: 'end', dx: -8, dy: 4 };
+  return { textAnchor: 'end', dx: -8, dy: 4 };
+}
 
-  const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
+// 데이터의 value는 0~10 스케일 (표시는 *10)
+const ACCENT_COLOR = '#e8622a';
+const GRID_COLOR = 'rgba(255,255,255,0.12)';
+const AXIS_COLOR = 'rgba(255,255,255,0.08)';
 
-  const dataPoints = personality.map((p, i) => {
-    const angle = i * angleStep;
-    const r = (p.value / 10) * RADIUS;
-    return polarToXY(angle, r);
-  });
-  const dataPath = makePath(dataPoints);
+export function PersonalityRadar({ personality, syncedAt }: Props) {
+  const valuePts = personality
+    .map((p, i) => pt(i, p.value / 10))
+    .map((p) => `${p.x},${p.y}`)
+    .join(' ');
+
+  const syncedStr = syncedAt
+    ? new Date(syncedAt).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+    : null;
 
   return (
     <div
@@ -42,15 +65,16 @@ export function PersonalityRadar({ personality }: Props) {
         border: '1px solid',
         borderColor: 'border.default',
         borderRadius: 'xl',
-        p: '4',
+        p: '5',
       })}
     >
+      {/* 헤더 */}
       <div
         className={css({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: '3',
+          mb: '4',
         })}
       >
         <span
@@ -62,87 +86,88 @@ export function PersonalityRadar({ personality }: Props) {
         >
           6대 성향 레이더
         </span>
-        <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-          상위 N% 성향 →
-        </span>
+        <button
+          type="button"
+          className={css({
+            fontSize: 'xs',
+            color: 'accent.fg',
+            bg: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            _hover: { opacity: '0.7' },
+          })}
+        >
+          히향 다시 진단
+        </button>
       </div>
 
+      {/* 차트 + 범례 */}
       <div className={css({ display: 'flex', gap: '4', alignItems: 'center' })}>
+        {/* SVG 레이더 */}
         <svg
-          width={SIZE}
-          height={SIZE}
-          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          width={CX * 2}
+          height={CY * 2}
+          viewBox={`0 0 ${CX * 2} ${CY * 2}`}
           style={{ flexShrink: 0 }}
           role="img"
           aria-label="6대 성향 레이더 차트"
         >
-          <title>6대 성향 레이더 차트</title>
-          {/* 배경 그리드 */}
-          {gridLevels.map((level) => {
-            const pts = personality.map((_, i) =>
-              polarToXY(i * angleStep, RADIUS * level),
-            );
-            return (
-              <path
-                key={level}
-                d={makePath(pts)}
-                fill="none"
-                stroke="rgba(255,255,255,0.08)"
-                strokeWidth="1"
-              />
-            );
-          })}
+          {/* 배경 격자 */}
+          {LEVELS.map((level) => (
+            <polygon
+              key={level}
+              points={hexPoints(level)}
+              fill="none"
+              stroke={GRID_COLOR}
+              strokeWidth="1"
+            />
+          ))}
 
-          {/* 축 선 */}
+          {/* 축선 */}
           {personality.map((p, i) => {
-            const end = polarToXY(i * angleStep, RADIUS);
+            const outer = pt(i, 1.0);
             return (
               <line
-                key={`axis-${p.label}`}
-                x1={CENTER}
-                y1={CENTER}
-                x2={end.x}
-                y2={end.y}
-                stroke="rgba(255,255,255,0.1)"
+                key={p.label}
+                x1={CX}
+                y1={CY}
+                x2={outer.x}
+                y2={outer.y}
+                stroke={AXIS_COLOR}
                 strokeWidth="1"
               />
             );
           })}
 
-          {/* 데이터 폴리곤 */}
-          <path
-            d={dataPath}
-            fill="rgba(239,90,44,0.25)"
-            stroke="#EF5A2C"
-            strokeWidth="1.5"
+          {/* 값 폴리곤 */}
+          <polygon
+            points={valuePts}
+            fill={ACCENT_COLOR}
+            fillOpacity="0.35"
+            stroke={ACCENT_COLOR}
+            strokeWidth="2"
           />
 
-          {/* 데이터 점 */}
+          {/* 값 점 */}
           {personality.map((p, i) => {
-            const pos = polarToXY(i * angleStep, (p.value / 10) * RADIUS);
+            const { x, y } = pt(i, p.value / 10);
             return (
-              <circle
-                key={`dot-${p.label}`}
-                cx={pos.x}
-                cy={pos.y}
-                r="3"
-                fill="#EF5A2C"
-              />
+              <circle key={p.label} cx={x} cy={y} r="3.5" fill={ACCENT_COLOR} />
             );
           })}
 
-          {/* 라벨 */}
+          {/* 축 레이블 */}
           {personality.map((p, i) => {
-            const pos = polarToXY(i * angleStep, RADIUS + 18);
+            const { x, y } = pt(i, 1.18);
+            const { textAnchor, dx, dy } = labelProps(i);
             return (
               <text
-                key={`label-${p.label}`}
-                x={pos.x}
-                y={pos.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="9"
-                fill="rgba(255,255,255,0.6)"
+                key={p.label}
+                x={x + dx}
+                y={y + dy}
+                textAnchor={textAnchor}
+                fontSize="11"
+                fill="rgba(255,255,255,0.65)"
               >
                 {p.label}
               </text>
@@ -164,37 +189,53 @@ export function PersonalityRadar({ personality }: Props) {
               key={p.label}
               className={css({
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
+                gap: '2',
               })}
             >
-              <div
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: ACCENT_COLOR,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                className={css({ fontSize: 'xs', color: 'fg.subtle', flex: 1 })}
+              >
+                {p.label}
+              </span>
+              <span
                 className={css({
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1.5',
+                  fontSize: 'xs',
+                  color: 'fg.default',
+                  fontWeight: 'medium',
                 })}
               >
-                <div
-                  className={css({
-                    w: '2',
-                    h: '2',
-                    borderRadius: 'full',
-                    bg: 'accent.default',
-                    flexShrink: 0,
-                  })}
-                />
-                <span className={css({ fontSize: 'xs', color: 'fg.muted' })}>
-                  {p.label}
-                </span>
-              </div>
-              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-                {p.value}
+                {p.value * 10}
               </span>
             </div>
           ))}
         </div>
       </div>
+
+      {/* 하단 메타 */}
+      {syncedStr && (
+        <p
+          className={css({
+            fontSize: '11px',
+            color: 'fg.subtle',
+            mt: '3',
+            pt: '3',
+            borderTop: '1px solid',
+            borderColor: 'border.default',
+          })}
+        >
+          user_stats 최신 레코드 · 갱신 {syncedStr} — USER-1
+        </p>
+      )}
     </div>
   );
 }
