@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
@@ -147,6 +148,7 @@ export function ProfileEditPage() {
           {/* 이메일 (읽기 전용) */}
           <div>
             <label
+              htmlFor="edit-email"
               className={css({
                 fontSize: 'sm',
                 fontWeight: 'medium',
@@ -158,6 +160,7 @@ export function ProfileEditPage() {
               이메일
             </label>
             <input
+              id="edit-email"
               value={email}
               readOnly
               className={css({
@@ -189,6 +192,7 @@ export function ProfileEditPage() {
               })}
             >
               <label
+                htmlFor="edit-nickname"
                 className={css({
                   fontSize: 'sm',
                   fontWeight: 'medium',
@@ -202,6 +206,7 @@ export function ProfileEditPage() {
               </span>
             </div>
             <input
+              id="edit-nickname"
               value={nickname}
               onChange={handleChange(setNickname)}
               maxLength={NICKNAME_MAX}
@@ -239,6 +244,7 @@ export function ProfileEditPage() {
           {/* 생년월일 */}
           <div>
             <label
+              htmlFor="edit-birthdate"
               className={css({
                 fontSize: 'sm',
                 fontWeight: 'medium',
@@ -250,6 +256,7 @@ export function ProfileEditPage() {
               생년월일
             </label>
             <input
+              id="edit-birthdate"
               value={birthdate}
               onChange={handleChange(setBirthdate)}
               placeholder="YYYY.MM.DD"
@@ -273,6 +280,7 @@ export function ProfileEditPage() {
           {/* 성별 */}
           <div>
             <label
+              htmlFor="edit-gender"
               className={css({
                 fontSize: 'sm',
                 fontWeight: 'medium',
@@ -284,6 +292,7 @@ export function ProfileEditPage() {
               성별
             </label>
             <select
+              id="edit-gender"
               value={gender}
               onChange={handleChange<'남성' | '여성' | '기타' | ''>(setGender)}
               className={css({
@@ -377,14 +386,11 @@ export function ProfileEditPage() {
                 })}
               >
                 {profile.avatarUrl ? (
-                  <img
+                  <Image
                     src={profile.avatarUrl}
                     alt="preview"
-                    className={css({
-                      w: 'full',
-                      h: 'full',
-                      objectFit: 'cover',
-                    })}
+                    fill
+                    className={css({ objectFit: 'cover' })}
                   />
                 ) : (
                   initials

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import { useAuthStore } from '@/lib/store/useAuthStore';
@@ -94,10 +95,11 @@ export function ProfileHeader({ profile }: Props) {
         })}
       >
         {avatarUrl ? (
-          <img
+          <Image
             src={avatarUrl}
             alt={nickname}
-            className={css({ w: 'full', h: 'full', objectFit: 'cover' })}
+            fill
+            className={css({ objectFit: 'cover' })}
           />
         ) : (
           <>
