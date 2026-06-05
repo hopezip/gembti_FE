@@ -17,6 +17,9 @@ export interface MockUserProfile {
   email: string;
   birthdate: string;
   gender: '남성' | '여성' | '기타' | null;
+  bio: string;
+  website: string | null;
+  favoriteGenres: string[];
   stats: {
     following: number;
     followers: number;
@@ -27,6 +30,17 @@ export interface MockUserProfile {
     label: string;
     value: number; // 0~10
   }[];
+}
+
+export interface MockFollowUser {
+  id: string;
+  nickname: string;
+  handle: string;
+  avatarColor: string;
+  bio: string;
+  genres: string[];
+  isMutualFollow: boolean;
+  isFollowing: boolean;
 }
 
 export interface MockWishlistItem {
@@ -89,6 +103,9 @@ const MOCK_PROFILE: MockUserProfile = {
   email: 'my_email@example.com',
   birthdate: '1995.05.14',
   gender: '남성',
+  bio: '오픈 월드 RPG 중독자. 퀘스트 100% 클리어가 목표.',
+  website: null,
+  favoriteGenres: ['RPG', '인디', '오픈 월드'],
   stats: {
     following: 147,
     followers: 38,
@@ -233,8 +250,28 @@ const MOCK_NOTIFICATIONS: MockNotification[] = [
   },
 ];
 
+const MOCK_FOLLOWING: MockFollowUser[] = [
+  { id: 'u2', nickname: '스팀헌터', handle: 'steamhunter', avatarColor: '#4A7C59', bio: '게임 세일 정보 수집가. 스팀 위시리스트 분석 전문. 할인 정보는 저한테 물어보세요.', genres: ['RPG', '전략', '세일헌터'], isMutualFollow: true, isFollowing: true },
+  { id: 'u3', nickname: '인디러버', handle: 'indie_lover', avatarColor: '#7C4A6E', bio: '인디 게임 전문 리뷰어. 숨겨진 명작 발굴이 취미. 스팀 리뷰 300개 돌파.', genres: ['인디', '퍼즐', '픽셀아트'], isMutualFollow: true, isFollowing: true },
+  { id: 'u4', nickname: '나이트크롤러', handle: 'nightcrawler', avatarColor: '#2D4A6E', bio: '야간 전용 게이머. 호러와 서바이벌 장르 위주 플레이. 무서울수록 좋음.', genres: ['호러', '서바이벌', '어드벤처'], isMutualFollow: true, isFollowing: true },
+  { id: 'u5', nickname: '프로게이머99', handle: 'progamer99', avatarColor: '#6E4A2D', bio: '전직 프로게이머. 현재 스트리머 활동 중. FPS와 MOBA 전문 해설.', genres: ['FPS', 'MOBA', '경쟁'], isMutualFollow: false, isFollowing: true },
+  { id: 'u6', nickname: 'RPG퀘스트', handle: 'rpg_quest', avatarColor: '#4A2D6E', bio: '오픈월드 RPG 중독자. 퀘스트 100% 완료가 목표. The Witcher 3 올클리어.', genres: ['RPG', '오픈월드', '스토리'], isMutualFollow: false, isFollowing: true },
+  { id: 'u7', nickname: '잼블리', handle: 'gambly_', avatarColor: '#2D6E4A', bio: '가볍게 즐기는 캐주얼 게임 애호가. 힐링 게임 전문. 모바일도 PC도 좋아요.', genres: ['캐주얼', '퍼즐', '힐링'], isMutualFollow: true, isFollowing: true },
+];
+
+const MOCK_FOLLOWERS: MockFollowUser[] = [
+  ...MOCK_FOLLOWING.filter((u) => u.isMutualFollow),
+  { id: 'u8', nickname: '게임탐험가', handle: 'game_explorer', avatarColor: '#6E2D4A', bio: '새로운 장르 탐험이 즐거움. 알려지지 않은 숨겨진 게임 전문가.', genres: ['어드벤처', '인디', '탐험'], isMutualFollow: false, isFollowing: false },
+];
+
 export const mypageHandlers = [
   http.get('/api/mypage/profile', () => {
+    return HttpResponse.json(MOCK_PROFILE);
+  }),
+
+  http.patch('/api/mypage/profile', async ({ request }) => {
+    const patch = (await request.json()) as Partial<MockUserProfile>;
+    Object.assign(MOCK_PROFILE, patch);
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
@@ -269,6 +306,29 @@ export const mypageHandlers = [
       items,
       hasMore: start + pageSize < filtered.length,
     });
+  }),
+
+  http.get('/api/mypage/following', () => {
+    return HttpResponse.json({ users: MOCK_FOLLOWING });
+  }),
+
+  http.get('/api/mypage/followers', () => {
+    return HttpResponse.json({ users: MOCK_FOLLOWERS });
+  }),
+
+  http.post('/api/mypage/follow/:userId', ({ params }) => {
+    const user = MOCK_FOLLOWING.find((u) => u.id === params.userId)
+      ?? MOCK_FOLLOWERS.find((u) => u.id === params.userId);
+    if (user) user.isFollowing = true;
+    return HttpResponse.json({ ok: true });
+  }),
+
+  http.delete('/api/mypage/follow/:userId', ({ params }) => {
+    const inFollowing = MOCK_FOLLOWING.find((u) => u.id === params.userId);
+    if (inFollowing) inFollowing.isFollowing = false;
+    const inFollowers = MOCK_FOLLOWERS.find((u) => u.id === params.userId);
+    if (inFollowers) inFollowers.isFollowing = false;
+    return HttpResponse.json({ ok: true });
   }),
 
   http.get('/api/mypage/activity', () => {
