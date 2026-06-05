@@ -1,18 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { GameCard } from '@/components/ui/GameCard';
 import type { MockLibraryItem } from '@/mocks/handlers/mypage';
 
-type LibraryTab = 'all' | 'playing' | 'cleared' | 'unplayed' | 'dropped';
+type LibraryTab = 'all' | 'playing' | 'rated';
+type LibrarySort = 'recent' | 'playtime' | 'rating';
 
 const TABS: { key: LibraryTab; label: string }[] = [
   { key: 'all', label: '전체' },
-  { key: 'playing', label: '플레이 중' },
-  { key: 'cleared', label: '내 평점' },
-  { key: 'unplayed', label: '미 플레이' },
-  { key: 'dropped', label: '중단됨' },
+  { key: 'playing', label: '플레이중' },
+  { key: 'rated', label: '내 별점' },
+];
+
+const SORT_OPTIONS: { key: LibrarySort; label: string }[] = [
+  { key: 'recent', label: '최근 플레이순' },
+  { key: 'playtime', label: '플레이 시간순' },
+  { key: 'rating', label: '별점순' },
 ];
 
 interface LibraryResponse {
@@ -136,38 +142,58 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
 
 export function LibrarySection() {
   const [activeTab, setActiveTab] = useState<LibraryTab>('all');
+  const [sort, setSort] = useState<LibrarySort>('recent');
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [allItems, setAllItems] = useState<MockLibraryItem[]>([]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['mypage', 'library', activeTab, page],
+    queryKey: ['mypage', 'library', activeTab, sort, search, page],
     queryFn: () =>
       ky
-        .get(`/api/mypage/library?tab=${activeTab}&page=${page}`)
+        .get('/api/mypage/library', {
+          searchParams: { tab: activeTab, sort, search, page },
+        })
         .json<LibraryResponse>(),
     placeholderData: (prev) => prev,
   });
 
-  const handleTabChange = (tab: LibraryTab) => {
+  useEffect(() => {
+    if (!data) return;
+    if (page === 1) {
+      setAllItems(data.items);
+      return;
+    }
+    setAllItems((prev) => {
+      const ids = new Set(prev.map((i) => i.id));
+      const next = data.items.filter((i) => !ids.has(i.id));
+      return next.length === 0 ? prev : [...prev, ...next];
+    });
+  }, [data, page]);
+
+  function handleTabChange(tab: LibraryTab) {
     if (tab === activeTab) return;
     setActiveTab(tab);
     setPage(1);
-    setAllItems([]);
-  };
+    setSearch('');
+    setSearchInput('');
+  }
 
-  const items = (() => {
-    if (!data) return allItems;
-    if (page === 1) return data.items;
-    const ids = new Set(allItems.map((i) => i.id));
-    const newItems = data.items.filter((i) => !ids.has(i.id));
-    if (newItems.length > 0) {
-      setAllItems((prev) => [...prev, ...newItems]);
-    }
-    return [...allItems, ...newItems];
-  })();
+  function handleSortChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setSort(e.target.value as LibrarySort);
+    setPage(1);
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setSearch(searchInput.trim());
+    setPage(1);
+  }
 
   return (
     <section>
+      {/* 헤더 */}
       <div
         className={css({
           display: 'flex',
@@ -198,7 +224,7 @@ export function LibrarySection() {
           className={css({ display: 'flex', gap: '2', alignItems: 'center' })}
         >
           <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-            소스 · Steam
+            모두 · Steam · 직접
           </span>
           <button
             type="button"
@@ -215,49 +241,124 @@ export function LibrarySection() {
               _hover: { borderColor: 'border.emphasized' },
             })}
           >
-            수동 동기화
+            동기화
           </button>
         </div>
       </div>
 
-      {/* 탭 */}
+      {/* 필터 행 */}
       <div
         className={css({
           display: 'flex',
-          gap: '1',
-          mb: '4',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           borderBottom: '1px solid',
           borderColor: 'border.default',
-          pb: '0',
+          mb: '4',
         })}
       >
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => handleTabChange(tab.key)}
+        {/* 탭 + 정렬 */}
+        <div className={css({ display: 'flex', alignItems: 'center' })}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => handleTabChange(tab.key)}
+              className={css({
+                px: '3',
+                py: '2',
+                fontSize: 'sm',
+                fontWeight: activeTab === tab.key ? 'semibold' : 'normal',
+                color: activeTab === tab.key ? 'accent.fg' : 'fg.subtle',
+                bg: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid',
+                borderColor:
+                  activeTab === tab.key ? 'accent.default' : 'transparent',
+                cursor: 'pointer',
+                mb: '-1px',
+                _hover: { color: 'fg.default' },
+              })}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <select
+            value={sort}
+            onChange={handleSortChange}
             className={css({
-              px: '3',
-              py: '2',
-              fontSize: 'sm',
-              fontWeight: activeTab === tab.key ? 'semibold' : 'normal',
-              color: activeTab === tab.key ? 'accent.fg' : 'fg.subtle',
-              bg: 'transparent',
-              border: 'none',
-              borderBottom: '2px solid',
-              borderColor:
-                activeTab === tab.key ? 'accent.default' : 'transparent',
+              ml: '3',
+              px: '2',
+              py: '1',
+              fontSize: 'xs',
+              color: 'fg.subtle',
+              bg: 'bg.surfaceRaised',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'md',
               cursor: 'pointer',
-              mb: '-1px',
-              _hover: { color: 'fg.default' },
+              outline: 'none',
+              mb: '2',
             })}
           >
-            {tab.label}
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 검색 */}
+        <form
+          onSubmit={handleSearch}
+          className={css({
+            display: 'flex',
+            gap: '1',
+            alignItems: 'center',
+            mb: '2',
+          })}
+        >
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="내 라이브러리에서 검색..."
+            className={css({
+              px: '3',
+              py: '1.5',
+              fontSize: 'xs',
+              color: 'fg.default',
+              bg: 'bg.surfaceRaised',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'md',
+              outline: 'none',
+              w: '52',
+              _focus: { borderColor: 'accent.default' },
+            })}
+          />
+          <button
+            type="submit"
+            className={css({
+              px: '2.5',
+              py: '1.5',
+              bg: 'accent.default',
+              border: 'none',
+              borderRadius: 'md',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: 'sm',
+              lineHeight: '1',
+              _hover: { opacity: '0.9' },
+            })}
+          >
+            🔍
           </button>
-        ))}
+        </form>
       </div>
 
-      {isLoading && items.length === 0 ? (
+      {/* 콘텐츠 */}
+      {isLoading && allItems.length === 0 ? (
         <div
           className={css({
             display: 'grid',
@@ -276,17 +377,17 @@ export function LibrarySection() {
             />
           ))}
         </div>
-      ) : items.length === 0 ? (
-        <div
-          className={css({
-            textAlign: 'center',
-            py: '12',
-            color: 'fg.subtle',
-            fontSize: 'sm',
-          })}
-        >
-          라이브러리가 비어 있습니다
-        </div>
+      ) : allItems.length === 0 ? (
+        <EmptyState
+          type={search ? 'search' : 'party'}
+          target={search || undefined}
+          title={search ? undefined : '라이브러리가 비어 있어요'}
+          description={
+            search
+              ? undefined
+              : 'Steam을 연동하면 게임 라이브러리가 자동으로 동기화돼요.'
+          }
+        />
       ) : (
         <>
           <div
@@ -297,11 +398,10 @@ export function LibrarySection() {
               mb: '4',
             })}
           >
-            {items.map((item) => (
+            {allItems.map((item) => (
               <LibraryGameCard key={item.id} item={item} />
             ))}
           </div>
-
           {data?.hasMore && (
             <div className={css({ textAlign: 'center' })}>
               <button
@@ -323,7 +423,7 @@ export function LibrarySection() {
                   },
                 })}
               >
-                더 보기 · {data.total - items.length}개 남음
+                더 보기 · {data.total - allItems.length}개 남음 ↓
               </button>
             </div>
           )}

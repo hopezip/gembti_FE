@@ -378,13 +378,37 @@ export const mypageHandlers = [
   http.get('/api/mypage/library', ({ request }) => {
     const url = new URL(request.url);
     const tab = url.searchParams.get('tab') ?? 'all';
+    const sort = url.searchParams.get('sort') ?? 'recent';
+    const search = url.searchParams.get('search') ?? '';
     const page = Number(url.searchParams.get('page') ?? 1);
     const pageSize = 12;
 
-    const filtered =
-      tab === 'all'
-        ? MOCK_LIBRARY
-        : MOCK_LIBRARY.filter((g) => g.status === tab);
+    let filtered = [...MOCK_LIBRARY];
+
+    if (tab === 'playing') {
+      filtered = filtered.filter((g) => g.status === 'playing');
+    } else if (tab === 'rated') {
+      filtered = filtered.filter((g) => g.myRating !== null);
+    }
+
+    if (search) {
+      filtered = filtered.filter((g) =>
+        g.title.toLowerCase().includes(search.toLowerCase()),
+      );
+    }
+
+    if (sort === 'playtime') {
+      filtered.sort((a, b) => b.playHours - a.playHours);
+    } else if (sort === 'rating') {
+      filtered.sort((a, b) => (b.myRating ?? 0) - (a.myRating ?? 0));
+    } else {
+      filtered.sort((a, b) => {
+        if (!a.lastPlayedAt && !b.lastPlayedAt) return 0;
+        if (!a.lastPlayedAt) return 1;
+        if (!b.lastPlayedAt) return -1;
+        return b.lastPlayedAt.localeCompare(a.lastPlayedAt);
+      });
+    }
 
     const start = (page - 1) * pageSize;
     const items = filtered.slice(start, start + pageSize);
