@@ -10,8 +10,10 @@ const NICKNAME_MAX = 20;
 function validateNickname(value: string): string | null {
   const t = value.trim();
   if (t.length < 2) return '닉네임은 2자 이상이어야 합니다.';
-  if (t.length > NICKNAME_MAX) return `닉네임은 ${NICKNAME_MAX}자 이하여야 합니다.`;
-  if (/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ_\s]/.test(t)) return '특수문자는 사용할 수 없습니다.';
+  if (t.length > NICKNAME_MAX)
+    return `닉네임은 ${NICKNAME_MAX}자 이하여야 합니다.`;
+  if (/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ_\s]/.test(t))
+    return '특수문자는 사용할 수 없습니다.';
   return null;
 }
 
@@ -65,7 +67,9 @@ export function ProfileEditPage() {
   }
 
   if (isLoading || !profile) {
-    return <div className={css({ p: '8', color: 'fg.subtle' })}>로딩 중...</div>;
+    return (
+      <div className={css({ p: '8', color: 'fg.subtle' })}>로딩 중...</div>
+    );
   }
 
   const nicknameError = validateNickname(nickname);
@@ -75,28 +79,58 @@ export function ProfileEditPage() {
     <div className={css({ maxW: '1200px', mx: 'auto', px: '6', py: '8' })}>
       {/* 헤더 */}
       <div className={css({ mb: '6' })}>
-        <h1 className={css({ fontSize: '2xl', fontWeight: 'bold', color: 'fg.default', mb: '1' })}>
+        <h1
+          className={css({
+            fontSize: '2xl',
+            fontWeight: 'bold',
+            color: 'fg.default',
+            mb: '1',
+          })}
+        >
           프로필 편집
         </h1>
-        <p className={css({ fontSize: 'sm', color: 'fg.subtle' })}>회원님의 프로필 정보를 수정합니다</p>
+        <p className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
+          회원님의 프로필 정보를 수정합니다
+        </p>
       </div>
 
       {/* 탭 */}
-      <div className={css({ borderBottom: '1px solid', borderColor: 'border.default', mb: '6' })}>
+      <div
+        className={css({
+          borderBottom: '1px solid',
+          borderColor: 'border.default',
+          mb: '6',
+        })}
+      >
         <button
           type="button"
           className={css({
-            px: '1', pb: '2', fontSize: 'sm', fontWeight: 'semibold', color: 'accent.fg',
-            borderBottom: '2px solid', borderColor: 'accent.default',
-            bg: 'transparent', cursor: 'pointer',
-            display: 'inline-flex', alignItems: 'center', gap: '1.5',
+            px: '1',
+            pb: '2',
+            fontSize: 'sm',
+            fontWeight: 'semibold',
+            color: 'accent.fg',
+            borderBottom: '2px solid',
+            borderColor: 'accent.default',
+            bg: 'transparent',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '1.5',
           })}
         >
           👤 기본 정보
         </button>
       </div>
 
-      <div className={css({ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '6', alignItems: 'start' })}>
+      <div
+        className={css({
+          display: 'grid',
+          gridTemplateColumns: '1fr 300px',
+          gap: '6',
+          alignItems: 'start',
+        })}
+      >
         {/* 왼쪽: 폼 */}
         <div
           className={css({
@@ -112,44 +146,91 @@ export function ProfileEditPage() {
         >
           {/* 이메일 (읽기 전용) */}
           <div>
-            <label className={css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.default', display: 'block', mb: '1.5' })}>
+            <label
+              className={css({
+                fontSize: 'sm',
+                fontWeight: 'medium',
+                color: 'fg.default',
+                display: 'block',
+                mb: '1.5',
+              })}
+            >
               이메일
             </label>
             <input
               value={email}
               readOnly
               className={css({
-                w: 'full', bg: 'bg.surfaceRaised', border: '1px solid', borderColor: 'border.default',
-                borderRadius: 'lg', px: '4', py: '3', fontSize: 'sm', color: 'fg.subtle',
-                outline: 'none', cursor: 'not-allowed',
+                w: 'full',
+                bg: 'bg.surfaceRaised',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                fontSize: 'sm',
+                color: 'fg.subtle',
+                outline: 'none',
+                cursor: 'not-allowed',
               })}
             />
-            <p className={css({ fontSize: 'xs', color: 'fg.subtle', mt: '1' })}>이메일은 변경할 수 없습니다.</p>
+            <p className={css({ fontSize: 'xs', color: 'fg.subtle', mt: '1' })}>
+              이메일은 변경할 수 없습니다.
+            </p>
           </div>
 
           {/* 닉네임 */}
           <div>
-            <div className={css({ display: 'flex', justifyContent: 'space-between', mb: '1.5' })}>
-              <label className={css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.default' })}>
+            <div
+              className={css({
+                display: 'flex',
+                justifyContent: 'space-between',
+                mb: '1.5',
+              })}
+            >
+              <label
+                className={css({
+                  fontSize: 'sm',
+                  fontWeight: 'medium',
+                  color: 'fg.default',
+                })}
+              >
                 닉네임 <span className={css({ color: 'accent.fg' })}>*</span>
               </label>
-              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>2~{NICKNAME_MAX}자</span>
+              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                2~{NICKNAME_MAX}자
+              </span>
             </div>
             <input
               value={nickname}
               onChange={handleChange(setNickname)}
               maxLength={NICKNAME_MAX}
               className={css({
-                w: 'full', bg: 'bg.surface', border: '1px solid',
-                borderColor: nicknameError ? 'danger.default' : 'border.default',
-                borderRadius: 'lg', px: '4', py: '3', fontSize: 'sm', color: 'fg.default',
-                outline: 'none', _focus: { borderColor: 'accent.default' },
+                w: 'full',
+                bg: 'bg.surface',
+                border: '1px solid',
+                borderColor: nicknameError
+                  ? 'danger.default'
+                  : 'border.default',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                fontSize: 'sm',
+                color: 'fg.default',
+                outline: 'none',
+                _focus: { borderColor: 'accent.default' },
               })}
             />
             {nicknameError ? (
-              <p className={css({ fontSize: 'xs', color: 'danger.fg', mt: '1' })}>{nicknameError}</p>
+              <p
+                className={css({ fontSize: 'xs', color: 'danger.fg', mt: '1' })}
+              >
+                {nicknameError}
+              </p>
             ) : (
-              <p className={css({ fontSize: 'xs', color: 'fg.subtle', mt: '1' })}>
+              <p
+                className={css({ fontSize: 'xs', color: 'fg.subtle', mt: '1' })}
+              >
                 영문, 숫자, 한글 사용 가능. 특수문자 불가.
               </p>
             )}
@@ -157,7 +238,15 @@ export function ProfileEditPage() {
 
           {/* 생년월일 */}
           <div>
-            <label className={css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.default', display: 'block', mb: '1.5' })}>
+            <label
+              className={css({
+                fontSize: 'sm',
+                fontWeight: 'medium',
+                color: 'fg.default',
+                display: 'block',
+                mb: '1.5',
+              })}
+            >
               생년월일
             </label>
             <input
@@ -165,9 +254,17 @@ export function ProfileEditPage() {
               onChange={handleChange(setBirthdate)}
               placeholder="YYYY.MM.DD"
               className={css({
-                w: 'full', bg: 'bg.surface', border: '1px solid', borderColor: 'border.default',
-                borderRadius: 'lg', px: '4', py: '3', fontSize: 'sm', color: 'fg.default',
-                outline: 'none', _focus: { borderColor: 'accent.default' },
+                w: 'full',
+                bg: 'bg.surface',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                fontSize: 'sm',
+                color: 'fg.default',
+                outline: 'none',
+                _focus: { borderColor: 'accent.default' },
                 _placeholder: { color: 'fg.subtle' },
               })}
             />
@@ -175,16 +272,33 @@ export function ProfileEditPage() {
 
           {/* 성별 */}
           <div>
-            <label className={css({ fontSize: 'sm', fontWeight: 'medium', color: 'fg.default', display: 'block', mb: '1.5' })}>
+            <label
+              className={css({
+                fontSize: 'sm',
+                fontWeight: 'medium',
+                color: 'fg.default',
+                display: 'block',
+                mb: '1.5',
+              })}
+            >
               성별
             </label>
             <select
               value={gender}
               onChange={handleChange<'남성' | '여성' | '기타' | ''>(setGender)}
               className={css({
-                w: 'full', bg: 'bg.surface', border: '1px solid', borderColor: 'border.default',
-                borderRadius: 'lg', px: '4', py: '3', fontSize: 'sm', color: 'fg.default',
-                outline: 'none', cursor: 'pointer', _focus: { borderColor: 'accent.default' },
+                w: 'full',
+                bg: 'bg.surface',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'lg',
+                px: '4',
+                py: '3',
+                fontSize: 'sm',
+                color: 'fg.default',
+                outline: 'none',
+                cursor: 'pointer',
+                _focus: { borderColor: 'accent.default' },
               })}
             >
               <option value="">선택 안 함</option>
@@ -195,7 +309,15 @@ export function ProfileEditPage() {
           </div>
 
           {isDirty && (
-            <p className={css({ fontSize: 'xs', color: 'fg.subtle', display: 'flex', alignItems: 'center', gap: '1' })}>
+            <p
+              className={css({
+                fontSize: 'xs',
+                color: 'fg.subtle',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1',
+              })}
+            >
               <span className={css({ color: 'accent.fg' })}>●</span>
               변경사항 저장 대기 중 · 저장하면 프로필이 업데이트 됩니다
             </p>
@@ -203,55 +325,134 @@ export function ProfileEditPage() {
         </div>
 
         {/* 오른쪽: 미리보기 + 저장 */}
-        <div className={css({ display: 'flex', flexDirection: 'column', gap: '4' })}>
+        <div
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4',
+          })}
+        >
           {/* 미리보기 */}
           <div
             className={css({
-              bg: 'bg.surface', border: '1px solid', borderColor: 'border.default',
-              borderRadius: 'xl', p: '4',
+              bg: 'bg.surface',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'xl',
+              p: '4',
             })}
           >
-            <p className={css({ fontSize: 'xs', fontWeight: 'semibold', color: 'fg.subtle', mb: '3' })}>
+            <p
+              className={css({
+                fontSize: 'xs',
+                fontWeight: 'semibold',
+                color: 'fg.subtle',
+                mb: '3',
+              })}
+            >
               👁 미리보기
             </p>
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '3', mb: '2' })}>
+            <div
+              className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3',
+                mb: '2',
+              })}
+            >
               <div
                 className={css({
-                  w: '10', h: '10', borderRadius: 'full', bg: 'accent.default', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 'sm', fontWeight: 'bold', color: 'white', overflow: 'hidden',
+                  w: '10',
+                  h: '10',
+                  borderRadius: 'full',
+                  bg: 'accent.default',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 'sm',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  overflow: 'hidden',
                 })}
               >
                 {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="preview" className={css({ w: 'full', h: 'full', objectFit: 'cover' })} />
+                  <img
+                    src={profile.avatarUrl}
+                    alt="preview"
+                    className={css({
+                      w: 'full',
+                      h: 'full',
+                      objectFit: 'cover',
+                    })}
+                  />
                 ) : (
                   initials
                 )}
               </div>
               <div>
-                <p className={css({ fontSize: 'sm', fontWeight: 'bold', color: 'fg.default' })}>{nickname || profile.nickname}</p>
-                <p className={css({ fontSize: 'xs', color: 'fg.subtle' })}>@{profile.handle}</p>
+                <p
+                  className={css({
+                    fontSize: 'sm',
+                    fontWeight: 'bold',
+                    color: 'fg.default',
+                  })}
+                >
+                  {nickname || profile.nickname}
+                </p>
+                <p className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                  @{profile.handle}
+                </p>
               </div>
             </div>
-            <div className={css({ fontSize: 'xs', color: 'fg.subtle', display: 'flex', flexDirection: 'column', gap: '0.5' })}>
+            <div
+              className={css({
+                fontSize: 'xs',
+                color: 'fg.subtle',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5',
+              })}
+            >
               <p>생년월일: {birthdate || '미설정'}</p>
               <p>성별: {gender || '미설정'}</p>
             </div>
           </div>
 
           {/* 저장/취소 */}
-          <div className={css({ display: 'flex', flexDirection: 'column', gap: '2' })}>
+          <div
+            className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2',
+            })}
+          >
             {mutation.isPending && (
-              <p className={css({ fontSize: 'xs', color: 'fg.subtle', textAlign: 'center' })}>저장 중...</p>
+              <p
+                className={css({
+                  fontSize: 'xs',
+                  color: 'fg.subtle',
+                  textAlign: 'center',
+                })}
+              >
+                저장 중...
+              </p>
             )}
             <div className={css({ display: 'flex', gap: '2' })}>
               <button
                 type="button"
                 onClick={() => navigate('/mypage')}
                 className={css({
-                  flex: 1, py: '2.5', fontSize: 'sm', color: 'fg.default', bg: 'bg.surfaceRaised',
-                  border: '1px solid', borderColor: 'border.emphasized', borderRadius: 'lg',
-                  cursor: 'pointer', _hover: { borderColor: 'accent.default' },
+                  flex: 1,
+                  py: '2.5',
+                  fontSize: 'sm',
+                  color: 'fg.default',
+                  bg: 'bg.surfaceRaised',
+                  border: '1px solid',
+                  borderColor: 'border.emphasized',
+                  borderRadius: 'lg',
+                  cursor: 'pointer',
+                  _hover: { borderColor: 'accent.default' },
                 })}
               >
                 취소
@@ -261,8 +462,15 @@ export function ProfileEditPage() {
                 onClick={handleSave}
                 disabled={mutation.isPending || Boolean(nicknameError)}
                 className={css({
-                  flex: 2, py: '2.5', fontSize: 'sm', fontWeight: 'semibold', color: 'white',
-                  bg: 'accent.default', border: 'none', borderRadius: 'lg', cursor: 'pointer',
+                  flex: 2,
+                  py: '2.5',
+                  fontSize: 'sm',
+                  fontWeight: 'semibold',
+                  color: 'white',
+                  bg: 'accent.default',
+                  border: 'none',
+                  borderRadius: 'lg',
+                  cursor: 'pointer',
                   _hover: { opacity: '0.9' },
                   _disabled: { opacity: '0.5', cursor: 'not-allowed' },
                 })}

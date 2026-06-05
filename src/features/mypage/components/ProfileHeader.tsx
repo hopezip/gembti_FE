@@ -11,7 +11,16 @@ interface Props {
 }
 
 export function ProfileHeader({ profile }: Props) {
-  const { nickname, handle, birthdate, joinedAt, avatarUrl, stats, isPublic, favoriteGenres } = profile;
+  const {
+    nickname,
+    handle,
+    birthdate,
+    joinedAt,
+    avatarUrl,
+    stats,
+    isPublic,
+    favoriteGenres,
+  } = profile;
   const navigate = useNavigate();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const queryClient = useQueryClient();
@@ -20,7 +29,9 @@ export function ProfileHeader({ profile }: Props) {
 
   const toggleMutation = useMutation({
     mutationFn: (val: boolean) =>
-      ky.patch('/api/mypage/profile', { json: { isPublic: val } }).json<MockUserProfile>(),
+      ky
+        .patch('/api/mypage/profile', { json: { isPublic: val } })
+        .json<MockUserProfile>(),
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
     },
@@ -44,7 +55,10 @@ export function ProfileHeader({ profile }: Props) {
   const statItems = [
     { label: '보유', value: stats.following },
     { label: '플레이중', value: stats.followers },
-    { label: '총 플레이 시간(시간)', value: stats.totalPlayHours.toLocaleString() },
+    {
+      label: '총 플레이 시간(시간)',
+      value: stats.totalPlayHours.toLocaleString(),
+    },
     { label: '리뷰', value: stats.reviewCount },
   ];
 
@@ -80,11 +94,17 @@ export function ProfileHeader({ profile }: Props) {
         })}
       >
         {avatarUrl ? (
-          <img src={avatarUrl} alt={nickname} className={css({ w: 'full', h: 'full', objectFit: 'cover' })} />
+          <img
+            src={avatarUrl}
+            alt={nickname}
+            className={css({ w: 'full', h: 'full', objectFit: 'cover' })}
+          />
         ) : (
           <>
             <span>{initials}</span>
-            <span className={css({ fontSize: '9px', color: 'fg.subtle' })}>아바타 이미지</span>
+            <span className={css({ fontSize: '9px', color: 'fg.subtle' })}>
+              아바타 이미지
+            </span>
           </>
         )}
       </div>
@@ -92,8 +112,21 @@ export function ProfileHeader({ profile }: Props) {
       {/* 닉네임 + 정보 + 통계 */}
       <div className={css({ flex: 1, minW: 0 })}>
         {/* 닉네임 + 장르 배지 */}
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '1.5' })}>
-          <span className={css({ fontSize: '2xl', fontWeight: 'bold', color: 'fg.default' })}>
+        <div
+          className={css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2',
+            mb: '1.5',
+          })}
+        >
+          <span
+            className={css({
+              fontSize: '2xl',
+              fontWeight: 'bold',
+              color: 'fg.default',
+            })}
+          >
             {nickname}
           </span>
           {favoriteGenres.slice(0, 1).map((g) => (
@@ -116,7 +149,16 @@ export function ProfileHeader({ profile }: Props) {
         </div>
 
         {/* 핸들 · 생년월일 · 가입일 */}
-        <div className={css({ display: 'flex', gap: '1.5', color: 'fg.subtle', fontSize: 'sm', mb: '4', alignItems: 'center' })}>
+        <div
+          className={css({
+            display: 'flex',
+            gap: '1.5',
+            color: 'fg.subtle',
+            fontSize: 'sm',
+            mb: '4',
+            alignItems: 'center',
+          })}
+        >
           <span>@{handle}</span>
           {birthdateShort && (
             <>
@@ -132,18 +174,39 @@ export function ProfileHeader({ profile }: Props) {
         <div className={css({ display: 'flex', gap: '8' })}>
           {statItems.map(({ label, value }) => (
             <div key={label} className={css({ textAlign: 'center' })}>
-              <div className={css({ fontSize: 'xl', fontWeight: 'bold', color: 'fg.default' })}>{value}</div>
-              <div className={css({ fontSize: 'xs', color: 'fg.subtle' })}>{label}</div>
+              <div
+                className={css({
+                  fontSize: 'xl',
+                  fontWeight: 'bold',
+                  color: 'fg.default',
+                })}
+              >
+                {value}
+              </div>
+              <div className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                {label}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* 우측: 공개 토글 + 버튼 */}
-      <div className={css({ display: 'flex', flexDirection: 'column', gap: '3', alignItems: 'flex-end' })}>
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '3',
+          alignItems: 'flex-end',
+        })}
+      >
         {/* 공개 토글 */}
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>유저페이지 공개</span>
+        <div
+          className={css({ display: 'flex', alignItems: 'center', gap: '2' })}
+        >
+          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+            유저페이지 공개
+          </span>
           <button
             type="button"
             role="switch"
@@ -155,7 +218,9 @@ export function ProfileHeader({ profile }: Props) {
               borderRadius: 'full',
               bg: publicToggle ? 'accent.default' : 'bg.surfaceRaised',
               border: '1px solid',
-              borderColor: publicToggle ? 'accent.default' : 'border.emphasized',
+              borderColor: publicToggle
+                ? 'accent.default'
+                : 'border.emphasized',
               cursor: 'pointer',
               position: 'relative',
               transition: 'background 0.2s',
@@ -182,8 +247,15 @@ export function ProfileHeader({ profile }: Props) {
             type="button"
             onClick={handleLogout}
             className={css({
-              px: '3', py: '1.5', fontSize: 'sm', color: 'fg.muted', bg: 'transparent',
-              border: '1px solid', borderColor: 'border.emphasized', borderRadius: 'md', cursor: 'pointer',
+              px: '3',
+              py: '1.5',
+              fontSize: 'sm',
+              color: 'fg.muted',
+              bg: 'transparent',
+              border: '1px solid',
+              borderColor: 'border.emphasized',
+              borderRadius: 'md',
+              cursor: 'pointer',
               _hover: { borderColor: 'danger.default', color: 'danger.fg' },
             })}
           >
@@ -193,8 +265,15 @@ export function ProfileHeader({ profile }: Props) {
             type="button"
             onClick={() => navigate('/mypage/edit')}
             className={css({
-              px: '3', py: '1.5', fontSize: 'sm', color: 'fg.default', bg: 'bg.surfaceRaised',
-              border: '1px solid', borderColor: 'border.emphasized', borderRadius: 'md', cursor: 'pointer',
+              px: '3',
+              py: '1.5',
+              fontSize: 'sm',
+              color: 'fg.default',
+              bg: 'bg.surfaceRaised',
+              border: '1px solid',
+              borderColor: 'border.emphasized',
+              borderRadius: 'md',
+              cursor: 'pointer',
               _hover: { borderColor: 'accent.default' },
             })}
           >
@@ -203,8 +282,15 @@ export function ProfileHeader({ profile }: Props) {
           <button
             type="button"
             className={css({
-              px: '3', py: '1.5', fontSize: 'sm', color: 'fg.muted', bg: 'transparent',
-              border: '1px solid', borderColor: 'border.emphasized', borderRadius: 'md', cursor: 'pointer',
+              px: '3',
+              py: '1.5',
+              fontSize: 'sm',
+              color: 'fg.muted',
+              bg: 'transparent',
+              border: '1px solid',
+              borderColor: 'border.emphasized',
+              borderRadius: 'md',
+              cursor: 'pointer',
               _hover: { color: 'fg.default' },
             })}
           >
