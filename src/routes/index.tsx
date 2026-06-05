@@ -3,6 +3,7 @@ import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
+import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
@@ -64,6 +65,7 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  if (path === '/recommendations') return <RecommendationsPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
