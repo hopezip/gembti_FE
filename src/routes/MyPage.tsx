@@ -94,31 +94,21 @@ export function MyPage() {
     >
       <ProfileHeader profile={profile} />
 
-      {/* 2컬럼: 기본 정보(왼쪽) + 스팀·레이더(오른쪽) */}
+      {/* 3컬럼 동등 크기 */}
       <div
         className={css({
           display: 'grid',
-          gridTemplateColumns: '1fr 340px',
-          gap: '6',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '4',
           alignItems: 'start',
         })}
       >
         <BasicInfoCard profile={profile} />
-
-        {/* 오른쪽 컬럼: Steam + 레이더 */}
-        <div
-          className={css({
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4',
-          })}
-        >
-          <SteamConnectCard profile={profile} />
-          <PersonalityRadar
-            personality={profile.personality}
-            syncedAt={profile.steamSyncedAt}
-          />
-        </div>
+        <SteamConnectCard profile={profile} />
+        <PersonalityRadar
+          personality={profile.personality}
+          syncedAt={profile.steamSyncedAt}
+        />
       </div>
     </div>
   );

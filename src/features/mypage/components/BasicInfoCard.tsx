@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
@@ -12,8 +11,10 @@ interface Props {
 type EditableField = 'nickname' | 'birthdate' | 'gender';
 
 export function BasicInfoCard({ profile }: Props) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  // 편집 모드 여부 (변경 버튼 노출)
+  const [isEditMode, setIsEditMode] = useState(false);
+  // 현재 인라인 편집 중인 필드
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [fieldValue, setFieldValue] = useState('');
 
@@ -42,30 +43,41 @@ export function BasicInfoCard({ profile }: Props) {
     mutation.mutate({ [editingField]: value });
   }
 
+  function handleClose() {
+    setEditingField(null);
+    setIsEditMode(false);
+  }
+
   const rowCss = css({
     display: 'flex',
     alignItems: 'center',
     py: '2.5',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    gap: '3',
+    gap: '2',
     _last: { borderBottom: 'none' },
   });
   const labelCss = css({
     fontSize: 'xs',
     color: 'fg.subtle',
-    minW: '16',
+    minW: '14',
     flexShrink: 0,
   });
-  const valueCss = css({ fontSize: 'sm', color: 'fg.default', flex: 1 });
+  const valueCss = css({
+    fontSize: 'sm',
+    color: 'fg.default',
+    flex: 1,
+    minW: 0,
+  });
   const inputCss = css({
     flex: 1,
+    minW: 0,
     bg: 'bg.surfaceRaised',
     border: '1px solid',
     borderColor: 'accent.default',
     borderRadius: 'md',
-    px: '3',
-    py: '1.5',
+    px: '2',
+    py: '1',
     fontSize: 'sm',
     color: 'fg.default',
     outline: 'none',
@@ -76,7 +88,7 @@ export function BasicInfoCard({ profile }: Props) {
     bg: 'accent.default',
     border: 'none',
     borderRadius: 'md',
-    px: '3',
+    px: '2',
     py: '1',
     cursor: 'pointer',
     flexShrink: 0,
@@ -96,8 +108,9 @@ export function BasicInfoCard({ profile }: Props) {
     bg: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    px: '2',
-    py: '1',
+    px: '1.5',
+    py: '0.5',
+    flexShrink: 0,
     _hover: { opacity: '0.7' },
   });
   const badgeCss = css({
@@ -111,28 +124,6 @@ export function BasicInfoCard({ profile }: Props) {
     color: 'fg.default',
   });
 
-  function EditButtons() {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={mutation.isPending}
-          className={saveBtnCss}
-        >
-          저장
-        </button>
-        <button
-          type="button"
-          onClick={() => setEditingField(null)}
-          className={cancelBtnCss}
-        >
-          취소
-        </button>
-      </>
-    );
-  }
-
   return (
     <div
       className={css({
@@ -141,6 +132,7 @@ export function BasicInfoCard({ profile }: Props) {
         borderColor: 'border.default',
         borderRadius: 'xl',
         p: '5',
+        h: 'full',
       })}
     >
       {/* 헤더 */}
@@ -161,20 +153,37 @@ export function BasicInfoCard({ profile }: Props) {
         >
           기본 정보
         </span>
-        <button
-          type="button"
-          onClick={() => navigate('/mypage/edit')}
-          className={css({
-            fontSize: 'xs',
-            color: 'accent.fg',
-            bg: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            _hover: { opacity: '0.7' },
-          })}
-        >
-          편집 &rsaquo;
-        </button>
+        {!isEditMode ? (
+          <button
+            type="button"
+            onClick={() => setIsEditMode(true)}
+            className={css({
+              fontSize: 'xs',
+              color: 'accent.fg',
+              bg: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              _hover: { opacity: '0.7' },
+            })}
+          >
+            편집 &rsaquo;
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleClose}
+            className={css({
+              fontSize: 'xs',
+              color: 'fg.subtle',
+              bg: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              _hover: { opacity: '0.7' },
+            })}
+          >
+            닫기
+          </button>
+        )}
       </div>
 
       <div className={css({ display: 'flex', flexDirection: 'column' })}>
@@ -186,11 +195,12 @@ export function BasicInfoCard({ profile }: Props) {
             className={css({
               fontSize: 'xs',
               color: 'fg.subtle',
-              px: '2',
+              px: '1.5',
               py: '0.5',
               border: '1px solid',
               borderColor: 'border.default',
               borderRadius: 'sm',
+              flexShrink: 0,
             })}
           >
             잠금
@@ -206,21 +216,37 @@ export function BasicInfoCard({ profile }: Props) {
                 value={fieldValue}
                 onChange={(e) => setFieldValue(e.target.value)}
                 className={inputCss}
-                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX상 자동 포커스 필요
+                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
                 autoFocus
               />
-              <EditButtons />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={mutation.isPending}
+                className={saveBtnCss}
+              >
+                저장
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingField(null)}
+                className={cancelBtnCss}
+              >
+                취소
+              </button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.nickname}</span>
-              <button
-                type="button"
-                onClick={() => startEdit('nickname')}
-                className={changeBtnCss}
-              >
-                변경
-              </button>
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => startEdit('nickname')}
+                  className={changeBtnCss}
+                >
+                  변경
+                </button>
+              )}
             </>
           )}
         </div>
@@ -235,21 +261,37 @@ export function BasicInfoCard({ profile }: Props) {
                 onChange={(e) => setFieldValue(e.target.value)}
                 placeholder="YYYY.MM.DD"
                 className={inputCss}
-                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX상 자동 포커스 필요
+                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
                 autoFocus
               />
-              <EditButtons />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={mutation.isPending}
+                className={saveBtnCss}
+              >
+                저장
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingField(null)}
+                className={cancelBtnCss}
+              >
+                취소
+              </button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
-              <button
-                type="button"
-                onClick={() => startEdit('birthdate')}
-                className={changeBtnCss}
-              >
-                변경
-              </button>
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => startEdit('birthdate')}
+                  className={changeBtnCss}
+                >
+                  변경
+                </button>
+              )}
             </>
           )}
         </div>
@@ -264,12 +306,13 @@ export function BasicInfoCard({ profile }: Props) {
                 onChange={(e) => setFieldValue(e.target.value)}
                 className={css({
                   flex: 1,
+                  minW: 0,
                   bg: 'bg.surfaceRaised',
                   border: '1px solid',
                   borderColor: 'accent.default',
                   borderRadius: 'md',
-                  px: '3',
-                  py: '1.5',
+                  px: '2',
+                  py: '1',
                   fontSize: 'sm',
                   color: 'fg.default',
                   outline: 'none',
@@ -281,18 +324,34 @@ export function BasicInfoCard({ profile }: Props) {
                 <option value="여성">여성</option>
                 <option value="기타">기타</option>
               </select>
-              <EditButtons />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={mutation.isPending}
+                className={saveBtnCss}
+              >
+                저장
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingField(null)}
+                className={cancelBtnCss}
+              >
+                취소
+              </button>
             </>
           ) : (
             <>
               <span className={valueCss}>{profile.gender ?? '미설정'}</span>
-              <button
-                type="button"
-                onClick={() => startEdit('gender')}
-                className={changeBtnCss}
-              >
-                변경
-              </button>
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => startEdit('gender')}
+                  className={changeBtnCss}
+                >
+                  변경
+                </button>
+              )}
             </>
           )}
         </div>
