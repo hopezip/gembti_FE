@@ -3,6 +3,7 @@ import { GlobalShell } from '@/components/layout/GlobalShell';
 import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
 import { NotFoundPage } from './NotFoundPage';
+import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SteamCallbackPage } from './SteamCallbackPage';
@@ -68,6 +69,7 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  if (path === '/recommendations') return <RecommendationsPage />;
   // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
   if (path === '/onboarding/steam') return <SteamOnboardingPage />;
   if (path === '/auth/steam/callback') return <SteamCallbackPage />;
