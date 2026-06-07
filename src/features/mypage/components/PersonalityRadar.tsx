@@ -79,7 +79,7 @@ export function PersonalityRadar({ personality }: Props) {
           6대 성향 레이더
         </span>
         <Button variant="ghost" size="sm">
-          히향 다시 진단
+          취향 다시 진단
         </Button>
       </div>
 
