@@ -16,12 +16,14 @@ export function FollowListPage() {
 
   const { data: followingData } = useQuery({
     queryKey: ['mypage', 'following'],
-    queryFn: () => ky.get('/api/mypage/following').json<{ users: MockFollowUser[] }>(),
+    queryFn: () =>
+      ky.get('/api/mypage/following').json<{ users: MockFollowUser[] }>(),
   });
 
   const { data: followersData } = useQuery({
     queryKey: ['mypage', 'followers'],
-    queryFn: () => ky.get('/api/mypage/followers').json<{ users: MockFollowUser[] }>(),
+    queryFn: () =>
+      ky.get('/api/mypage/followers').json<{ users: MockFollowUser[] }>(),
   });
 
   const followMutation = useMutation({
@@ -42,7 +44,10 @@ export function FollowListPage() {
     },
   });
 
-  const activeList = tab === 'following' ? followingData?.users ?? [] : followersData?.users ?? [];
+  const activeList =
+    tab === 'following'
+      ? (followingData?.users ?? [])
+      : (followersData?.users ?? []);
 
   const filtered = search.trim()
     ? activeList.filter(
@@ -86,49 +91,108 @@ export function FollowListPage() {
           })}
         >
           {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="avatar" className={css({ w: 'full', h: 'full', objectFit: 'cover' })} />
+            <img
+              src={profile.avatarUrl}
+              alt="avatar"
+              className={css({ w: 'full', h: 'full', objectFit: 'cover' })}
+            />
           ) : (
             initials
           )}
         </div>
         <div>
-          <div className={css({ display: 'flex', alignItems: 'center', gap: '1.5', mb: '0.5' })}>
-            <span className={css({ fontSize: 'lg', fontWeight: 'bold', color: 'fg.default' })}>
+          <div
+            className={css({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1.5',
+              mb: '0.5',
+            })}
+          >
+            <span
+              className={css({
+                fontSize: 'lg',
+                fontWeight: 'bold',
+                color: 'fg.default',
+              })}
+            >
               {profile?.nickname ?? '...'}
             </span>
             <span className={css({ fontSize: 'sm', color: '#4A9EFF' })}>✓</span>
           </div>
-          <p className={css({ fontSize: 'sm', color: 'fg.subtle', mb: '1' })}>@{profile?.handle ?? ''}</p>
+          <p className={css({ fontSize: 'sm', color: 'fg.subtle', mb: '1' })}>
+            @{profile?.handle ?? ''}
+          </p>
           <div className={css({ display: 'flex', gap: '4' })}>
             <button
               type="button"
               onClick={() => setTab('following')}
-              className={css({ bg: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', gap: '1', alignItems: 'baseline' })}
+              className={css({
+                bg: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                gap: '1',
+                alignItems: 'baseline',
+              })}
             >
-              <span className={css({ fontSize: 'sm', fontWeight: 'bold', color: tab === 'following' ? 'accent.fg' : 'fg.default' })}>
+              <span
+                className={css({
+                  fontSize: 'sm',
+                  fontWeight: 'bold',
+                  color: tab === 'following' ? 'accent.fg' : 'fg.default',
+                })}
+              >
                 {profile?.stats.following ?? 0}
               </span>
-              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>팔로잉</span>
+              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                팔로잉
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setTab('followers')}
-              className={css({ bg: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', gap: '1', alignItems: 'baseline' })}
+              className={css({
+                bg: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                gap: '1',
+                alignItems: 'baseline',
+              })}
             >
-              <span className={css({ fontSize: 'sm', fontWeight: 'bold', color: tab === 'followers' ? 'accent.fg' : 'fg.default' })}>
+              <span
+                className={css({
+                  fontSize: 'sm',
+                  fontWeight: 'bold',
+                  color: tab === 'followers' ? 'accent.fg' : 'fg.default',
+                })}
+              >
                 {profile?.stats.followers ?? 0}
               </span>
-              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>팔로워</span>
+              <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+                팔로워
+              </span>
             </button>
           </div>
         </div>
       </div>
 
       {/* 탭 */}
-      <div className={css({ display: 'flex', borderBottom: '1px solid', borderColor: 'border.default', mb: '4' })}>
+      <div
+        className={css({
+          display: 'flex',
+          borderBottom: '1px solid',
+          borderColor: 'border.default',
+          mb: '4',
+        })}
+      >
         {(['following', 'followers'] as const).map((t) => {
           const label = t === 'following' ? '팔로잉' : '팔로워';
-          const count = t === 'following' ? profile?.stats.following : profile?.stats.followers;
+          const count =
+            t === 'following'
+              ? profile?.stats.following
+              : profile?.stats.followers;
           const isActive = tab === t;
           return (
             <button
@@ -157,7 +221,16 @@ export function FollowListPage() {
 
       {/* 검색 */}
       <div className={css({ position: 'relative', mb: '4' })}>
-        <span className={css({ position: 'absolute', left: '3', top: '50%', transform: 'translateY(-50%)', color: 'fg.subtle', fontSize: 'xs' })}>
+        <span
+          className={css({
+            position: 'absolute',
+            left: '3',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'fg.subtle',
+            fontSize: 'xs',
+          })}
+        >
           ●
         </span>
         <input
@@ -183,20 +256,45 @@ export function FollowListPage() {
       </div>
 
       {/* 카운트 */}
-      <div className={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '3' })}>
-        <span className={css({ fontSize: 'sm', color: 'fg.subtle' })}>전체 {filtered.length}명</span>
+      <div
+        className={css({
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: '3',
+        })}
+      >
+        <span className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
+          전체 {filtered.length}명
+        </span>
         <button
           type="button"
-          className={css({ fontSize: 'xs', color: 'fg.subtle', bg: 'transparent', border: 'none', cursor: 'pointer', _hover: { color: 'fg.default' } })}
+          className={css({
+            fontSize: 'xs',
+            color: 'fg.subtle',
+            bg: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            _hover: { color: 'fg.default' },
+          })}
         >
           최신순 ▾
         </button>
       </div>
 
       {/* 유저 목록 */}
-      <div className={css({ display: 'flex', flexDirection: 'column', gap: '0' })}>
+      <div
+        className={css({ display: 'flex', flexDirection: 'column', gap: '0' })}
+      >
         {filtered.length === 0 ? (
-          <p className={css({ py: '12', textAlign: 'center', fontSize: 'sm', color: 'fg.subtle' })}>
+          <p
+            className={css({
+              py: '12',
+              textAlign: 'center',
+              fontSize: 'sm',
+              color: 'fg.subtle',
+            })}
+          >
             {search ? '검색 결과가 없습니다' : '아직 없습니다'}
           </p>
         ) : (
@@ -259,11 +357,26 @@ function UserRow({
 
       {/* 정보 */}
       <div className={css({ flex: 1, minW: 0 })}>
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mb: '0.5' })}>
-          <span className={css({ fontSize: 'sm', fontWeight: 'semibold', color: 'fg.default' })}>
+        <div
+          className={css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2',
+            mb: '0.5',
+          })}
+        >
+          <span
+            className={css({
+              fontSize: 'sm',
+              fontWeight: 'semibold',
+              color: 'fg.default',
+            })}
+          >
             {user.nickname}
           </span>
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>@{user.handle}</span>
+          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+            @{user.handle}
+          </span>
           {user.isMutualFollow && (
             <span
               className={css({
@@ -281,7 +394,14 @@ function UserRow({
             </span>
           )}
         </div>
-        <p className={css({ fontSize: 'xs', color: 'fg.muted', mb: '1.5', lineHeight: '1.5' })}>
+        <p
+          className={css({
+            fontSize: 'xs',
+            color: 'fg.muted',
+            mb: '1.5',
+            lineHeight: '1.5',
+          })}
+        >
           {user.bio}
         </p>
         <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1' })}>
@@ -318,7 +438,9 @@ function UserRow({
           color: user.isFollowing ? 'fg.subtle' : 'white',
           bg: user.isFollowing ? 'transparent' : 'accent.default',
           border: '1px solid',
-          borderColor: user.isFollowing ? 'border.emphasized' : 'accent.default',
+          borderColor: user.isFollowing
+            ? 'border.emphasized'
+            : 'accent.default',
           borderRadius: 'md',
           cursor: 'pointer',
           flexShrink: 0,
