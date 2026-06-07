@@ -95,6 +95,35 @@ describe('라우트 골격', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('게임 상세 경로(/games/:gameId)가 PlaceholderPage 대신 GameDetailPage를 렌더한다(REC-DET-FE-001)', () => {
+    // 화면 교체 회귀 방지: /games/:gameId는 더 이상 공통 PlaceholderPage("게임별 상세")가 아니라
+    //   실제 GameDetailPage로 마운트되어야 한다.
+    // vitest 셋업에는 MSW 서버가 없어 useGameDetail의 fetch가 동기적으로 resolve되지 않는다.
+    //   따라서 유효한 id에서는 GameDetailPage가 로딩 상태(스켈레톤)로 렌더된다.
+    //   로딩 스켈레톤에는 접근성 이름이 없으므로, "PlaceholderPage가 아님"을 음성 단언으로 검증한다.
+    renderAt('/games/1');
+    // PlaceholderPage라면 보였을 흔적(헤딩 "게임별 상세" + "Placeholder" 라벨)이 없어야 한다.
+    expect(
+      screen.queryByRole('heading', { name: '게임별 상세' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Placeholder')).not.toBeInTheDocument();
+    // 셸(Header/Footer)은 GameDetailPage에도 동일하게 적용된다(라우트 레벨 GlobalShell).
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+  });
+
+  it('게임 상세에서 잘못된 id(NaN)면 GameDetailPage가 "찾을 수 없음" 안내를 렌더한다', () => {
+    // isValidId 가드(Number(gameId) NaN) 경로는 fetch 없이 동기 렌더되므로,
+    //   GameDetailPage가 실제로 마운트됐음을 결정적으로 증명한다(PlaceholderPage엔 없는 카피).
+    renderAt('/games/not-a-number');
+    expect(
+      screen.getByRole('heading', { name: '게임을 찾을 수 없어요' }),
+    ).toBeInTheDocument();
+    // 옛 PlaceholderPage 헤딩은 더 이상 없다.
+    expect(
+      screen.queryByRole('heading', { name: '게임별 상세' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('GlobalShell layout 라우트가 모든 경로에 Header/Footer 셸을 렌더한다', () => {
     // 중첩 구조에서 페이지(Outlet)와 함께 셸 landmark(banner/nav/contentinfo)가 보여야 한다.
     renderAt('/search');
