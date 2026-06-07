@@ -37,6 +37,15 @@ interface HomeGameRaw {
   is_new?: boolean;
 }
 
+// 추천 페이지 Hero의 취향 2그룹 메타(REC-FE-002). "좋아하는 것" 칩은
+// 별도 필드 없이 기존 user_interest_tags를 재사용한다(중복 방지).
+interface RecommendationProfileRaw {
+  challenge_tags: string[];
+  liked_meta: string;
+  challenge_meta: string;
+  last_updated_text: string;
+}
+
 interface PersonalizedHomeResponseRaw {
   status: string;
   data: {
@@ -44,6 +53,9 @@ interface PersonalizedHomeResponseRaw {
     user_interest_tags: string[];
     recommended_games: PersonalizedGameRaw[];
     new_releases: HomeGameRaw[];
+    // 기존 실서버 계약엔 없는 추가 필드(REC-FE-002 mock 보강). 실서버가 옛 형태로 내려와도
+    // 매핑이 깨지지 않도록 optional로 둔다(없으면 매핑에서 기본값으로 채움).
+    recommendation_profile?: RecommendationProfileRaw;
   };
 }
 
@@ -62,11 +74,21 @@ export interface PersonalizedGameSummary extends HomeGameSummary {
   reasonTagline: string;
 }
 
+// 추천 페이지 Hero의 취향 2그룹 메타(REC-FE-002).
+// "좋아하는 것" 그룹 칩은 별도 필드 없이 기존 userInterestTags를 재사용한다.
+export interface RecommendationProfile {
+  likedMeta: string; // "좋아하는 것" 그룹 캡션 (예: "★4+ 게임 23개에서 추출")
+  challengeTags: string[]; // "새로운 도전" 그룹 칩
+  challengeMeta: string; // "새로운 도전" 그룹 캡션
+  lastUpdatedText: string; // "마지막 업데이트 …"의 값 (예: "2일 전")
+}
+
 export interface PersonalizedHome {
   topRecommendation: TopRecommendation;
   userInterestTags: string[];
   recommendedGames: PersonalizedGameSummary[];
   newReleases: HomeGameSummary[];
+  recommendationProfile: RecommendationProfile;
 }
 
 function mapHomeGame(raw: HomeGameRaw): HomeGameSummary {
@@ -103,6 +125,7 @@ function mapPersonalizedHome(
     user_interest_tags,
     recommended_games,
     new_releases,
+    recommendation_profile,
   } = raw.data;
   return {
     topRecommendation: {
@@ -115,6 +138,15 @@ function mapPersonalizedHome(
     userInterestTags: user_interest_tags,
     recommendedGames: recommended_games.map(mapPersonalizedGame),
     newReleases: new_releases.map(mapHomeGame),
+    // recommendation_profile은 실서버 옛 계약엔 없을 수 있다(optional). 없으면 기본값으로 채워
+    // 매핑 예외를 방지한다 — 이 쿼리를 공유하는 MainPage 개인화 홈까지 동반 에러로 떨어지지 않도록.
+    // 빈 값은 Hero가 조건부 렌더로 자연히 숨긴다(빈 칩 그룹·캡션 미노출).
+    recommendationProfile: {
+      likedMeta: recommendation_profile?.liked_meta ?? '',
+      challengeTags: recommendation_profile?.challenge_tags ?? [],
+      challengeMeta: recommendation_profile?.challenge_meta ?? '',
+      lastUpdatedText: recommendation_profile?.last_updated_text ?? '',
+    },
   };
 }
 

@@ -499,6 +499,13 @@ export const gameHandlers = [
           '스토리 중심',
           '싱글플레이어',
         ],
+        // REC-FE-002 보강: 추천 페이지 Hero의 "새로운 도전" 칩·두 그룹 캡션·마지막 업데이트 표기 (additive, 기존 필드 무변경).
+        recommendation_profile: {
+          challenge_tags: ['로그라이크', '전략 시뮬', '대전 격투', '서바이벌'],
+          liked_meta: '★4+ 게임 23개에서 추출',
+          challenge_meta: '새로운 도전 거리로 추천',
+          last_updated_text: '2일 전',
+        },
         recommended_games,
         new_releases,
       },

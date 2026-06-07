@@ -27,7 +27,14 @@ export function GlobalShell() {
     >
       <Header />
       {/* 콘텐츠 영역 — 남은 세로 공간을 채워 Footer를 하단에 고정한다. */}
-      <div className={css({ flex: '1', minW: '0' })}>
+      <div
+        className={css({
+          flex: '1',
+          minW: '0',
+          display: 'flex',
+          flexDirection: 'column',
+        })}
+      >
         <Outlet />
       </div>
       <Footer />

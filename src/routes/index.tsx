@@ -5,9 +5,13 @@ import { MainPage } from './MainPage';
 import { MyPage } from './MyPage';
 import { NotFoundPage } from './NotFoundPage';
 import { ProfileEditPage } from './ProfileEditPage';
+import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
+import { SteamCallbackPage } from './SteamCallbackPage';
+import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
+import { SurveyPage } from './SurveyPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -41,7 +45,8 @@ const mvpRoutes: RouteDef[] = [
   },
   // SURVEY-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
   { title: '설문 인트로', path: '/survey/intro', access: 'Public' },
-  { title: '설문 진행', path: '/survey', access: 'Auth' },
+  // SURVEY-FE-002 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
+  { title: '설문 진행', path: '/survey', access: 'Public' },
   { title: '설문 결과', path: '/survey/result', access: 'Auth' },
   { title: '검색', path: '/search', access: 'Public' },
   { title: '게임 추천', path: '/recommendations', access: 'Public' },
@@ -66,7 +71,12 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/login') return <LoginPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/search') return <SearchPage />;
+  if (path === '/recommendations') return <RecommendationsPage />;
+  // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
+  if (path === '/onboarding/steam') return <SteamOnboardingPage />;
+  if (path === '/auth/steam/callback') return <SteamCallbackPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
+  if (path === '/survey') return <SurveyPage />;
   if (path === '/mypage') return <MyPage />;
   if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;

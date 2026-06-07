@@ -2,9 +2,10 @@ import { NavLink } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 
 // 글로벌 셸 1차 내비게이션 (DESIGN_SYSTEM 4.1 + Figma g-header: gap 22px, active 시 주황 Bold + 하단 2px accent 바).
-// 노출 항목은 2개(홈/추천). 커뮤니티는 MVP 구현 생략(보류, scaffold 유지)으로 진입점 비노출(TASK-DEVEX-016). 검색은 별도 검색창으로 분리된다.
+// 노출 항목은 홈/추천/설문조사. 커뮤니티는 MVP 구현 생략(보류, scaffold 유지)으로 진입점 비노출(TASK-DEVEX-016). 검색은 별도 검색창으로 분리된다.
 //  - 홈 '/'                 : Public
 //  - 추천 '/recommendations' : Public
+//  - 설문조사 '/survey/intro' : Public
 // 가드/권한 분기는 라우트가 책임지며 Nav는 표시(링크)만 한다.
 interface NavItem {
   // 표시 라벨
@@ -18,6 +19,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: '홈', to: '/', end: true },
   { label: '추천', to: '/recommendations' },
+  { label: '설문조사', to: '/survey/intro' },
 ];
 
 // 링크 기본 스타일 — active 여부와 무관한 공통 시각.

@@ -10,17 +10,22 @@ import { Checkbox } from './Checkbox';
 import { PasswordInput } from './PasswordInput';
 import { PasswordRules } from './PasswordRules';
 
-// 회원가입 STEP1 (계정정보) — LOGIN-FE-005.
-// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 14세 이상 한 줄 체크.
-//   (기존 약관 그룹 전체동의/이용약관/개인정보/마케팅은 제거 — TermsAgreement 미사용.)
-//   (이메일 실시간 중복확인도 제거 — 백엔드 계약에 check-email 엔드포인트가 없다. 중복은 가입 단계 서버 응답으로 처리.)
-// 제출 성공 시 send-code 호출은 페이지(SignupPage)가 담당한다. 이 폼은 검증된 계정정보를
-//   onSubmitStep1로 넘기기만 한다(비밀번호는 STEP2 최종 signup까지 페이지 state로 보관).
+// 회원가입 STEP1 (계정정보) — LOGIN-FE-006.
+// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 이용약관 동의 + [필수] 개인정보 처리방침 동의.
+//   약관 2개는 GEMBTI_API SignupRequest의 terms_agreed/privacy_agreed로 STEP2 signup 시 전송된다.
+//   (이메일 실시간 중복확인 없음 — 백엔드에 check-email 엔드포인트가 없다. 중복은 가입 단계 서버 응답으로 처리.)
+// 제출 성공 시 send-code 호출은 페이지(SignupPage)가 담당한다. 이 폼은 검증된 계정정보 + 약관 동의를
+//   onSubmitStep1로 넘기기만 한다(비밀번호/약관은 STEP2 최종 signup까지 페이지 state로 보관).
 
 interface SignupFormProps {
-  // STEP1 검증 성공 시 호출. 검증된 계정정보(이메일/비밀번호)를 페이지로 넘긴다.
+  // STEP1 검증 성공 시 호출. 검증된 계정정보(이메일/비밀번호) + 약관 동의를 페이지로 넘긴다.
   //   페이지가 send-code 후 STEP2로 전환한다.
-  onSubmitStep1: (values: { email: string; password: string }) => void;
+  onSubmitStep1: (values: {
+    email: string;
+    password: string;
+    termsAgreed: boolean;
+    privacyAgreed: boolean;
+  }) => void;
   // send-code 진행 중 여부(페이지가 제어) — 제출 버튼 로딩 표시.
   isSubmitting?: boolean;
   // send-code 실패 등 페이지 레벨 에러 메시지.
@@ -47,7 +52,8 @@ export function SignupForm({
       email: '',
       password: '',
       passwordConfirm: '',
-      ageOver14: false,
+      termsAgreed: false,
+      privacyAgreed: false,
     },
   });
 
@@ -60,7 +66,12 @@ export function SignupForm({
   };
 
   const onValid = (values: SignupStep1Input) => {
-    onSubmitStep1({ email: values.email, password: values.password });
+    onSubmitStep1({
+      email: values.email,
+      password: values.password,
+      termsAgreed: values.termsAgreed,
+      privacyAgreed: values.privacyAgreed,
+    });
   };
 
   return (
@@ -92,7 +103,7 @@ export function SignupForm({
       >
         <PasswordInput
           autoComplete="new-password"
-          placeholder="영문·숫자 포함 8자 이상"
+          placeholder="특수문자 포함 10자 이상"
           disabled={isSubmitting}
           {...register('password')}
         />
@@ -114,22 +125,22 @@ export function SignupForm({
         />
       </Field>
 
-      {/* [필수] 만 14세 이상 한 줄 동의 (약관 그룹 대체) */}
-      <div className={vstack({ gap: '1.5', alignItems: 'stretch' })}>
+      {/* [필수] 약관 동의 2개 — 이용약관 / 개인정보 처리방침 (GEMBTI_API terms_agreed/privacy_agreed) */}
+      <div className={vstack({ gap: '2', alignItems: 'stretch' })}>
         <Controller
           control={control}
-          name="ageOver14"
+          name="termsAgreed"
           render={({ field }) => (
             <Checkbox
               checked={field.value === true}
               onCheckedChange={field.onChange}
             >
               <span className={css({ color: 'accent.fg' })}>[필수]</span>
-              <span className={css({ ml: '1' })}>만 14세 이상이에요</span>
+              <span className={css({ ml: '1' })}>이용약관에 동의해요</span>
             </Checkbox>
           )}
         />
-        {errors.ageOver14 && (
+        {errors.termsAgreed && (
           <p
             role="alert"
             className={css({
@@ -138,7 +149,35 @@ export function SignupForm({
               color: 'danger.default',
             })}
           >
-            {errors.ageOver14.message}
+            {errors.termsAgreed.message}
+          </p>
+        )}
+
+        <Controller
+          control={control}
+          name="privacyAgreed"
+          render={({ field }) => (
+            <Checkbox
+              checked={field.value === true}
+              onCheckedChange={field.onChange}
+            >
+              <span className={css({ color: 'accent.fg' })}>[필수]</span>
+              <span className={css({ ml: '1' })}>
+                개인정보 처리방침에 동의해요
+              </span>
+            </Checkbox>
+          )}
+        />
+        {errors.privacyAgreed && (
+          <p
+            role="alert"
+            className={css({
+              fontFamily: 'mono',
+              fontSize: 'sm',
+              color: 'danger.default',
+            })}
+          >
+            {errors.privacyAgreed.message}
           </p>
         )}
       </div>

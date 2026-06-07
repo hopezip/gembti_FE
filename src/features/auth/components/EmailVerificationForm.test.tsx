@@ -5,21 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SignupError, VerifyError } from '@/services/auth';
 import { EmailVerificationForm } from './EmailVerificationForm';
 
-// 서비스 레이어를 모킹한다(MSW 미설정 테스트 환경). verify-code→signup 순차 분기를 검증한다.
-const verifyEmailCode = vi.fn();
+// 서비스 레이어를 모킹한다(MSW 미설정 테스트 환경). verify→signup 순차 분기를 검증한다.
+const verifyEmail = vi.fn();
 const signup = vi.fn();
 const sendEmailCode = vi.fn();
-const checkNicknameAvailability = vi.fn();
 
 vi.mock('@/services/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/auth')>();
   return {
     ...actual,
-    verifyEmailCode: (...args: unknown[]) => verifyEmailCode(...args),
+    verifyEmail: (...args: unknown[]) => verifyEmail(...args),
     signup: (...args: unknown[]) => signup(...args),
     sendEmailCode: (...args: unknown[]) => sendEmailCode(...args),
-    checkNicknameAvailability: (...args: unknown[]) =>
-      checkNicknameAvailability(...args),
   };
 });
 
@@ -31,8 +28,10 @@ function renderForm(onSignedUp = vi.fn()) {
     <QueryClientProvider client={client}>
       <EmailVerificationForm
         email="new_user@example.com"
-        password="abcde123"
-        initialExpiresInSeconds={300}
+        password="abcde1234!"
+        passwordConfirm="abcde1234!"
+        termsAgreed
+        privacyAgreed
         onSignedUp={onSignedUp}
       />
     </QueryClientProvider>,
@@ -57,18 +56,16 @@ async function fillProfile(user: ReturnType<typeof userEvent.setup>) {
 
 describe('EmailVerificationForm (STEP2)', () => {
   beforeEach(() => {
-    verifyEmailCode.mockReset();
+    verifyEmail.mockReset();
     signup.mockReset();
     sendEmailCode.mockReset();
-    checkNicknameAvailability.mockReset();
-    checkNicknameAvailability.mockResolvedValue({ available: true });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('안내 배너의 이메일과 타이머(05:00)를 표시한다', () => {
+  it('안내 배너의 이메일과 타이머(05:00, 상수 TTL)를 표시한다', () => {
     renderForm();
     expect(screen.getByText('new_user@example.com')).toBeInTheDocument();
     expect(screen.getByRole('timer')).toHaveTextContent('05:00');
@@ -81,11 +78,16 @@ describe('EmailVerificationForm (STEP2)', () => {
     expect(screen.getByLabelText('인증 코드 6번째 자리')).toHaveValue('6');
   });
 
-  it('가입 완료 시 verify-code→signup 순차 호출 후 onSignedUp을 부른다', async () => {
-    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+  it('가입 완료 시 verify→signup 순차 호출 후 onSignedUp을 부른다', async () => {
+    verifyEmail.mockResolvedValue(undefined);
     signup.mockResolvedValue({
-      user: { id: 'u_new', nickname: '테스트유저', hasCompletedSurvey: false },
-      tokens: { accessToken: 'a', refreshToken: 'r' },
+      user: {
+        id: 10,
+        email: 'new_user@example.com',
+        nickname: '테스트유저',
+        hasCompletedSurvey: false,
+      },
+      accessToken: 'a',
     });
     const user = userEvent.setup();
     const { onSignedUp } = renderForm();
@@ -95,19 +97,24 @@ describe('EmailVerificationForm (STEP2)', () => {
     await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
 
     await waitFor(() => expect(onSignedUp).toHaveBeenCalledTimes(1));
-    expect(verifyEmailCode.mock.calls[0][0]).toEqual({
+    expect(verifyEmail.mock.calls[0][0]).toEqual({
       email: 'new_user@example.com',
       code: '123456',
     });
     expect(signup.mock.calls[0][0]).toMatchObject({
-      signupToken: 'sgn_1',
-      password: 'abcde123',
+      email: 'new_user@example.com',
+      password: 'abcde1234!',
+      passwordConfirm: 'abcde1234!',
       nickname: '테스트유저',
+      gender: 'other',
+      birthDate: '2000-01-01',
+      termsAgreed: true,
+      privacyAgreed: true,
     });
   });
 
-  it('코드 오류(invalid-code)는 코드 영역 에러로 표시한다', async () => {
-    verifyEmailCode.mockRejectedValue(new VerifyError('invalid-code'));
+  it('코드 오류(invalid-code)는 코드 영역 에러로 표시하고 signup을 호출하지 않는다', async () => {
+    verifyEmail.mockRejectedValue(new VerifyError('invalid-code'));
     const user = userEvent.setup();
     renderForm();
 
@@ -120,8 +127,8 @@ describe('EmailVerificationForm (STEP2)', () => {
     expect(signup).not.toHaveBeenCalled();
   });
 
-  it('닉네임 중복(NICKNAME_DUPLICATED)은 닉네임 필드 에러로 표시한다', async () => {
-    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+  it('닉네임 중복(nickname-duplicated)은 닉네임 필드 에러로 표시한다', async () => {
+    verifyEmail.mockResolvedValue(undefined);
     signup.mockRejectedValue(new SignupError('nickname-duplicated'));
     const user = userEvent.setup();
     renderForm();
@@ -136,7 +143,7 @@ describe('EmailVerificationForm (STEP2)', () => {
   });
 
   it('signup 일반 오류는 코드 영역에 일반 에러로 표시한다', async () => {
-    verifyEmailCode.mockResolvedValue({ signupToken: 'sgn_1' });
+    verifyEmail.mockResolvedValue(undefined);
     signup.mockRejectedValue(new SignupError('generic'));
     const user = userEvent.setup();
     renderForm();
@@ -150,7 +157,7 @@ describe('EmailVerificationForm (STEP2)', () => {
   });
 
   it('재전송 버튼 클릭 시 sendEmailCode 호출 후 쿨다운으로 비활성화된다', async () => {
-    sendEmailCode.mockResolvedValue({ expiresInSeconds: 300 });
+    sendEmailCode.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderForm();
 

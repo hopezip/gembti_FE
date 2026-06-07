@@ -22,6 +22,7 @@ GamBTI recipe(`styled-system/recipes`)를 덮어쓴 스타일 컴포넌트만 �
 | `Field` | `Field.tsx` | 없음(조합) | 없음 (props: `label`/`id`/`required?`/`hint?`/`help?`/`error?`/`children`) | 폼 래퍼. `styled-system/patterns`(vstack)+`css`(기존 textStyles 매핑+semantic token)로 label row→입력 children 슬롯→help→error를 조합. `htmlFor`/`aria-required`/`aria-invalid`/`aria-describedby`를 children 입력에 주입(a11y). error 존재 시 help 대신 error 표시. RHF/Zod 미결합 — `error` 문자열 생성은 소비자 책임 |
 | `Avatar` | `Avatar.tsx` | 없음(조합) | 없음 (props: `size`(xs/sm/md/lg/xl, 기본 md)/`src?`/`name`/`op?`) | 유저 표시 primitive(DESIGN_SYSTEM 2.6). Ark UI Avatar(Root/Image/Fallback) 위에 `css`(기존 sizes 토큰 `avatarXs`~`avatarXl`+semantic token)만 얹어 원형 이미지 + 이니셜 fallback을 조합. `src` 미제공/로드 실패 시 `name` 기반 이니셜로 자동 전환(Ark). `op`(글쓴이)는 `border.accent`+`accent.default`로 강조. a11y는 Root `aria-label={name}`+이미지 `alt`(이니셜은 `aria-hidden`). 도메인 로직(데이터 패칭) 미결합 — `src`/`name`은 소비자 주입 |
 | `Toast` | `Toast.tsx` | `toast`(slot recipe) | 없음 (API: `toaster`, `Toaster`) | Park UI Toast 기반 전역 피드백. `GlobalShell`에서 `Toaster`를 렌더하고, 소비자는 `toaster.create({ title, type })` 또는 `toaster.*`를 호출한다 |
+| `ProgressBar` | `ProgressBar.tsx` | 없음(조합) | 없음 (props: `value`/`label?`/`size?`) | Ark UI Progress 기반 선형 진행률. `size="sm"`은 카드용 얇은 막대, `size="md"`는 설문 하단처럼 더 높은 막대에 사용 |
 
 ## Toast 사용 패턴
 
