@@ -101,7 +101,7 @@ export function MyPage() {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '4',
-          alignItems: 'start',
+          alignItems: 'stretch',
         })}
       >
         <BasicInfoCard profile={profile} />

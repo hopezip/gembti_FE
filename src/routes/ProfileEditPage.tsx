@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { Card } from '@/components/ui/GameCard';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 const NICKNAME_MAX = 20;
@@ -132,13 +133,9 @@ export function ProfileEditPage() {
         })}
       >
         {/* 왼쪽: 폼 */}
-        <div
+        <Card
+          padding="lg"
           className={css({
-            bg: 'bg.surface',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 'xl',
-            p: '6',
             display: 'flex',
             flexDirection: 'column',
             gap: '5',
@@ -330,7 +327,7 @@ export function ProfileEditPage() {
               변경사항 저장 대기 중 · 저장하면 프로필이 업데이트 됩니다
             </p>
           )}
-        </div>
+        </Card>
 
         {/* 오른쪽: 미리보기 + 저장 */}
         <div
@@ -341,15 +338,7 @@ export function ProfileEditPage() {
           })}
         >
           {/* 미리보기 */}
-          <div
-            className={css({
-              bg: 'bg.surface',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'xl',
-              p: '4',
-            })}
-          >
+          <Card padding="sm">
             <p
               className={css({
                 fontSize: 'xs',
@@ -426,7 +415,7 @@ export function ProfileEditPage() {
               <p>생년월일: {birthdate || '미설정'}</p>
               <p>성별: {gender || '미설정'}</p>
             </div>
-          </div>
+          </Card>
 
           {/* 저장/취소 */}
           <div

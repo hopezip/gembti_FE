@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
@@ -41,15 +42,7 @@ export function SteamConnectCard({ profile }: Props) {
   const isSyncing = syncMutation.isPending;
 
   return (
-    <div
-      className={css({
-        bg: 'bg.surface',
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 'xl',
-        p: '5',
-      })}
-    >
+    <Card padding="md" className={css({ h: 'full' })}>
       {/* 헤더 */}
       <div
         className={css({
@@ -181,6 +174,6 @@ export function SteamConnectCard({ profile }: Props) {
           </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

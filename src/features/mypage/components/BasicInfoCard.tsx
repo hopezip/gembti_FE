@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
 import { Tag } from '@/components/ui/Tag';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
@@ -127,16 +128,7 @@ export function BasicInfoCard({ profile }: Props) {
   });
 
   return (
-    <div
-      className={css({
-        bg: 'bg.surface',
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 'xl',
-        p: '5',
-        h: 'full',
-      })}
-    >
+    <Card padding="md" className={css({ h: 'full' })}>
       {/* 헤더 */}
       <div
         className={css({
@@ -446,6 +438,6 @@ export function BasicInfoCard({ profile }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
