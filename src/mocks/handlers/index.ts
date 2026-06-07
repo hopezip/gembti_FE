@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { gameHandlers } from './games';
+import { mypageHandlers } from './mypage';
 import { steamHandlers } from './steam';
 
 // MSW 핸들러 레지스트리.
@@ -9,5 +10,6 @@ import { steamHandlers } from './steam';
 export const handlers = [
   http.get('/health', () => HttpResponse.json({ ok: true })),
   ...gameHandlers,
+  ...mypageHandlers,
   ...steamHandlers,
 ];
