@@ -4,6 +4,7 @@ import {
   useId,
   useState,
 } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { css } from 'styled-system/css';
 import { Input, type InputProps } from '@/components/ui/Input';
 
@@ -68,13 +69,12 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             },
           })}
         >
-          {/* 의미 전달은 버튼 aria-label이 담당, 아이콘은 장식(alt="") */}
-          <img
-            src={visible ? '/icons/eye-off.png' : '/icons/eye.png'}
-            alt=""
-            aria-hidden="true"
-            className={css({ w: '5', h: '5' })}
-          />
+          {/* 의미 전달은 버튼 aria-label이 담당, 아이콘은 장식 */}
+          {visible ? (
+            <EyeOff size={20} aria-hidden="true" />
+          ) : (
+            <Eye size={20} aria-hidden="true" />
+          )}
         </button>
       </div>
     );
