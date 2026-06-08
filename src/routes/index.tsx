@@ -14,6 +14,7 @@ import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { SurveyAnalysisLoadingPage } from './SurveyAnalysisLoadingPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
 import { SurveyPage } from './SurveyPage';
+import { SurveyResultPage } from './SurveyResultPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -51,7 +52,8 @@ const mvpRoutes: RouteDef[] = [
   { title: '설문 진행', path: '/survey', access: 'Public' },
   // SURVEY-FE-003 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
   { title: '설문 결과 분석', path: '/survey/loading', access: 'Public' },
-  { title: '설문 결과', path: '/survey/result', access: 'Auth' },
+  // TEND-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
+  { title: '설문 결과', path: '/survey/result', access: 'Public' },
   { title: '검색', path: '/search', access: 'Public' },
   { title: '게임 추천', path: '/recommendations', access: 'Public' },
   { title: '게임별 상세', path: '/games/:gameId', access: 'Public' },
@@ -85,6 +87,7 @@ function pageElement({ title, path, access }: RouteDef) {
   // 게임별 상세 (REC-DET-FE-001) — 라우트 정의/권한(Public)은 변경하지 않고 화면만 교체.
   if (path === '/games/:gameId') return <GameDetailPage />;
   if (path === '/survey/loading') return <SurveyAnalysisLoadingPage />;
+  if (path === '/survey/result') return <SurveyResultPage />;
   if (path === '/mypage') return <MyPage />;
   if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
