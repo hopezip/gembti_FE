@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { GlobalShell } from '@/components/layout/GlobalShell';
+import GameDetailPage from './GameDetailPage';
 import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
 import { MyPage } from './MyPage';
@@ -77,6 +78,8 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/auth/steam/callback') return <SteamCallbackPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
   if (path === '/survey') return <SurveyPage />;
+  // 게임별 상세 (REC-DET-FE-001) — 라우트 정의/권한(Public)은 변경하지 않고 화면만 교체.
+  if (path === '/games/:gameId') return <GameDetailPage />;
   if (path === '/mypage') return <MyPage />;
   if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;

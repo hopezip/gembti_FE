@@ -9,8 +9,9 @@ import { PageContainer } from '@/components/layout/PageContainer';
 // items 타입을 제네릭 <T>로 일반화했다. 게스트 호출부는 제네릭 추론으로 무변경이다.
 // 데스크탑 전용 규칙의 1100px 미만 1열 fallback도 여기서 단일 출처로 처리한다.
 
-// 더보기 클릭당 추가 노출 개수. 추천·신규 공통 단일 출처.
-const PAGE_SIZE = 12;
+// 더보기 클릭당 추가 노출 개수 기본값. 추천·신규 공통 단일 출처.
+// pageSize prop 미지정 시 이 값으로 동작(기존 호출부 무영향).
+const DEFAULT_PAGE_SIZE = 12;
 
 const styles = {
   grid: css({
@@ -80,6 +81,8 @@ interface GameGridSectionProps<T> {
   errorText: string;
   /** 빈 상태 문구 */
   emptyText: string;
+  /** 초기 노출 개수 + 더보기 클릭당 추가 노출 개수. 미지정 시 12(기존 호출부 무영향). 게임 상세 카드 섹션은 4 전달. */
+  pageSize?: number;
 }
 
 export function GameGridSection<T>({
@@ -90,8 +93,19 @@ export function GameGridSection<T>({
   renderCard,
   errorText,
   emptyText,
+  pageSize = DEFAULT_PAGE_SIZE,
 }: GameGridSectionProps<T>) {
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [visible, setVisible] = useState(pageSize);
+
+  // 상세(/games/:gameId)에서 다른 게임으로 이동하면 같은 라우트라 컴포넌트가 재사용되어
+  // visible이 유지된다. items가 교체되면 렌더 중 노출 개수를 초기값으로 되돌려 "초기 노출 개수" 계약을 지킨다.
+  // React 공식 "prop 변경 시 state 조정" 패턴 — effect보다 정확하고 깜빡임이 없다.
+  // (items는 react-query 캐시 참조라 같은 데이터에선 안정적 — 불필요한 리셋이 발생하지 않는다.)
+  const [prevItems, setPrevItems] = useState(items);
+  if (prevItems !== items) {
+    setPrevItems(items);
+    setVisible(pageSize);
+  }
 
   const shown = items.slice(0, visible);
   const hasMore = visible < items.length;
@@ -102,7 +116,7 @@ export function GameGridSection<T>({
 
       {isLoading ? (
         <div className={styles.skeletonGrid}>
-          {Array.from({ length: PAGE_SIZE }, (_, i) => `skeleton-${i}`).map(
+          {Array.from({ length: pageSize }, (_, i) => `skeleton-${i}`).map(
             (key) => (
               <div key={key} className={styles.skeletonCard} />
             ),
@@ -124,7 +138,7 @@ export function GameGridSection<T>({
                 type="button"
                 // items가 비동기로 줄어드는 경우까지 대비해 visible이 길이를 넘지 않게 clamp.
                 onClick={() =>
-                  setVisible((v) => Math.min(v + PAGE_SIZE, items.length))
+                  setVisible((v) => Math.min(v + pageSize, items.length))
                 }
                 className={styles.moreButton}
                 aria-label={`${title} 더 보기`}
