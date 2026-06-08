@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { SurveyQuestionSection } from '@/features/survey/components/SurveyQuestionSection';
@@ -23,10 +24,12 @@ const styles = {
 };
 
 export function SurveyPage() {
+  const navigate = useNavigate();
+
   return (
     <main className={cx(surveyBackgroundPageStyle, styles.page)}>
       <PageContainer className={styles.content}>
-        <SurveyQuestionSection />
+        <SurveyQuestionSection onComplete={() => navigate('/survey/loading')} />
       </PageContainer>
     </main>
   );

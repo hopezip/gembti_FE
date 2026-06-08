@@ -39,6 +39,16 @@ describe('라우트 골격', () => {
     ).toBeInTheDocument();
   });
 
+  it('설문 결과 분석 경로(/survey/loading)가 로딩 화면을 렌더한다', () => {
+    renderAt('/survey/loading');
+    expect(
+      screen.getByRole('heading', { name: '당신의 성향을 분석하고 있어요' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: '설문 결과 분석 중' }),
+    ).toBeInTheDocument();
+  });
+
   it('메인 경로(/)가 MainPage Hero 배너(MAIN-FE-001)를 렌더한다', () => {
     // '/'는 PlaceholderPage 대신 MainPage(HeroBanner)를 렌더한다.
     // 배너 텍스트는 추천 데이터 로딩/에러와 무관하게 항상 렌더되므로 <h1>로 검증한다.

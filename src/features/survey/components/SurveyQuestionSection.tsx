@@ -73,7 +73,13 @@ function renderQuestion(text: string, accent: string) {
   );
 }
 
-export function SurveyQuestionSection() {
+interface SurveyQuestionSectionProps {
+  onComplete?: () => void;
+}
+
+export function SurveyQuestionSection({
+  onComplete,
+}: SurveyQuestionSectionProps) {
   const totalSteps = surveyQuestions.length;
   const {
     answers,
@@ -85,7 +91,7 @@ export function SurveyQuestionSection() {
     selectedValue,
     selectAnswer,
     skipQuestion,
-  } = useSurveyQuestionSection({ totalSteps });
+  } = useSurveyQuestionSection({ onComplete, totalSteps });
   const currentQuestion = surveyQuestions[currentIndex];
 
   return (
