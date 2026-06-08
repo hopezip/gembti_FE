@@ -58,7 +58,7 @@ const COPY: Record<SteamLinkOrigin, InviteCopy> = {
     linkCardTitle: 'Steam 연동하기',
     linkCardDesc:
       '로그인 후 Steam OpenID로 계정을 인증하면 라이브러리를 자동 동기화해요.',
-    linkLabel: '로그인하고 연동하기 →',
+    linkLabel: '연동하기 →',
     skipCardTitle: '먼저 둘러볼게요',
     skipCardDesc: '로그인 없이도 추천 콘텐츠와 커뮤니티를 둘러볼 수 있어요.',
     skipLabel: '홈으로 →',

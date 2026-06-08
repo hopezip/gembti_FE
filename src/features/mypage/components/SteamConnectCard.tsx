@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky from 'ky';
+import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
@@ -23,6 +24,7 @@ function relativeTime(isoStr: string): string {
 
 export function SteamConnectCard({ profile }: Props) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const syncMutation = useMutation({
     mutationFn: () => ky.post('/api/mypage/steam/sync').json<MockUserProfile>(),
@@ -169,7 +171,11 @@ export function SteamConnectCard({ profile }: Props) {
           >
             Steam 계정이 연동되지 않았습니다
           </p>
-          <Button variant="primary" size="sm">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/onboarding/steam')}
+          >
             Steam 연동하기
           </Button>
         </div>
