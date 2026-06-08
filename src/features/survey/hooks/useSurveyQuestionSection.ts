@@ -3,10 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const autoAdvanceDelay = 420;
 
 interface UseSurveyQuestionSectionParams {
+  onComplete?: () => void;
   totalSteps: number;
 }
 
 export function useSurveyQuestionSection({
+  onComplete,
   totalSteps,
 }: UseSurveyQuestionSectionParams) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -52,6 +54,11 @@ export function useSurveyQuestionSection({
       advanceTimer.current = window.setTimeout(() => {
         setCurrentIndex((prev) => Math.min(prev + 1, totalSteps - 1));
       }, autoAdvanceDelay);
+      return;
+    }
+
+    if (onComplete) {
+      advanceTimer.current = window.setTimeout(onComplete, autoAdvanceDelay);
     }
   }
 
@@ -64,9 +71,15 @@ export function useSurveyQuestionSection({
         index === currentIndex ? true : isSkipped,
       ),
     );
-    goToQuestion(
-      currentIndex < totalSteps - 1 ? currentIndex + 1 : currentIndex,
-    );
+    if (currentIndex < totalSteps - 1) {
+      goToQuestion(currentIndex + 1);
+      return;
+    }
+
+    if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
+    if (onComplete) {
+      advanceTimer.current = window.setTimeout(onComplete, autoAdvanceDelay);
+    }
   }
 
   return {

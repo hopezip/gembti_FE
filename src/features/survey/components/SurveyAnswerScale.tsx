@@ -73,7 +73,7 @@ export function SurveyAnswerScale({
                 }),
                 selected &&
                   css({
-                    color: 'accent.default',
+                    color: 'fg.onAccent',
                     bg: 'accent.default',
                     filter: `drop-shadow(0 0 12px ${accentGlow})`,
                     transform: 'translateY(-4px) scale(1.05)',
@@ -95,7 +95,7 @@ export function SurveyAnswerScale({
                   }),
                   selected &&
                     css({
-                      bg: 'linear-gradient(180deg, rgba(255,120,0,0.16) 0%, rgba(255,120,0,0.04) 100%)',
+                      bg: 'accent.default',
                     }),
                 )}
               >
