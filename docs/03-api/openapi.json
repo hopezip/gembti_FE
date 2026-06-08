@@ -359,6 +359,11 @@
         ],
         "title": "SignupRequest"
       },
+      "UserFlowStatus": {
+        "type": "string",
+        "enum": ["NEEDS_SURVEY", "READY"],
+        "title": "UserFlowStatus"
+      },
       "UserResponse": {
         "properties": {
           "id": { "type": "integer", "title": "Id" },
@@ -389,6 +394,15 @@
               { "type": "null" }
             ],
             "title": "Last Synced At"
+          },
+          "has_completed_survey": {
+            "type": "boolean",
+            "title": "Has Completed Survey",
+            "default": false
+          },
+          "user_flow_status": {
+            "$ref": "#/components/schemas/UserFlowStatus",
+            "default": "NEEDS_SURVEY"
           }
         },
         "type": "object",
