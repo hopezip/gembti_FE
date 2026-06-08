@@ -49,12 +49,14 @@ export function sampleReviews(reviews: SteamReview[], opts: SampleOpts) {
 }
 
 // 리뷰 텍스트 집합 → 결정적 해시(캐시 키). 외부 의존 없는 FNV-1a.
+const FNV_OFFSET_BASIS = 0x811c9dc5; // FNV-1a 32비트 초기값
+const FNV_PRIME = 0x01000193; // FNV-1a 32비트 소수
 function hashReviews(reviews: { review: string }[]): string {
-  let h = 0x811c9dc5;
+  let h = FNV_OFFSET_BASIS;
   for (const { review } of reviews) {
     for (let i = 0; i < review.length; i++) {
       h ^= review.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
+      h = Math.imul(h, FNV_PRIME);
     }
   }
   return (h >>> 0).toString(16);
@@ -81,13 +83,22 @@ export async function fetchSteamGame(appid: number): Promise<SteamGameDTO> {
     throw new Error(`appdetails 실패: appid=${appid}`);
   }
 
-  const reviewRes = await fetch(
-    `https://store.steampowered.com/appreviews/${appid}?json=1&language=koreana&num_per_page=100&filter=recent`,
-  );
-  const reviewJson = (await reviewRes
-    .json()
-    .catch(() => ({ reviews: [] }))) as { reviews?: SteamReview[] };
-  const sampled = sampleReviews(reviewJson.reviews ?? [], SAMPLE);
+  // appreviews는 appdetails 성공의 부가 신호일 뿐 — 네트워크/파싱 실패나 success=0(레이트리밋 등)이어도
+  // 전체를 실패시키지 않고 빈 리뷰로 폴백한다(spec §5: 리뷰 없으면 설명·태그만 축약 분석).
+  let reviews: SteamReview[] = [];
+  try {
+    const reviewRes = await fetch(
+      `https://store.steampowered.com/appreviews/${appid}?json=1&language=koreana&num_per_page=100&filter=recent`,
+    );
+    const reviewJson = (await reviewRes.json()) as {
+      success?: number;
+      reviews?: SteamReview[];
+    };
+    if (reviewJson.success === 1) reviews = reviewJson.reviews ?? [];
+  } catch {
+    reviews = [];
+  }
+  const sampled = sampleReviews(reviews, SAMPLE);
 
   return {
     appid,

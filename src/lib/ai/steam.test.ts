@@ -25,6 +25,8 @@ const appreviews = {
 
 describe('sampleReviews', () => {
   it('긍/부정/helpful 혼합으로 뽑고 각 리뷰를 자른다(편향·토큰 가드)', () => {
+    // 순수함수라 동작 검증용 작은 opts를 직접 준다(maxLen:5로 자르기 경계 확인).
+    // 운영 기본값(긍5/부5/helpful5·400자)은 fetchSteamGame 내부 SAMPLE 상수.
     const out = sampleReviews(appreviews.reviews, {
       positive: 1,
       negative: 1,
