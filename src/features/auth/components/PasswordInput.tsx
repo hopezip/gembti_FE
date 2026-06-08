@@ -68,8 +68,13 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             },
           })}
         >
-          {/* 텍스트 이모지 대신 의미 전달은 aria-label이 담당, 시각 아이콘만 노출 */}
-          <span aria-hidden="true">{visible ? '🙈' : '👁'}</span>
+          {/* 의미 전달은 버튼 aria-label이 담당, 아이콘은 장식(alt="") */}
+          <img
+            src={visible ? '/icons/eye-off.png' : '/icons/eye.png'}
+            alt=""
+            aria-hidden="true"
+            className={css({ w: '5', h: '5' })}
+          />
         </button>
       </div>
     );
