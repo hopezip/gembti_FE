@@ -97,6 +97,16 @@ export function GameGridSection<T>({
 }: GameGridSectionProps<T>) {
   const [visible, setVisible] = useState(pageSize);
 
+  // 상세(/games/:gameId)에서 다른 게임으로 이동하면 같은 라우트라 컴포넌트가 재사용되어
+  // visible이 유지된다. items가 교체되면 렌더 중 노출 개수를 초기값으로 되돌려 "초기 노출 개수" 계약을 지킨다.
+  // React 공식 "prop 변경 시 state 조정" 패턴 — effect보다 정확하고 깜빡임이 없다.
+  // (items는 react-query 캐시 참조라 같은 데이터에선 안정적 — 불필요한 리셋이 발생하지 않는다.)
+  const [prevItems, setPrevItems] = useState(items);
+  if (prevItems !== items) {
+    setPrevItems(items);
+    setVisible(pageSize);
+  }
+
   const shown = items.slice(0, visible);
   const hasMore = visible < items.length;
 

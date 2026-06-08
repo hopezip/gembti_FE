@@ -517,9 +517,16 @@ export const gameHandlers = [
   // snake_case 필드는 gameDetail.ts(GameDetailRaw)의 camel 도메인 타입과 1:1 대응한다.
   http.get('*/api/v1/games/:id', ({ params }) => {
     const id = String(params.id);
-    const base = MOCK_GAMES.find((g) => g.id === id);
+    const numId = Number(id);
+    // 실제 MOCK_GAMES id 우선. 없으면 합성 id(인기 i+1·신규 200+·추천 300+·개인화 400+·검색 i+1)도
+    // MOCK_GAMES로 순환 매핑해 상세를 제공한다 — 메인/검색 카드의 상세 진입점이 mock에서 404로 깨지는 것을 방지.
+    const base =
+      MOCK_GAMES.find((g) => g.id === id) ??
+      (Number.isFinite(numId) && numId > 0
+        ? MOCK_GAMES[(numId - 1) % MOCK_GAMES.length]
+        : undefined);
 
-    // 없는 id → NOT_FOUND + 404(상세 에러 분기 시연).
+    // 매핑조차 불가한 id(NaN·0·음수) → NOT_FOUND + 404(상세 에러 분기 시연).
     if (!base) {
       return HttpResponse.json({ status: 'NOT_FOUND' }, { status: 404 });
     }

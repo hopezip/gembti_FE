@@ -39,13 +39,14 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
   const playModeLabel =
     playModes.length > 0 ? mapPlayModeLabels(playModes).join(', ') : '-';
 
-  // 세일가가 있고 onSale이며 할인율이 양수일 때만 할인 배지를 노출한다.
+  // 세일 적용 = 세일가 존재 + onSale + 할인율 양수. 셋 다 충족할 때만 세일가/취소선/배지를 노출한다.
+  // (on_sale=false인데 sale_price가 남은 응답에서 세일가가 잘못 대표가로 선택되는 것을 방지.)
   const hasSalePrice = priceInfo.salePrice != null;
-  const showDiscountBadge =
-    hasSalePrice && onSale && priceInfo.discountRate > 0;
+  const isSaleActive = hasSalePrice && onSale && priceInfo.discountRate > 0;
 
-  // 화면 표시 가격: 세일가가 있으면 세일가, 없으면 정가(?? 로 null 좁힘).
-  const displayPrice = priceInfo.salePrice ?? priceInfo.originalPrice;
+  // 화면 표시 가격: 세일 적용 시 세일가, 아니면 정가(?? 로 null 좁힘).
+  const displayPrice =
+    (isSaleActive ? priceInfo.salePrice : null) ?? priceInfo.originalPrice;
 
   return (
     <section
@@ -181,8 +182,8 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
                 {formatPrice(displayPrice)}
               </span>
 
-              {/* 세일 중일 때만 정가 취소선 노출. */}
-              {hasSalePrice && (
+              {/* 세일 적용 중일 때만 정가 취소선 노출. */}
+              {isSaleActive && (
                 <span
                   className={css({
                     fontSize: 'lg', // 14px
@@ -196,7 +197,7 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
               )}
 
               {/* 할인배지 — danger 배경 + 흰 글씨(fg.onAccent) + 작은 라운드. */}
-              {showDiscountBadge && (
+              {isSaleActive && (
                 <span
                   className={css({
                     bg: 'danger.default',
