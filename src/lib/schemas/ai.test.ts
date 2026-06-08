@@ -58,7 +58,12 @@ describe('ExplainResponseSchema', () => {
         genreTone: 'hardcore',
       },
       script: [
-        { lineId: 'l1', text: '이 게임은', emotion: 'excited', gesture: 'point' },
+        {
+          lineId: 'l1',
+          text: '이 게임은',
+          emotion: 'excited',
+          gesture: 'point',
+        },
       ],
     };
     expect(ExplainResponseSchema.parse(r)).toEqual(r);

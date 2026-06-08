@@ -41,7 +41,9 @@ describe('fetchSteamGame', () => {
   it('appdetails+appreviews를 정규화 DTO로 합친다', async () => {
     vi.spyOn(global, 'fetch').mockImplementation((url) => {
       const body = String(url).includes('appreviews') ? appreviews : appdetails;
-      return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+      return Promise.resolve(
+        new Response(JSON.stringify(body), { status: 200 }),
+      );
     });
     const dto = await fetchSteamGame(1245620);
     expect(dto.name).toBe('ELDEN RING');
@@ -51,7 +53,9 @@ describe('fetchSteamGame', () => {
 
   it('appdetails success=false면 에러(버튼 비활성 신호)', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ '1': { success: false } }), { status: 200 }),
+      new Response(JSON.stringify({ '1': { success: false } }), {
+        status: 200,
+      }),
     );
     await expect(fetchSteamGame(1)).rejects.toThrow();
   });
@@ -61,7 +65,9 @@ describe('fetchSteamGame', () => {
       const body = String(url).includes('appreviews')
         ? { success: 1, reviews: [] }
         : appdetails;
-      return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+      return Promise.resolve(
+        new Response(JSON.stringify(body), { status: 200 }),
+      );
     });
     const dto = await fetchSteamGame(1245620);
     expect(dto.reviews).toEqual([]);

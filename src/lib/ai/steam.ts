@@ -61,7 +61,12 @@ function hashReviews(reviews: { review: string }[]): string {
 }
 
 // 샘플 기본값(spec §6: 긍5/부5/helpful5, 리뷰당 ~400자). 토큰 비용 보고 조정.
-const SAMPLE: SampleOpts = { positive: 5, negative: 5, helpful: 5, maxLen: 400 };
+const SAMPLE: SampleOpts = {
+  positive: 5,
+  negative: 5,
+  helpful: 5,
+  maxLen: 400,
+};
 
 export async function fetchSteamGame(appid: number): Promise<SteamGameDTO> {
   const detailRes = await fetch(
