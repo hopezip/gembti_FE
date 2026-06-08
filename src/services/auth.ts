@@ -14,6 +14,8 @@ type UserResponse = components['schemas']['UserResponse'];
 type LoginRequest = components['schemas']['LoginRequest'];
 type SignupRequest = components['schemas']['SignupRequest'];
 type Gender = components['schemas']['Gender'];
+type EmailCodeSendRequest = components['schemas']['EmailCodeSendRequest'];
+type EmailCodeVerifyRequest = components['schemas']['EmailCodeVerifyRequest'];
 
 // ── 사용자/세션 ──────────────────────────────────────────────────────────────
 // 도메인 사용자. 백엔드 UserResponse(id:number 외 다수)에서 화면이 쓰는 최소 필드만 추린다.
@@ -110,8 +112,11 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 
 // ── 인증 코드 발송(STEP2 진입 시) ────────────────────────────────────────────
 // 발송 응답은 MessageResponse(expires_in 없음). 카운트다운은 FE 상수 TTL을 쓴다.
+// purpose는 회원가입 흐름 고정값 'SIGNUP'을 서비스 레이어에서 채운다(EmailCodeSendRequest 계약).
+//   PASSWORD_RESET 흐름은 요구사항 밖이라 파라미터화하지 않는다.
 export async function sendEmailCode(email: string): Promise<void> {
-  await api.post('api/v1/auth/email/send-code', { json: { email } }).json();
+  const body = { email, purpose: 'SIGNUP' } satisfies EmailCodeSendRequest;
+  await api.post('api/v1/auth/email/send-code', { json: body }).json();
 }
 
 // ── 인증 코드 검증 ───────────────────────────────────────────────────────────
@@ -141,7 +146,13 @@ export interface VerifyEmailPayload {
 
 export async function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
   try {
-    await api.post('api/v1/auth/email/verify', { json: payload }).json();
+    // purpose는 send-code와 동일하게 'SIGNUP'을 채운다(EmailCodeVerifyRequest 계약).
+    const body = {
+      email: payload.email,
+      code: payload.code,
+      purpose: 'SIGNUP',
+    } satisfies EmailCodeVerifyRequest;
+    await api.post('api/v1/auth/email/verify', { json: body }).json();
   } catch (error) {
     if (error instanceof HTTPError) {
       const status = error.response.status;
@@ -229,10 +240,8 @@ export async function refresh(): Promise<{ accessToken: string }> {
 
 // ── 로그아웃(httpOnly 쿠키 무효화) ───────────────────────────────────────────
 export async function logout(): Promise<void> {
-  await api
-    .post('api/v1/auth/logout')
-    .json()
-    .catch(() => undefined);
+  // 204 No Content — 본문이 없어 .json() 파싱을 하지 않는다. 실패해도 클라이언트는 진행한다.
+  await api.post('api/v1/auth/logout').catch(() => undefined);
 }
 
 // ── 현재 사용자 ──────────────────────────────────────────────────────────────
