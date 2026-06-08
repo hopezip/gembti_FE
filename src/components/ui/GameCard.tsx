@@ -9,3 +9,7 @@ import { gameCard, type GameCardVariantProps } from 'styled-system/recipes';
 export const GameCard = styled(ark.div, gameCard);
 
 export type GameCardProps = GameCardVariantProps;
+
+// 카드 컨테이너 의미로 쓸 때의 alias(동일 gameCard recipe). 게임 외 일반 카드에 사용.
+export const Card = GameCard;
+export type CardProps = GameCardVariantProps;
