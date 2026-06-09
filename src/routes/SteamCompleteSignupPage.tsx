@@ -19,15 +19,16 @@ import { completeSteamSignup, SteamSignupError } from '@/services/auth';
 // 콜백(SteamCallbackPage)이 result=signup_required일 때 signup_token을 state로 실어 이 화면으로 보낸다.
 //   Steam은 비밀번호가 없어(OpenID) 이메일 + 닉네임 + [필수] 약관 2개만 받는다(gender/birth는 정책 미확정 제외).
 // 가입 완료(201) 시 응답의 access_token/user로 세션을 세우고 홈으로 — 콜백 success 흐름과 동일 랜딩.
-//   직접 접근(signup_token 없음)은 콜백을 거치지 않은 비정상이라 로그인으로 돌려보낸다.
+//
+// 가드/폼 2단 분리: 바깥은 signup_token 유무만 판정하고, 폼·뮤테이션은 토큰이 보장된 뒤
+//   내부 컴포넌트(prop: string)가 맡는다. 덕분에 폼 쪽에서 토큰을 강제 캐스팅(as string)할 필요가 없다.
 export function SteamCompleteSignupPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const setSession = useAuthStore((s) => s.setSession);
   const signupToken =
     (location.state as { signupToken?: string } | null)?.signupToken ?? null;
 
-  // 직접 접근 방어 — 가입 토큰 없이는 가입 불가.
+  // 직접 접근 방어 — 콜백을 거치지 않아 가입 토큰이 없으면 가입 불가.
   useEffect(() => {
     if (!signupToken) {
       toaster.create({
@@ -38,6 +39,15 @@ export function SteamCompleteSignupPage() {
       navigate('/login', { replace: true });
     }
   }, [signupToken, navigate]);
+
+  if (!signupToken) return null;
+
+  return <SteamCompleteSignupForm signupToken={signupToken} />;
+}
+
+function SteamCompleteSignupForm({ signupToken }: { signupToken: string }) {
+  const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
 
   const {
     register,
@@ -58,7 +68,7 @@ export function SteamCompleteSignupPage() {
 
   const mutation = useMutation({
     mutationFn: (values: SteamSignupInput) =>
-      completeSteamSignup({ signupToken: signupToken as string, ...values }),
+      completeSteamSignup({ signupToken, ...values }),
     onSuccess: (session) => {
       setSession({ user: session.user, accessToken: session.accessToken });
       navigate('/', { replace: true });
@@ -78,8 +88,6 @@ export function SteamCompleteSignupPage() {
       }
     },
   });
-
-  if (!signupToken) return null;
 
   // 세션 만료(invalid-signup-token)는 토스트+이동으로 처리하므로, 폼에는 그 외 일반 에러만 표시한다.
   const isExpired =
