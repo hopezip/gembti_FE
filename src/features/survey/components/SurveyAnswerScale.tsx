@@ -1,4 +1,5 @@
 import { css, cx } from 'styled-system/css';
+import type { SurveyAnswerValue } from '@/features/survey/api/types';
 
 const accentGlow =
   'color-mix(in srgb, token(colors.accent.default) 56%, transparent)';
@@ -10,8 +11,8 @@ const scaleLabels = ['전혀 아니다', '', '보통이다', '', '매우 그렇�
 const scaleValues = [1, 2, 3, 4, 5] as const;
 
 interface SurveyAnswerScaleProps {
-  selectedValue: number | null;
-  onSelect: (value: number) => void;
+  selectedValue: SurveyAnswerValue | null;
+  onSelect: (value: SurveyAnswerValue) => void;
 }
 
 export function SurveyAnswerScale({

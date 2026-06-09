@@ -5,12 +5,19 @@ import { button } from 'styled-system/recipes';
 import { TraitRadarChart, type TraitScore } from './TraitRadarChart';
 
 interface ResultSummaryProps {
+  archetype: string;
+  description: string;
   scores: TraitScore[];
-  tags: string[];
+  tags?: string[];
 }
 
 // 설문 결과 상단: 좌측 레이더와 우측 대표 유형 설명을 조립한다.
-export function ResultSummary({ scores, tags }: ResultSummaryProps) {
+export function ResultSummary({
+  archetype,
+  description,
+  scores,
+  tags = [],
+}: ResultSummaryProps) {
   return (
     <section
       className={css({
@@ -59,9 +66,7 @@ export function ResultSummary({ scores, tags }: ResultSummaryProps) {
           id="survey-result-title"
         >
           당신은{' '}
-          <span className={css({ color: 'accent.default' })}>
-            오픈월드 탐험가형
-          </span>
+          <span className={css({ color: 'accent.default' })}>{archetype}</span>
           <br />
           플레이어입니다
         </h1>
@@ -75,43 +80,43 @@ export function ResultSummary({ scores, tags }: ResultSummaryProps) {
             lineHeight: 'relaxed',
           })}
         >
-          넓은 세계를 돌아다니며 숨겨진 이야기를 수집하는 유형. 속도보다는 밀도,
-          경쟁보다는 몰입감을 택하는 설계자·탐험가입니다.
+          {description}
         </p>
 
-        {/* 대표 태그는 API 연결 전까지 mock 배열을 표시한다. */}
-        <ul
-          className={css({
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 'clamp(token(spacing.2), 1vw, token(spacing.3))',
-            p: '0',
-            m: '0',
-            listStyle: 'none',
-          })}
-          aria-label="대표 성향 태그"
-        >
-          {tags.map((tag) => (
-            <li
-              className={css({
-                display: 'inline-flex',
-                alignItems: 'center',
-                minH: '9',
-                px: '4',
-                border: '1px solid',
-                borderColor: 'accent.default',
-                borderRadius: 'full',
-                color: 'accent.default',
-                bg: 'accent.soft',
-                fontSize: 'sm',
-                fontWeight: 'semibold',
-              })}
-              key={tag}
-            >
-              # {tag}
-            </li>
-          ))}
-        </ul>
+        {tags.length > 0 && (
+          <ul
+            className={css({
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 'clamp(token(spacing.2), 1vw, token(spacing.3))',
+              p: '0',
+              m: '0',
+              listStyle: 'none',
+            })}
+            aria-label="대표 성향 태그"
+          >
+            {tags.map((tag) => (
+              <li
+                className={css({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minH: '9',
+                  px: '4',
+                  border: '1px solid',
+                  borderColor: 'accent.default',
+                  borderRadius: 'full',
+                  color: 'accent.default',
+                  bg: 'accent.soft',
+                  fontSize: 'sm',
+                  fontWeight: 'semibold',
+                })}
+                key={tag}
+              >
+                # {tag}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div
           className={css({

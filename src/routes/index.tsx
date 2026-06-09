@@ -46,14 +46,10 @@ const mvpRoutes: RouteDef[] = [
     path: '/onboarding/steam/result',
     access: 'Auth',
   },
-  // SURVEY-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 인트로', path: '/survey/intro', access: 'Public' },
-  // SURVEY-FE-002 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 진행', path: '/survey', access: 'Public' },
-  // SURVEY-FE-003 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 결과 분석', path: '/survey/loading', access: 'Public' },
-  // TEND-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 결과', path: '/survey/result', access: 'Public' },
+  { title: '설문 인트로', path: '/survey/intro', access: 'Auth' },
+  { title: '설문 진행', path: '/survey', access: 'Auth' },
+  { title: '설문 결과 분석', path: '/survey/loading', access: 'Auth' },
+  { title: '설문 결과', path: '/survey/result', access: 'Auth' },
   { title: '검색', path: '/search', access: 'Public' },
   { title: '게임 추천', path: '/recommendations', access: 'Public' },
   { title: '게임별 상세', path: '/games/:gameId', access: 'Public' },

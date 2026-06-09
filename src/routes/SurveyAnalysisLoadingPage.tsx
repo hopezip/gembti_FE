@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
+import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { Button } from '@/components/ui/Button';
+import { useSubmitSurvey } from '@/features/survey/api/surveyResult';
+import type { SurveyAnalysisNavigationState } from '@/features/survey/api/types';
 import { SurveyAnalysisLoading } from '@/features/survey/components/SurveyAnalysisLoading';
 import { surveyBackgroundPageStyle } from '@/features/survey/components/surveyIntro.styles';
+import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
-const totalQuestions = 7;
 const redirectDelayMs = 4200;
 
 const analysisStages = [
@@ -30,8 +35,69 @@ const styles = {
 };
 
 export function SurveyAnalysisLoadingPage() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const submitSurvey = useSubmitSurvey();
+  const setSurveyCompleted = useAuthStore((store) => store.setSurveyCompleted);
+  const resetSurveyProgress = useSurveyProgressStore(
+    (store) => store.resetProgress,
+  );
+  const hasSubmitted = useRef(false);
+  const [analysisStatus, setAnalysisStatus] = useState<
+    'pending' | 'success' | 'error'
+  >('pending');
   const [progressValue, setProgressValue] = useState(78);
+  const state = location.state as SurveyAnalysisNavigationState | null;
+  const answers = state?.answers ?? [];
+  const totalQuestions = state?.totalQuestions ?? 7;
+
+  const submitAnswers = () => {
+    setAnalysisStatus('pending');
+    submitSurvey.mutate(
+      { answers },
+      {
+        onSuccess: () => {
+          setSurveyCompleted(answers.length === totalQuestions);
+          resetSurveyProgress();
+          setAnalysisStatus('success');
+        },
+        onError: () => {
+          setSurveyCompleted(false);
+          setAnalysisStatus('error');
+        },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (!state) {
+      setAnalysisStatus('success');
+      return;
+    }
+    if (hasSubmitted.current) return;
+    hasSubmitted.current = true;
+    submitSurvey.mutate(
+      { answers },
+      {
+        onSuccess: () => {
+          setSurveyCompleted(answers.length === totalQuestions);
+          resetSurveyProgress();
+          setAnalysisStatus('success');
+        },
+        onError: () => {
+          setSurveyCompleted(false);
+          setAnalysisStatus('error');
+        },
+      },
+    );
+  }, [
+    answers,
+    resetSurveyProgress,
+    setSurveyCompleted,
+    state,
+    submitSurvey.mutate,
+    totalQuestions,
+  ]);
 
   useEffect(() => {
     const startedAt = Date.now();
@@ -43,15 +109,15 @@ export function SurveyAnalysisLoadingPage() {
       setProgressValue(Math.round(78 + elapsedRatio * 22));
     }, 120);
 
-    const redirectTimer = window.setTimeout(() => {
-      navigate('/survey/result', { replace: true });
-    }, redirectDelayMs);
-
     return () => {
       window.clearInterval(progressTimer);
-      window.clearTimeout(redirectTimer);
     };
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    if (progressValue < 100 || analysisStatus === 'error') return;
+    navigate('/survey/result', { replace: true });
+  }, [analysisStatus, navigate, progressValue]);
 
   const currentStage = useMemo(() => {
     if (progressValue >= 94) return analysisStages[2];
@@ -59,11 +125,30 @@ export function SurveyAnalysisLoadingPage() {
     return analysisStages[0];
   }, [progressValue]);
 
+  if (analysisStatus === 'error') {
+    return (
+      <main className={cx(surveyBackgroundPageStyle, styles.page)}>
+        <PageContainer className={styles.content}>
+          <EmptyState
+            action={
+              <Button type="button" variant="primary" onClick={submitAnswers}>
+                다시 분석하기
+              </Button>
+            }
+            description="선택한 응답은 유지되어 있어요. 다시 시도해 주세요."
+            title="설문 결과 분석에 실패했어요"
+            type="notification"
+          />
+        </PageContainer>
+      </main>
+    );
+  }
+
   return (
     <main className={cx(surveyBackgroundPageStyle, styles.page)}>
       <PageContainer className={styles.content}>
         <SurveyAnalysisLoading
-          completedQuestions={totalQuestions}
+          completedQuestions={answers.length}
           currentStage={currentStage}
           progressValue={progressValue}
           totalQuestions={totalQuestions}

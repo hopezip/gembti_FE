@@ -59,8 +59,29 @@ export interface SurveySubmitResponse {
 export interface SurveyLatestResultResponse {
   survey_id: number;
   type: string;
-  stats: Partial<Record<SurveyTraitKey | string, number>>;
+  stats: SurveyStats;
   created_at: string;
+}
+
+// 설문 완료 후 로딩 라우트로 전달하는 클라이언트 상태.
+// 건너뛴 문항은 answers에 포함하지 않는다.
+export interface SurveyAnalysisNavigationState {
+  answers: SurveySubmitAnswer[];
+  totalQuestions: number;
+}
+
+export interface SurveyRecommendationGame {
+  game_id: number;
+  name: string;
+  image_url: string;
+  genres: string[];
+  score: number;
+  reason: string;
+}
+
+export interface SurveyRecommendationsResponse {
+  recommendation_items_id: number;
+  games: SurveyRecommendationGame[];
 }
 
 // MSW와 서비스에서 공통으로 쓰는 에러 응답 형태.
