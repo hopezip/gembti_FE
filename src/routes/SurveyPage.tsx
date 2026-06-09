@@ -3,6 +3,7 @@ import { css, cx } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { SurveyQuestionSection } from '@/features/survey/components/SurveyQuestionSection';
 import { surveyBackgroundPageStyle } from '@/features/survey/components/surveyIntro.styles';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
 const styles = {
   page: css({
@@ -25,11 +26,24 @@ const styles = {
 
 export function SurveyPage() {
   const navigate = useNavigate();
+  const setSurveyCompleted = useAuthStore((store) => store.setSurveyCompleted);
 
   return (
     <main className={cx(surveyBackgroundPageStyle, styles.page)}>
       <PageContainer className={styles.content}>
-        <SurveyQuestionSection onComplete={() => navigate('/survey/loading')} />
+        <SurveyQuestionSection
+          onComplete={(answers, totalQuestions) => {
+            if (answers.length < totalQuestions) {
+              navigate('/');
+              return;
+            }
+
+            setSurveyCompleted(true);
+            navigate('/survey/loading', {
+              state: { answers, totalQuestions },
+            });
+          }}
+        />
       </PageContainer>
     </main>
   );
