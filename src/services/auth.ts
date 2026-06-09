@@ -93,12 +93,13 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     const res = await api
       .post('api/v1/auth/login', { json: payload satisfies LoginRequest })
       .json<AuthResponse>();
-    // ky가 비정상 응답에 throw하지 않은 경우 방어(에러 바디를 200처럼 파싱한 상황 등):
-    //   토큰/유저가 없으면 자격증명 실패로 본다.
-    if (!res?.access_token || !res.user) {
+    // STEAM-INTER-FE-005: AuthResponse에서 user가 제거됐다(access만 응답). user는 me로 조회한다.
+    //   토큰이 없으면 자격증명 실패로 본다.
+    if (!res?.access_token) {
       throw new LoginError('invalid-credentials');
     }
-    return { user: mapAuthUser(res.user), accessToken: res.access_token };
+    const user = await getMe(res.access_token);
+    return { user, accessToken: res.access_token };
   } catch (error) {
     if (error instanceof LoginError) throw error;
     if (error instanceof HTTPError && error.response.status === 401) {
@@ -212,10 +213,12 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
     const res = await api
       .post('api/v1/auth/signup', { json: body })
       .json<AuthResponse>();
-    if (!res?.access_token || !res.user) {
+    // STEAM-INTER-FE-005: AuthResponse에서 user가 제거됐다(access만 응답). user는 me로 조회한다.
+    if (!res?.access_token) {
       throw new SignupError('generic');
     }
-    return { user: mapAuthUser(res.user), accessToken: res.access_token };
+    const user = await getMe(res.access_token);
+    return { user, accessToken: res.access_token };
   } catch (error) {
     if (error instanceof SignupError) throw error;
     const detail = await parseDetail(error);
@@ -244,7 +247,16 @@ export async function logout(): Promise<void> {
 
 // ── 현재 사용자 ──────────────────────────────────────────────────────────────
 // 세션 복원에 사용(refresh로 access 재발급 후 user를 받아온다).
-export async function getMe(): Promise<AuthUser> {
-  const res = await api.get('api/v1/auth/me').json<UserResponse>();
+export async function getMe(accessToken?: string): Promise<AuthUser> {
+  // login/signup 직후엔 access가 아직 store에 없어 ky가 Bearer를 못 붙인다 → 명시적으로 부착한다.
+  //   (store에 토큰이 있으면 ky beforeRequest가 이 값을 덮어쓴다.) 인자가 없으면 기존대로 store 토큰을 쓴다.
+  const res = await api
+    .get(
+      'api/v1/auth/me',
+      accessToken
+        ? { headers: { Authorization: `Bearer ${accessToken}` } }
+        : undefined,
+    )
+    .json<UserResponse>();
   return mapAuthUser(res);
 }

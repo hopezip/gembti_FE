@@ -15,6 +15,7 @@
       "!!**/styled-system",
       "!!**/storybook-static",
       "!!docs/design",
+      "!!docs/03-api/openapi.json",
       "!!public/mockServiceWorker.js",
       "!!tsconfig.json"
     ]
