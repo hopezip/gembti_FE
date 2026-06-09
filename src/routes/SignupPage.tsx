@@ -101,8 +101,11 @@ export function SignupPage() {
     >
       {step === 1 ? (
         <>
-          {/* Steam 소셜 가입 자리(비활성, 후속 LOGIN-FE-002) */}
-          <SteamButton label="Steam 계정으로 가입하기" />
+          {/* Steam 소셜 가입 — 신규 유저 흐름(signup_required) (STEAM-INTER-FE-007) */}
+          <SteamButton
+            label="Steam 계정으로 가입하기"
+            mockResult="signup_required"
+          />
 
           {/* 구분선 "— 또는 이메일로 가입 —" */}
           <AuthDivider>또는 이메일로 가입</AuthDivider>
