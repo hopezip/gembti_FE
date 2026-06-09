@@ -101,6 +101,23 @@ export const signupStep2Schema = z.object({
 
 export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
 
+// ── Steam 신규 유저 가입 완료 (STEAM-INTER-FE-007) ───────────────────────────
+// Steam은 비밀번호가 없다(OpenID). 이메일 + 닉네임 + [필수] 약관 2개만 받는다.
+//   gender/birth_date는 백엔드 정책 미확정(optional)이라 이번 화면에선 받지 않는다.
+export const steamSignupSchema = z.object({
+  email: z
+    .string()
+    .min(1, '이메일을 입력해주세요')
+    .email('올바른 이메일 형식이 아닙니다'),
+  nickname: nicknameSchema,
+  termsAgreed: z.boolean().refine((v) => v, '이용약관에 동의해주세요'),
+  privacyAgreed: z
+    .boolean()
+    .refine((v) => v, '개인정보 처리방침에 동의해주세요'),
+});
+
+export type SteamSignupInput = z.infer<typeof steamSignupSchema>;
+
 // 인증 코드 단독 스키마 — 코드만 검증해야 하는 곳(레거시/테스트 호환)에서 사용.
 export const verifyCodeSchema = z.object({
   code: signupStep2Schema.shape.code,

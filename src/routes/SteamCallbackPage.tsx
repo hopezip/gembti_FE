@@ -2,46 +2,93 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { vstack } from 'styled-system/patterns';
-import type { SteamSyncResult } from '@/features/onboarding/types';
+import { toaster } from '@/components/ui/Toast';
+import { refreshAccessToken } from '@/lib/ky';
+import { useAuthStore } from '@/lib/store/useAuthStore';
+import { getMe } from '@/services/auth';
 
-// 스팀 OAuth/OpenID 콜백 기술 라우트 (/auth/steam/callback, Technical). STEAM-INTER-FE-001.
-// 사용자용 화면이 아니라, 백엔드 인증 리다이렉트가 떨어지는 착지점이다.
-//   - ?error 있으면 → 진입 화면(/onboarding/steam)으로 보내되 합성 실패결과(result)를 실어
-//                     곧장 result step(공용 에러 화면)으로 안내한다.
-//   - 정상 복귀면 → 진입 화면으로 보내 startPolling=true로 곧장 동기화 폴링을 시작시킨다.
-// 통합 플로우(단일 페이지)라 결과 전용 라우트는 없다 — 결과는 진입 화면 state로 넘긴다.
+// 스팀 OpenID 콜백 기술 라우트 (/steam/callback, Technical). STEAM-INTER-FE-007.
+// 사용자용 화면이 아니라, 백엔드 OpenID 인증 리다이렉트가 떨어지는 착지점이다.
+// 백엔드는 결과를 `result` 쿼리로 알려준다(토큰은 바디로 주지 않는다):
+//   - result=success          → 기존 유저. refresh(쿠키)+me로 세션을 복원하고 홈으로.
+//   - result=signup_required  → 신규 유저. signup_token을 들고 추가정보 화면(/steam/complete-signup)으로.
+//   - result=failed (그 외)   → 인증 실패. 사유를 토스트로 알리고 로그인으로.
 // 모두 replace 이동이라 뒤로가기 시 콜백 URL이 히스토리에 남지 않는다.
-
-// 콜백 에러 시 결과 화면에 넘길 합성 실패 결과.
-const FAILED_RESULT: SteamSyncResult = {
-  status: 'failed',
-  foundGames: null,
-  steamNickname: null,
-  errorMessage: null,
-};
-
 export function SteamCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const setSession = useAuthStore((s) => s.setSession);
 
   useEffect(() => {
-    const error = searchParams.get('error');
-    if (error) {
-      // 인증 실패 — 진입 화면으로 보내 합성 실패결과를 result step으로 렌더시킨다.
-      navigate('/onboarding/steam', {
-        state: { result: FAILED_RESULT },
+    const result = searchParams.get('result');
+
+    // 신규 유저 — 추가정보 입력 화면으로(가입 토큰 동반). 토큰이 없으면 비정상이라 로그인으로.
+    if (result === 'signup_required') {
+      const signupToken = searchParams.get('signup_token');
+      if (!signupToken) {
+        toaster.create({
+          type: 'error',
+          title: 'Steam 가입 정보를 받지 못했어요',
+          description: '다시 시도해주세요.',
+        });
+        navigate('/login', { replace: true });
+        return;
+      }
+      navigate('/steam/complete-signup', {
+        state: { signupToken },
         replace: true,
       });
       return;
     }
-    // 정상 콜백 — 진입 화면에서 곧장 폴링을 시작시킨다.
-    navigate('/onboarding/steam', {
-      state: { startPolling: true },
-      replace: true,
-    });
-  }, [searchParams, navigate]);
 
-  // 리다이렉트 직전 잠깐 보이는 미니 스피너.
+    // 실패(또는 알 수 없는 결과) — 사유를 알리고 로그인으로.
+    if (result !== 'success') {
+      const reason = searchParams.get('reason');
+      toaster.create({
+        type: 'error',
+        title: 'Steam 인증에 실패했어요',
+        description: reason ? `사유: ${reason}` : '잠시 후 다시 시도해주세요.',
+      });
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    // 기존 유저(success) — 토큰이 바디로 안 오므로 쿠키 refresh + me로 세션을 복원한다.
+    let cancelled = false;
+    (async () => {
+      const accessToken = await refreshAccessToken();
+      if (cancelled) return;
+      if (!accessToken) {
+        toaster.create({
+          type: 'error',
+          title: '로그인 세션 복원에 실패했어요',
+          description: '다시 로그인해주세요.',
+        });
+        navigate('/login', { replace: true });
+        return;
+      }
+      try {
+        const user = await getMe(accessToken);
+        if (cancelled) return;
+        setSession({ user, accessToken });
+        // 홈으로 — 개인화/게스트 분기는 MainPage가 hasCompletedSurvey로 처리한다(로그인과 동일 랜딩).
+        navigate('/', { replace: true });
+      } catch {
+        if (cancelled) return;
+        toaster.create({
+          type: 'error',
+          title: '사용자 정보를 불러오지 못했어요',
+          description: '다시 로그인해주세요.',
+        });
+        navigate('/login', { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, navigate, setSession]);
+
+  // 리다이렉트/세션 복원 동안 잠깐 보이는 미니 스피너.
   return (
     <main
       className={css({

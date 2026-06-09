@@ -9,7 +9,8 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm biome:*)",
-      "Bash(npx biome:*)"
+      "Bash(npx biome:*)",
+      "Read(//c/Users/최민제/Downloads/**)"
     ]
   }
 }
