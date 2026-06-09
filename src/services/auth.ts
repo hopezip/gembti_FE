@@ -182,8 +182,12 @@ export interface SignupPayload {
 
 // 회원가입 실패 유형.
 // - 'nickname-duplicated': detail이 닉네임 중복을 가리킴 — 닉네임 필드 에러로 표시
+// - 'email-duplicated': 409(또는 detail이 이메일 중복) — 이미 가입된 이메일, 토스트+로그인 유도
 // - 'generic': 그 외(서버 detail 메시지를 그대로 노출)
-export type SignupErrorKind = 'nickname-duplicated' | 'generic';
+export type SignupErrorKind =
+  | 'nickname-duplicated'
+  | 'email-duplicated'
+  | 'generic';
 
 export class SignupError extends Error {
   readonly kind: SignupErrorKind;
@@ -222,9 +226,15 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
   } catch (error) {
     if (error instanceof SignupError) throw error;
     const detail = await parseDetail(error);
-    // error_code가 없으므로 detail 문구로 닉네임 중복을 추정한다(백엔드 메시지 변경 시 generic으로 폴백).
+    const status = error instanceof HTTPError ? error.response.status : null;
+    // error_code가 없으므로 detail 문구로 닉네임 중복을 먼저 추정한다(백엔드 메시지 변경 시 폴백).
     if (detail && /nickname|닉네임/i.test(detail)) {
       throw new SignupError('nickname-duplicated', detail);
+    }
+    // 이메일 중복 — 409(이메일 unique 위반) 또는 detail이 이메일을 가리키면 email-duplicated.
+    //   (닉네임이 위에서 먼저 걸러지므로, 남은 409는 이메일 중복으로 본다.)
+    if (status === 409 || (detail && /email|이메일/i.test(detail))) {
+      throw new SignupError('email-duplicated', detail);
     }
     throw new SignupError('generic', detail);
   }
