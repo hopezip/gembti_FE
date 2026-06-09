@@ -75,13 +75,25 @@ async function stubAuth(page: Page) {
       body: JSON.stringify({ detail: 'no session' }),
     }),
   );
-  await page.route(/\/api\/v1\/auth\/me(\?|$)/, (route) =>
+  // /me는 Bearer access 유무로 분기한다.
+  //   - 로그인 직후 getMe(Bearer e2e-access): 인증 유저(MOCK_USER) 200 — 새 계약(login→me로 user 조회)
+  //   - 부팅 세션 복원(토큰 없음): anonymous 401
+  await page.route(/\/api\/v1\/auth\/me(\?|$)/, (route) => {
+    const auth = route.request().headers().authorization ?? '';
+    if (auth.includes('e2e-access')) {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_USER),
+      });
+      return;
+    }
     route.fulfill({
       status: 401,
       contentType: 'application/json',
       body: JSON.stringify({ detail: 'no session' }),
-    }),
-  );
+    });
+  });
 }
 
 // AuthCard(=<main>) 범위로 한정한 로컬 셀렉터 모음. 셸 Header/Footer 영향에서 격리한다.

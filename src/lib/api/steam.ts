@@ -20,7 +20,9 @@ export type SteamSyncStatus = components['schemas']['SteamSyncStatus'];
 
 // 스팀 계정 연동. steam_id는 17자리 숫자 문자열(SteamID64).
 export function linkSteam(body: SteamLinkRequest): Promise<SteamLinkResponse> {
-  return api.post('api/v1/steam/link', { json: body }).json<SteamLinkResponse>();
+  return api
+    .post('api/v1/steam/link', { json: body })
+    .json<SteamLinkResponse>();
 }
 
 // 현재 스팀 연동 상태 조회. 미연동이면 steam_linked=false + nullable 필드들이 null.
