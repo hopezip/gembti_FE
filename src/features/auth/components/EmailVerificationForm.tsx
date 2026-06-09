@@ -55,6 +55,8 @@ interface EmailVerificationFormProps {
   initialExpiresInSeconds?: number;
   /** 가입 완료 시 호출(자동 로그인 세션 정보 전달, 이동은 페이지가 담당). */
   onSignedUp: (result: AuthSession) => void;
+  /** 이메일 중복(409) 시 호출 — 토스트/로그인 이동은 페이지가 담당. detail은 서버 원문. */
+  onEmailDuplicated?: (detail: string | null) => void;
 }
 
 export function EmailVerificationForm({
@@ -65,6 +67,7 @@ export function EmailVerificationForm({
   privacyAgreed,
   initialExpiresInSeconds = EMAIL_CODE_TTL_SECONDS,
   onSignedUp,
+  onEmailDuplicated,
 }: EmailVerificationFormProps) {
   const {
     handleSubmit,
@@ -128,6 +131,11 @@ export function EmailVerificationForm({
           message: error.detail ?? '이미 사용 중인 닉네임이에요',
         });
         setFocus('nickname');
+        return;
+      }
+      // 이메일 중복(409) → 토스트 + 로그인 이동(페이지 위임).
+      if (error instanceof SignupError && error.kind === 'email-duplicated') {
+        onEmailDuplicated?.(error.detail);
         return;
       }
       // 그 외 → 코드 영역에 일반(또는 서버 detail) 에러 표시.
