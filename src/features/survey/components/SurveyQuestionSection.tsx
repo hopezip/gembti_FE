@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { useSurveyQuestions } from '@/features/survey/api/surveyQuestions';
 import type { SurveyQuestion } from '@/features/survey/api/surveyQuestions';
+import type { SurveySubmitAnswer } from '@/features/survey/api/types';
 import { useSurveyQuestionSection } from '@/features/survey/hooks/useSurveyQuestionSection';
 import { SurveyAnswerScale } from './SurveyAnswerScale';
 import { SurveyQuestionControls } from './SurveyQuestionControls';
@@ -50,12 +51,12 @@ function renderQuestion(text: string, accent: string) {
 }
 
 interface SurveyQuestionSectionProps {
-  onComplete?: () => void;
+  onComplete?: (answers: SurveySubmitAnswer[], totalQuestions: number) => void;
 }
 
 interface SurveyQuestionContentProps {
   questions: SurveyQuestion[];
-  onComplete?: () => void;
+  onComplete?: (answers: SurveySubmitAnswer[], totalQuestions: number) => void;
 }
 
 function SurveyQuestionContent({
@@ -73,7 +74,10 @@ function SurveyQuestionContent({
     selectedValue,
     selectAnswer,
     skipQuestion,
-  } = useSurveyQuestionSection({ onComplete, totalSteps });
+  } = useSurveyQuestionSection({
+    questions,
+    onComplete,
+  });
   const currentQuestion = questions[currentIndex];
   const questionLines = splitQuestionLines(currentQuestion.question);
   const accent =

@@ -4,6 +4,8 @@ import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
 import { Tag } from '@/components/ui/Tag';
 import { useGuestHome } from '@/features/main/api/guestHome';
+import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
 // MAIN-FE-001 비로그인 메인 Hero 배너 (Figma Hero 387:4742).
 // 구조(3층): ① 배경(추천 첫 1건 커버 이미지 또는 그라데이션 placeholder)
@@ -78,6 +80,20 @@ const styles = {
 export function HeroBanner() {
   const { data } = useGuestHome();
 
+  // 설문 진행 중 건너뛴 문항이 존재하는지 여부
+  // 건너뛴 문항이 있다면 메인 배너에서 '설문 이어하기'를 노출한다.
+  const hasSkippedQuestions = useSurveyProgressStore(
+    (state) => state.skippedQuestionIds.length > 0,
+  );
+  // 로그인한 사용자 중
+  // 설문 미완료 상태이거나 건너뛴 문항이 있는 경우에만
+  // 메인 배너의 설문 CTA를 노출한다.
+  const showSurveyCta = useAuthStore(
+    (state) =>
+      state.status === 'authenticated' &&
+      (!state.user?.hasCompletedSurvey || hasSkippedQuestions),
+  );
+
   // 배경은 guest-home의 curation_banner.background_image_url만 사용한다.
   // 이미지가 없으면(로딩/에러/빈/자산 미정) surface 단색 + 그라데이션 fallback이 되고,
   // 배너 텍스트·CTA는 데이터와 무관하게 항상 렌더된다(비로그인 카피는 하드코딩 유지).
@@ -133,6 +149,20 @@ export function HeroBanner() {
               >
                 탐색 시작하기
               </Link>
+
+              {showSurveyCta && (
+                // 설문 진행 상태에 따라 CTA 목적지와 문구를 변경한다.
+                // -건너뛴문항 존재: 설문 이어하기 - 설문 미시작: 설문 진행하기
+                <Link
+                  to={hasSkippedQuestions ? '/survey' : '/survey/intro'}
+                  className={cx(
+                    button({ variant: 'secondary', size: 'lg' }),
+                    styles.ctaLift,
+                  )}
+                >
+                  {hasSkippedQuestions ? '설문 이어하기' : '설문 진행하기'}
+                </Link>
+              )}
             </div>
           </div>
         </div>

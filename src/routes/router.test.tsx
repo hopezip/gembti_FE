@@ -10,6 +10,7 @@ import {
 import { afterEach, describe, expect, it } from 'vitest';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
 import { routeObjects } from './index';
@@ -29,6 +30,7 @@ function renderAt(path: string) {
 // 각 테스트 후 authStore를 비로그인 stub 기본값으로 복원한다(테스트 간 격리).
 afterEach(() => {
   useAuthStore.getState().clearAuth();
+  useSurveyProgressStore.getState().resetProgress();
 });
 
 describe('라우트 골격', () => {
@@ -40,6 +42,15 @@ describe('라우트 골격', () => {
   });
 
   it('설문 결과 분석 경로(/survey/loading)가 로딩 화면을 렌더한다', () => {
+    useAuthStore.getState().setSession({
+      user: {
+        id: 1,
+        email: 'survey@gambti.com',
+        nickname: '설문유저',
+        hasCompletedSurvey: false,
+      },
+      accessToken: 'mock-access',
+    });
     renderAt('/survey/loading');
     expect(
       screen.getByRole('heading', { name: '당신의 성향을 분석하고 있어요' }),
@@ -76,6 +87,12 @@ describe('라우트 골격', () => {
       screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
     ).toBeInTheDocument();
     expect(
+      screen.queryByRole('link', { name: '설문 다시하기' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /설문 (진행|이어)하기/ }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole('heading', { name: '당신을 위한 추천' }),
     ).toBeInTheDocument();
     // 게스트 홈 Hero(비로그인 카피)는 렌더되지 않는다(분기가 개인화로 갔음).
@@ -100,9 +117,59 @@ describe('라우트 골격', () => {
     expect(
       screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '설문 진행하기' })).toHaveAttribute(
+      'href',
+      '/survey/intro',
+    );
     expect(
       screen.queryByRole('heading', { name: '당신을 위한 추천' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('건너뛴 문항이 있으면 메인 배너에 설문 이어하기를 노출한다', () => {
+    useAuthStore.getState().setSession({
+      user: {
+        id: 1,
+        email: 'survey-continue@gambti.com',
+        nickname: '설문이어가기유저',
+        hasCompletedSurvey: false,
+      },
+      accessToken: 'mock-access',
+    });
+    useSurveyProgressStore.getState().saveProgress({ 1: 4, 2: 3 }, [3, 5]);
+
+    renderAt('/');
+
+    expect(screen.getByRole('link', { name: '설문 이어하기' })).toHaveAttribute(
+      'href',
+      '/survey',
+    );
+    expect(
+      screen.queryByRole('link', { name: '설문 진행하기' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('설문 완료 후 재진단에서 건너뛴 문항이 있으면 개인화 배너에 설문 이어하기를 노출한다', () => {
+    useAuthStore.getState().setSession({
+      user: {
+        id: 2,
+        email: 'survey-retry@gambti.com',
+        nickname: '재진단이어가기유저',
+        hasCompletedSurvey: true,
+      },
+      accessToken: 'mock-access',
+    });
+    useSurveyProgressStore.getState().saveProgress({ 1: 5, 2: 4 }, [3]);
+
+    renderAt('/');
+
+    expect(screen.getByRole('link', { name: '설문 이어하기' })).toHaveAttribute(
+      'href',
+      '/survey',
+    );
+    expect(
+      screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
+    ).toBeInTheDocument();
   });
 
   it('게임 상세 경로(/games/:gameId)가 PlaceholderPage 대신 GameDetailPage를 렌더한다(REC-DET-FE-001)', () => {
@@ -145,6 +212,17 @@ describe('라우트 골격', () => {
     // 페이지 콘텐츠도 함께 렌더(셸이 페이지를 덮어쓰지 않음).
     expect(
       screen.getByPlaceholderText('게임, 장르, 태그 검색'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '설문조사' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('비로그인 사용자가 설문 라우트에 접근하면 로그인으로 이동한다', () => {
+    renderAt('/survey/intro');
+
+    expect(
+      within(screen.getByRole('main')).getByRole('heading', { name: '로그인' }),
     ).toBeInTheDocument();
   });
 
