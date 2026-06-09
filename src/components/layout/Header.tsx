@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { css } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
 import { Avatar } from '@/components/ui/Avatar';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import { logout } from '@/services/auth';
 import { Logo } from './Logo';
 import { Nav } from './Nav';
 import { pageContainer, pageGutter } from './PageContainer';
@@ -27,13 +28,27 @@ const loginLink = css({
 // - g-header 60px · bg.canvas · border-bottom
 // - Search: 기존 ui Input(size sm) 재사용 + 인스턴스 override(radii.full · min-width 280 · mono).
 //   새 recipe/토큰 추가 없이 styled className merge 로만 형태를 맞춘다.
-// - 인증 액션: useAuthStore의 status만 "읽어" 분기(읽기 전용, auth 로직 변경 금지).
-//   현 stub은 항상 'anonymous'라 로그인-후 Avatar는 stub 토글로만 확인된다(회고 명시).
+// - 인증 액션: authenticated → Avatar + 로그아웃, 그 외 → 로그인/회원가입.
+//   로그아웃은 logout() 서비스(쿠키 무효화) 후 clearAuth()로 세션을 비우고 홈으로 보낸다.
+const logoutButtonReset = css({
+  bg: 'transparent',
+  border: 'none',
+  p: '0',
+  cursor: 'pointer',
+});
+
 export function Header() {
-  // status만 선택 구독 — 스토어 형태/액션은 건드리지 않는다.
   const status = useAuthStore((s) => s.status);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
   const [headerSearch, setHeaderSearch] = useState('');
+
+  // 로그아웃: 서버 쿠키 무효화(실패해도 진행) → 클라 세션 비우기 → 홈으로.
+  const handleLogout = async () => {
+    await logout();
+    clearAuth();
+    navigate('/');
+  };
 
   return (
     <header
@@ -83,20 +98,35 @@ export function Header() {
           })}
         />
 
-        {/* 인증 액션: authenticated → Avatar, 그 외 → 로그인(링크) + 회원가입(filled 버튼). status 읽기만. */}
+        {/* 인증 액션: authenticated → Avatar + 로그아웃, 그 외 → 로그인(링크) + 회원가입(filled 버튼). */}
         {status === 'authenticated' ? (
-          <Link
-            to="/mypage"
-            aria-label="내 프로필"
+          <div
             className={css({
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
+              gap: '3',
               flexShrink: 0,
-              borderRadius: 'full',
             })}
           >
-            <Avatar size="sm" name="내 계정" />
-          </Link>
+            <Link
+              to="/mypage"
+              aria-label="내 프로필"
+              className={css({
+                display: 'inline-flex',
+                alignItems: 'center',
+                borderRadius: 'full',
+              })}
+            >
+              <Avatar size="sm" name="내 계정" />
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={cx(loginLink, logoutButtonReset)}
+            >
+              로그아웃
+            </button>
+          </div>
         ) : (
           <div
             className={css({
