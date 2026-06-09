@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { gameHandlers } from './games';
 import { mypageHandlers } from './mypage';
 import { steamHandlers } from './steam';
+import { surveyHandlers } from './survey';
 
 // MSW 핸들러 레지스트리.
 // ⚠️ LOGIN-FE-006: /api/v1/auth/* 는 실서버(gembti.cloud)로 passthrough 한다(여기 미등록).
@@ -12,4 +13,5 @@ export const handlers = [
   ...gameHandlers,
   ...mypageHandlers,
   ...steamHandlers,
+  ...surveyHandlers,
 ];
