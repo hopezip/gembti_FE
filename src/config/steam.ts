@@ -18,5 +18,5 @@ export const STEAM_AUTH_START_URL =
 // 동기화 상태 폴링 주기(ms). 훅의 refetchInterval 기본값으로 쓴다.
 export const STEAM_POLL_INTERVAL_MS = 2000;
 
-// 클라이언트 폴링 타임아웃(ms). 이 시간을 넘기면 훅이 status를 'timeout'으로 강제한다(REQ-004 잠정 40초).
+// 클라이언트 폴링 타임아웃(ms). 이 시간을 넘기면 훅이 status를 'failed'로 합성한다(백엔드 enum에 timeout 없음, REQ-004 잠정 40초).
 export const STEAM_POLL_TIMEOUT_MS = 40000;

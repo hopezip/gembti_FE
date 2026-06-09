@@ -6,30 +6,34 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SteamSyncResult } from '@/features/onboarding/types';
 import { SteamOnboardingPage } from './SteamOnboardingPage';
 
-// 서비스 레이어를 모킹한다(MSW 미설정 단위환경). 폴링/스킵을 결정적으로 제어한다.
+// 서비스 레이어를 모킹한다(MSW 미설정 단위환경). 폴링을 결정적으로 제어한다.
 const getSyncStatus = vi.fn();
-const skipSteam = vi.fn();
 
 vi.mock('@/services/steam', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/steam')>();
   return {
     ...actual,
     getSyncStatus: (...args: unknown[]) => getSyncStatus(...args),
-    skipSteam: (...args: unknown[]) => skipSteam(...args),
   };
 });
 
 const SUCCESS: SteamSyncResult = {
   status: 'success',
-  foundGames: 147,
-  steamNickname: 'My_Steam_ID',
-  errorMessage: null,
+  steamId: '76561197960287930',
+  avatarUrl: null,
+  lastSyncedAt: '2026-06-09T09:30:00Z',
 };
 const PRIVATE: SteamSyncResult = {
   status: 'private',
-  foundGames: null,
-  steamNickname: null,
-  errorMessage: '비공개',
+  steamId: '76561197960287930',
+  avatarUrl: null,
+  lastSyncedAt: null,
+};
+const EMPTY: SteamSyncResult = {
+  status: 'empty',
+  steamId: '76561197960287930',
+  avatarUrl: null,
+  lastSyncedAt: null,
 };
 
 function renderPage(initialEntry = '/onboarding/steam?origin=steamSignup') {
@@ -51,7 +55,6 @@ function renderPage(initialEntry = '/onboarding/steam?origin=steamSignup') {
 
 beforeEach(() => {
   getSyncStatus.mockReset();
-  skipSteam.mockReset();
 });
 
 describe('SteamOnboardingPage (통합 플로우)', () => {
@@ -65,13 +68,30 @@ describe('SteamOnboardingPage (통합 플로우)', () => {
     );
 
     expect(await screen.findByText('Steam 연동 완료')).toBeInTheDocument();
-    expect(screen.getByText('147')).toBeInTheDocument();
+    expect(screen.getByText('플레이 데이터를 가져왔어요')).toBeInTheDocument();
+  });
+
+  it('empty 결과 → 게임 없음 안내 화면을 보여주고 설문으로 이동한다', async () => {
+    getSyncStatus.mockResolvedValue(EMPTY);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Steam으로 연동하기' }),
+    );
+
+    expect(
+      await screen.findByText('연동했지만 게임 기록이 없어요'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '설문 시작 →' }));
+    expect(await screen.findByText('SURVEY INTRO')).toBeInTheDocument();
   });
 
   it('비공개 결과에서 다시 시도하면 재폴링한다 (되돌이 회귀 가드)', async () => {
     getSyncStatus.mockResolvedValue(PRIVATE);
     const user = userEvent.setup();
-    renderPage('/onboarding/steam?origin=steamSignup&scenario=PRIVATE');
+    renderPage('/onboarding/steam?origin=steamSignup&scenario=private');
 
     await user.click(
       screen.getByRole('button', { name: 'Steam으로 연동하기' }),
@@ -89,15 +109,13 @@ describe('SteamOnboardingPage (통합 플로우)', () => {
     ).toBeInTheDocument();
   });
 
-  it('건너뛰기 → skip 호출 후 설문 인트로로 이동한다', async () => {
-    skipSteam.mockResolvedValue({ nextStep: 'SURVEY', message: 'ok' });
+  it('건너뛰기 → 설문 인트로로 이동한다', async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole('button', { name: '건너뛰고 시작하기' }));
 
     expect(await screen.findByText('SURVEY INTRO')).toBeInTheDocument();
-    expect(skipSteam).toHaveBeenCalledTimes(1);
   });
 
   it('콜백 합성 실패결과(state.result)로 진입하면 곧장 에러 화면을 보여준다', async () => {
@@ -117,9 +135,9 @@ describe('SteamOnboardingPage (통합 플로우)', () => {
               state: {
                 result: {
                   status: 'failed',
-                  foundGames: null,
-                  steamNickname: null,
-                  errorMessage: null,
+                  steamId: null,
+                  avatarUrl: null,
+                  lastSyncedAt: null,
                 },
               },
             },

@@ -15,9 +15,9 @@ import type { SteamSyncResult } from '@/features/onboarding/types';
 // 콜백 에러 시 결과 화면에 넘길 합성 실패 결과.
 const FAILED_RESULT: SteamSyncResult = {
   status: 'failed',
-  foundGames: null,
-  steamNickname: null,
-  errorMessage: null,
+  steamId: null,
+  avatarUrl: null,
+  lastSyncedAt: null,
 };
 
 export function SteamCallbackPage() {

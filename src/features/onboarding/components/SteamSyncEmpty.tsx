@@ -1,28 +1,23 @@
 import { css, cx } from 'styled-system/css';
 import { hstack, vstack } from 'styled-system/patterns';
 import { button } from 'styled-system/recipes';
-import { Avatar } from '@/components/ui/Avatar';
 
-// 스팀 동기화 성공 화면(화면4 / Figma 4074:1126).
+// 스팀 연동은 됐지만 보유 게임이 없는 경우(sync_status='empty') 화면 (STEAM-INTER-FE-006 신규).
 // 순수 프리젠테이션: 네비게이션은 콜백으로만. 내부 fetch/navigate 금지.
-// success 체크 배지 + 연동 완료 헤딩(+아바타) + NEXT STEP 카드(설문 시작 주 CTA / 메인 보조).
-//   STEAM-INTER-FE-006: 백엔드가 보유 게임 수(found_games)를 주지 않아 게임 수 표기를 제거하고,
-//   백엔드 제공 필드(steam_avatar_url)만 활용한다. (게임 수 API 제공 시 헤딩에 복원)
+// 연동 자체는 성공이라 에러(danger)가 아닌 중립(warning) 톤으로 안내하고, 설문 진행을 주 CTA로 둔다.
+//   다시 시도는 의미 없다(게임이 없는 상태는 재조회해도 동일) — retry 액션을 두지 않는다.
 
-export interface SteamSyncSuccessProps {
-  /** Steam 프로필 아바타 URL. 없으면 표시하지 않는다. */
-  avatarUrl?: string | null;
+export interface SteamSyncEmptyProps {
   /** 설문 시작(주 CTA) 클릭 콜백. */
   onStartSurvey: () => void;
-  /** 건너뛰고 메인으로(보조) 클릭 콜백. */
+  /** 메인으로(보조) 클릭 콜백. */
   onGoMain: () => void;
 }
 
-export function SteamSyncSuccess({
-  avatarUrl,
+export function SteamSyncEmpty({
   onStartSurvey,
   onGoMain,
-}: SteamSyncSuccessProps) {
+}: SteamSyncEmptyProps) {
   return (
     <main
       className={css({
@@ -31,54 +26,34 @@ export function SteamSyncSuccess({
         placeItems: 'center',
         bg: 'bg.canvas',
         px: '8',
-        // Figma는 콘텐츠를 본문 영역에서 약간 위쪽에 둔다 — 상단 패딩을 더 줘 중심을 끌어올린다.
         py: '20',
       })}
     >
       <section
         className={vstack({ gap: '8', alignItems: 'center', maxW: '560px' })}
       >
-        {/* ① success 체크 배지 + "Steam 연동 완료" (Figma 32px·체크링 ~54px) */}
-        <div className={hstack({ gap: '4', alignItems: 'center' })}>
+        {/* ① 안내 아이콘 + 헤딩 + 설명 */}
+        <div className={vstack({ gap: '3', alignItems: 'center' })}>
           <span
             aria-hidden="true"
             className={css({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              w: '14',
-              h: '14',
+              w: '20',
+              h: '20',
               borderRadius: 'full',
-              bg: 'success.soft',
+              bg: 'warning.soft',
               border: '1px solid',
-              borderColor: 'success.default',
-              color: 'success.fg',
-              // Figma 32px — 토큰 스케일(6xl=30) 외 값이라 정밀 일치 위해 직접 지정.
-              fontSize: '32px',
-              lineHeight: 'none',
+              borderColor: 'warning.default',
+              color: 'warning.fg',
+              fontSize: '4xl',
             })}
           >
-            ✓
+            🎮
           </span>
-          <span
-            className={css({
-              // Figma 32px(42dot Sans Regular) — 토큰 외 값이라 정밀 일치 위해 직접 지정.
-              fontSize: '32px',
-              fontWeight: 'normal',
-              lineHeight: 'tight',
-              color: 'fg.default',
-            })}
-          >
-            Steam 연동 완료
-          </span>
-        </div>
-
-        {/* ② 아바타(있으면) + 연동 완료 헤딩 + 설명 */}
-        <div className={vstack({ gap: '3', alignItems: 'center' })}>
-          {avatarUrl && <Avatar size="xl" src={avatarUrl} name="Steam" />}
           <h1
             className={css({
-              // Figma 34px(Bold, -0.5) — 토큰 스케일(7xl=36) 외 값이라 정밀 일치 위해 직접 지정.
               fontSize: '34px',
               fontWeight: 'bold',
               letterSpacing: 'tight',
@@ -87,21 +62,21 @@ export function SteamSyncSuccess({
               textAlign: 'center',
             })}
           >
-            플레이 데이터를 가져왔어요
+            연동했지만 게임 기록이 없어요
           </h1>
           <p
             className={css({
-              textStyle: 'body.md',
+              textStyle: 'body.lg',
               color: 'fg.muted',
               textAlign: 'center',
             })}
           >
-            플레이 데이터를 바탕으로 1차 성향을 추정했어요. 설문 몇 가지만 더
-            답하면 추천 정확도가 크게 올라가요.
+            Steam 계정은 정상적으로 연동됐지만, 가져올 플레이 게임이 없네요.
+            설문으로 진행하면 취향에 맞는 추천을 받을 수 있어요.
           </p>
         </div>
 
-        {/* ③ NEXT STEP 카드 — 설문 시작(주) / 건너뛰고 메인(보조). Figma radius 12·padding 24 */}
+        {/* ② NEXT STEP 카드 — 설문 시작(주) / 메인으로(보조) */}
         <div
           className={vstack({
             gap: '4',
@@ -114,7 +89,6 @@ export function SteamSyncSuccess({
             p: '6',
           })}
         >
-          {/* eyebrow 수치 — mono + accent (Figma 10px) */}
           <span
             className={css({
               fontFamily: 'mono',
@@ -128,12 +102,9 @@ export function SteamSyncSuccess({
           </span>
           <div className={vstack({ gap: '1.5', alignItems: 'flex-start' })}>
             <h2
-              className={css({
-                textStyle: 'heading.h4',
-                color: 'fg.default',
-              })}
+              className={css({ textStyle: 'heading.h4', color: 'fg.default' })}
             >
-              취향 설문으로 마무리하기
+              취향 설문으로 시작하기
             </h2>
             <p
               className={css({
@@ -154,7 +125,7 @@ export function SteamSyncSuccess({
                 button({ variant: 'primary', size: 'md' }),
                 css({ flex: '1' }),
               )}
-              data-testid="steam-sync-success-start-survey"
+              data-testid="steam-sync-empty-start-survey"
             >
               설문 시작 →
             </button>
@@ -165,9 +136,9 @@ export function SteamSyncSuccess({
                 button({ variant: 'secondary', size: 'md' }),
                 css({ flex: '1' }),
               )}
-              data-testid="steam-sync-success-go-main"
+              data-testid="steam-sync-empty-go-main"
             >
-              건너뛰고 메인으로
+              메인으로
             </button>
           </div>
         </div>

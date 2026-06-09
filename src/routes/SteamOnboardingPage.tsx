@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useSteamSkip } from '@/features/onboarding/api/steamSkip';
 import { useSteamSyncStatus } from '@/features/onboarding/api/steamSyncStatus';
 import { SteamLinkInvite } from '@/features/onboarding/components/SteamLinkInvite';
+import { SteamSyncEmpty } from '@/features/onboarding/components/SteamSyncEmpty';
 import { SteamSyncError } from '@/features/onboarding/components/SteamSyncError';
 import { SteamSyncLoading } from '@/features/onboarding/components/SteamSyncLoading';
 import { SteamSyncPrivate } from '@/features/onboarding/components/SteamSyncPrivate';
@@ -66,8 +66,6 @@ export function SteamOnboardingPage() {
   // 연동 세션 nonce. 연동/재시도마다 증가시켜 폴링 캐시를 새로 판다(되돌이 방지).
   const [runId, setRunId] = useState(0);
 
-  const skip = useSteamSkip();
-
   // 폴링은 step==='syncing'일 때만 가동.
   const { data, elapsedSeconds } = useSteamSyncStatus(
     step === 'syncing',
@@ -93,12 +91,8 @@ export function SteamOnboardingPage() {
     setStep('syncing');
   };
 
-  // 둘러보기/건너뛰기/설문으로 진행 — skip 성공 시 설문 인트로로.
-  const goSurvey = () => {
-    skip.mutate(undefined, {
-      onSuccess: () => navigate('/survey/intro'),
-    });
-  };
+  // 둘러보기/건너뛰기/설문으로 진행 — 백엔드에 skip 엔드포인트가 없어 클라에서 곧장 이동한다.
+  const goSurvey = () => navigate('/survey/intro');
 
   // 진행 취소 — 유도 화면으로 되돌린다(폴링도 enabled=false로 멈춤).
   const handleCancel = () => {
@@ -118,7 +112,15 @@ export function SteamOnboardingPage() {
     if (result.status === 'success') {
       return (
         <SteamSyncSuccess
-          foundGames={result.foundGames ?? 0}
+          avatarUrl={result.avatarUrl}
+          onStartSurvey={() => navigate('/survey/intro')}
+          onGoMain={() => navigate('/')}
+        />
+      );
+    }
+    if (result.status === 'empty') {
+      return (
+        <SteamSyncEmpty
           onStartSurvey={() => navigate('/survey/intro')}
           onGoMain={() => navigate('/')}
         />
@@ -129,7 +131,7 @@ export function SteamOnboardingPage() {
         <SteamSyncPrivate onRetry={startSyncing} onSkipToSurvey={goSurvey} />
       );
     }
-    // 'failed' | 'timeout' — 공용 에러 화면.
+    // 'failed' — 공용 에러 화면(클라 타임아웃도 failed로 합성됨).
     return <SteamSyncError onRetry={startSyncing} onSkipToSurvey={goSurvey} />;
   }
 
