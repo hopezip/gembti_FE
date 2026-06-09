@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 import { css } from 'styled-system/css';
+import { vstack } from 'styled-system/patterns';
+import { button } from 'styled-system/recipes';
 import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
 import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
@@ -13,6 +15,8 @@ export function MyPage() {
     data: profile,
     isLoading,
     isError,
+    refetch,
+    isFetching,
   } = useQuery({
     queryKey: ['mypage', 'profile'],
     queryFn: () => ky.get('/api/mypage/profile').json<MockUserProfile>(),
@@ -67,16 +71,25 @@ export function MyPage() {
   if (isError || !profile) {
     return (
       <div
-        className={css({
+        className={vstack({
           maxW: '1200px',
           mx: 'auto',
           px: '6',
-          py: '8',
-          textAlign: 'center',
+          py: '20',
+          gap: '4',
+          alignItems: 'center',
           color: 'fg.subtle',
         })}
       >
-        프로필 정보를 불러올 수 없습니다
+        <p>프로필 정보를 불러올 수 없습니다</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className={button({ variant: 'primary', size: 'sm' })}
+        >
+          {isFetching ? '불러오는 중…' : '다시 시도'}
+        </button>
       </div>
     );
   }
