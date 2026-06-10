@@ -1,5 +1,7 @@
 # Next.js 마이그레이션(1차·최소 이전) Implementation Plan
 
+> ⚠️ **SUPERSEDED (이력 문서)**: 이 계획은 MIGRATE-FE-002에서 되돌려졌다(Next 제거 → Vite SPA 복귀). 실행하지 말 것. 기록 보존용이다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Vite + React 19 SPA를 Next.js로 옮겨 LangChain용 독립 Node 서버를 확보하되, 화면·상태·데이터·인증·react-router를 그대로 유지한다.

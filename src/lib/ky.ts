@@ -16,7 +16,7 @@ import type { components } from '@/types/api';
 
 type AccessTokenResponse = components['schemas']['AccessTokenResponse'];
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // refresh 호출용 분리 인스턴스 — 메인 api의 afterResponse 훅을 타지 않아 재귀를 막는다.
 //   (refresh 자체가 401이어도 다시 refresh를 시도하지 않는다.) 쿠키 전송 위해 credentials 포함.

@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { CircleHelp, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -96,7 +95,7 @@ export function SurveyIntroPage() {
             {surveyTraits.map(({ title, description, icon }) => (
               <li className={styles.traitItem} key={title}>
                 <span className={styles.traitIcon}>
-                  <Image src={icon} alt="" width={40} height={44} />
+                  <img src={icon} alt="" width={40} height={44} />
                 </span>
                 <strong className={styles.traitTitle}>{title}</strong>
                 <small>{description}</small>

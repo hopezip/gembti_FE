@@ -59,7 +59,7 @@ features/auth/
 
 - 폼 검증: `src/lib/schemas/auth.ts`의 `loginSchema`/STEP1·STEP2 회원가입 스키마/`verifyCodeSchema`/닉네임 스키마(RHF + zodResolver). 비번 10자↑+특수문자, 닉 2~8자, 성별 male/female/other.
 - 서버 호출: `src/services/auth.ts`의 `login()`/`sendEmailCode()`/`verifyEmail()`/`signup()`/`refresh()`/`logout()`/`getMe()`. 응답 envelope 없음 — `AuthResponse`/`AccessTokenResponse`/`UserResponse`(자동생성물 `src/types/api.ts`)를 도메인(camel)으로 매핑. 에러는 `{detail}`(string | 검증배열) 파싱.
-- mock: **auth(`/api/v1/auth/*`)는 실서버(gembti.cloud)로 passthrough**(핸들러 미등록, `onUnhandledRequest:'bypass'`). steam/games/home은 계속 MSW mock. 환경: `NEXT_PUBLIC_API_BASE_URL=https://gembti.cloud`.
+- mock: **auth(`/api/v1/auth/*`)는 실서버(gembti.cloud)로 passthrough**(핸들러 미등록, `onUnhandledRequest:'bypass'`). steam/games/home은 계속 MSW mock. 환경: `VITE_API_BASE_URL=https://gembti.cloud`.
 
 ## 범위 밖(후속/별개 갭)
 

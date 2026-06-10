@@ -10,9 +10,9 @@
 
 // 스팀 OpenID 인증 시작 URL(REQ-003 가설정).
 //   A안(백엔드 위임)에선 FE가 이 URL을 쓰지 않으므로 빈 문자열로 둔다.
-//   env(NEXT_PUBLIC_STEAM_AUTH_START_URL)가 있으면 그 값을 우선한다.
+//   env(VITE_STEAM_AUTH_START_URL)가 있으면 그 값을 우선한다.
 export const STEAM_AUTH_START_URL =
-  process.env.NEXT_PUBLIC_STEAM_AUTH_START_URL ?? '';
+  import.meta.env.VITE_STEAM_AUTH_START_URL ?? '';
 
 // 동기화 상태 폴링 주기(ms). 훅의 refetchInterval 기본값으로 쓴다.
 export const STEAM_POLL_INTERVAL_MS = 2000;
