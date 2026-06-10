@@ -11,7 +11,7 @@ import { getMe } from '@/services/auth';
 // 사용자용 화면이 아니라, 백엔드 OpenID 인증 리다이렉트가 떨어지는 착지점이다.
 // 백엔드는 결과를 `result` 쿼리로 알려준다(토큰은 바디로 주지 않는다):
 //   - result=success          → 기존 유저. refresh(쿠키)+me로 세션을 복원하고 홈으로.
-//   - result=signup_required  → 신규 유저. signup_token을 들고 추가정보 화면(/steam/complete-signup)으로.
+//   - result=signup_required  → 신규 유저. Steam 가입은 미지원이라 이메일 회원가입(/signup)으로 안내한다.
 //   - result=failed (그 외)   → 인증 실패. 사유를 토스트로 알리고 로그인으로.
 // 모두 replace 이동이라 뒤로가기 시 콜백 URL이 히스토리에 남지 않는다.
 export function SteamCallbackPage() {
@@ -22,22 +22,14 @@ export function SteamCallbackPage() {
   useEffect(() => {
     const result = searchParams.get('result');
 
-    // 신규 유저 — 추가정보 입력 화면으로(가입 토큰 동반). 토큰이 없으면 비정상이라 로그인으로.
+    // 신규 유저 — Steam 가입은 미지원. 이메일 회원가입으로 안내한다(complete-signup 제거됨).
     if (result === 'signup_required') {
-      const signupToken = searchParams.get('signup_token');
-      if (!signupToken) {
-        toaster.create({
-          type: 'error',
-          title: 'Steam 가입 정보를 받지 못했어요',
-          description: '다시 시도해주세요.',
-        });
-        navigate('/login', { replace: true });
-        return;
-      }
-      navigate('/steam/complete-signup', {
-        state: { signupToken },
-        replace: true,
+      toaster.create({
+        type: 'error',
+        title: 'Steam으로는 가입할 수 없어요',
+        description: '이메일로 회원가입해주세요.',
       });
+      navigate('/signup', { replace: true });
       return;
     }
 

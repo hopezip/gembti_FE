@@ -10,7 +10,6 @@ import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SteamCallbackPage } from './SteamCallbackPage';
-import { SteamCompleteSignupPage } from './SteamCompleteSignupPage';
 import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { SurveyAnalysisLoadingPage } from './SurveyAnalysisLoadingPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
@@ -40,12 +39,6 @@ const mvpRoutes: RouteDef[] = [
     title: 'Steam OAuth 콜백',
     path: '/steam/callback',
     access: 'Technical',
-  },
-  {
-    // Steam 신규 유저 추가정보 입력(콜백이 signup_token과 함께 보낸다). 비로그인 신규 유저 접근이라 Public.
-    title: 'Steam 가입 완료',
-    path: '/steam/complete-signup',
-    access: 'Public',
   },
   { title: '스팀 연동', path: '/onboarding/steam', access: 'Auth' },
   {
@@ -84,7 +77,6 @@ function pageElement({ title, path, access }: RouteDef) {
   // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
   if (path === '/onboarding/steam') return <SteamOnboardingPage />;
   if (path === '/steam/callback') return <SteamCallbackPage />;
-  if (path === '/steam/complete-signup') return <SteamCompleteSignupPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
   if (path === '/survey') return <SurveyPage />;
 

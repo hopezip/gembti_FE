@@ -61,41 +61,6 @@ const steamApiHandlers = [
     });
   }),
 
-  // Steam 신규 유저 가입 완료 (STEAM-INTER-FE-007). 백엔드 미구현이라 mock으로 가로챈다.
-  //   (index.ts: auth/*는 보통 실서버 passthrough지만, 이 엔드포인트는 백엔드에 없어 명시 등록한다.)
-  //   signup_token === 'expired'면 400(INVALID_SIGNUP_TOKEN)으로 가입 세션 만료를 시뮬레이션한다.
-  http.post('*/api/v1/auth/steam/complete-signup', async ({ request }) => {
-    const body = (await request.json().catch(() => ({}))) as {
-      signup_token?: string;
-      email?: string;
-      nickname?: string;
-    };
-    if (body.signup_token === 'expired') {
-      return HttpResponse.json(
-        {
-          code: 'INVALID_SIGNUP_TOKEN',
-          message: '가입 세션이 만료되었거나 유효하지 않습니다.',
-        },
-        { status: 400 },
-      );
-    }
-    return HttpResponse.json(
-      {
-        status: 'success',
-        access_token: 'mock_steam_access_token',
-        token_type: 'bearer',
-        user: {
-          id: 7,
-          email: body.email ?? 'steam@example.com',
-          nickname: body.nickname ?? 'SteamUser',
-          login_provider: 'STEAM',
-          steam_linked: true,
-        },
-      },
-      { status: 201 },
-    );
-  }),
-
   // 스팀 계정 연동. 기본 success, ?scenario로 private/failed/empty 분기.
   http.post('*/api/v1/steam/link', async ({ request }) => {
     const url = new URL(request.url);
