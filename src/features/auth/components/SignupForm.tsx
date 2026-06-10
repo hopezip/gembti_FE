@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import ky from 'ky';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
-import { vstack } from 'styled-system/patterns';
+import { hstack, vstack } from 'styled-system/patterns';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
@@ -58,6 +60,27 @@ export function SignupForm({
   });
 
   const password = watch('password') ?? '';
+  const email = watch('email') ?? '';
+
+  // 이메일 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다. (LOGIN-FE-012, 닉네임 대칭)
+  const [emailCheck, setEmailCheck] = useState<
+    'idle' | 'checking' | 'available' | 'taken'
+  >('idle');
+
+  // 이메일 중복 확인 — MSW 핸들러(GET /api/users/check-email) 호출(실서버 엔드포인트 없음).
+  async function checkEmail() {
+    const value = email.trim();
+    if (!value) return;
+    setEmailCheck('checking');
+    try {
+      const res = await ky
+        .get('/api/users/check-email', { searchParams: { email: value } })
+        .json<{ available: boolean }>();
+      setEmailCheck(res.available ? 'available' : 'taken');
+    } catch {
+      setEmailCheck('idle');
+    }
+  }
 
   const onInvalid = () => {
     if (errors.email) setFocus('email');
@@ -80,20 +103,52 @@ export function SignupForm({
       onSubmit={handleSubmit(onValid, onInvalid)}
       className={vstack({ gap: '5', alignItems: 'stretch' })}
     >
-      <Field
-        label="이메일"
-        id="signup-email"
-        required
-        error={errors.email?.message}
-      >
-        <Input
-          type="email"
-          autoComplete="email"
-          placeholder="name@example.com"
-          disabled={isSubmitting}
-          {...register('email')}
-        />
-      </Field>
+      {/* 이메일 — 중복 확인 버튼(보조용, LOGIN-FE-012) */}
+      <div className={vstack({ gap: '1.5', alignItems: 'stretch' })}>
+        <div className={hstack({ gap: '2', alignItems: 'flex-end' })}>
+          <div className={css({ flex: 1, minW: 0 })}>
+            <Field
+              label="이메일"
+              id="signup-email"
+              required
+              error={errors.email?.message}
+            >
+              <Input
+                type="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                disabled={isSubmitting}
+                {...register('email', {
+                  // 이메일을 수정하면 이전 확인 결과를 초기화한다.
+                  onChange: () => {
+                    if (emailCheck !== 'idle') setEmailCheck('idle');
+                  },
+                })}
+              />
+            </Field>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={checkEmail}
+            disabled={
+              isSubmitting || emailCheck === 'checking' || !email.trim()
+            }
+          >
+            {emailCheck === 'checking' ? '확인 중…' : '중복 확인'}
+          </Button>
+        </div>
+        {emailCheck === 'available' && (
+          <span className={css({ textStyle: 'body.sm', color: 'success.fg' })}>
+            사용 가능한 이메일이에요
+          </span>
+        )}
+        {emailCheck === 'taken' && (
+          <span className={css({ textStyle: 'body.sm', color: 'danger.fg' })}>
+            이미 가입된 이메일이에요
+          </span>
+        )}
+      </div>
 
       <Field
         label="비밀번호"

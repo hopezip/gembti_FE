@@ -338,6 +338,16 @@ export const mypageHandlers = [
     return HttpResponse.json({ available });
   }),
 
+  http.get('/api/users/check-email', ({ request }) => {
+    const url = new URL(request.url);
+    const email = url.searchParams.get('email') ?? '';
+    // 현재 가입된 이메일은 중복으로 처리 (check-nickname 대칭, LOGIN-FE-012)
+    const takenEmails = [MOCK_PROFILE.email];
+    const available =
+      email.trim().length > 0 && !takenEmails.includes(email.trim());
+    return HttpResponse.json({ available });
+  }),
+
   http.get('/api/mypage/profile', () => {
     return HttpResponse.json(MOCK_PROFILE);
   }),
