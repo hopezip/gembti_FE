@@ -2,14 +2,12 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { AuthDivider } from '@/features/auth/components/AuthDivider';
 import { AuthTabs } from '@/features/auth/components/AuthTabs';
 import { EmailVerificationForm } from '@/features/auth/components/EmailVerificationForm';
 import { SignupForm } from '@/features/auth/components/SignupForm';
-import { SteamButton } from '@/features/auth/components/SteamButton';
 import { toaster } from '@/components/ui/Toast';
 import type { AuthSession } from '@/services/auth';
-import { sendEmailCode } from '@/services/auth';
+import { SendCodeError, sendEmailCode } from '@/services/auth';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 
 // /signup 페이지 엔트리 — Figma auth-modal(signup) 2단계 (LOGIN-FE-005 재구성).
@@ -40,6 +38,17 @@ export function SignupPage() {
     privacyAgreed: boolean;
   } | null>(null);
 
+  // 이메일 중복(409) → 토스트로 알리고 로그인 페이지로 보낸다(이미 가입된 계정 → 로그인 유도).
+  //   send-code(STEP1)와 signup(STEP2) 양쪽에서 공용으로 쓴다.
+  const handleEmailDuplicated = (detail: string | null) => {
+    toaster.create({
+      type: 'error',
+      title: '이미 가입된 이메일이에요',
+      description: detail ?? '로그인 페이지에서 로그인해주세요.',
+    });
+    navigate('/login');
+  };
+
   // STEP1 제출 → send-code → STEP2 전환.
   const sendCodeMutation = useMutation({
     mutationFn: ({
@@ -65,6 +74,13 @@ export function SignupPage() {
         state: { redirect: POST_SIGNUP_REDIRECT },
       });
     },
+    onError: (error) => {
+      // 409(이미 가입된 이메일)면 발송이 아니라 중복이므로 로그인으로 유도한다.
+      //   그 외(generic)는 폼 하단 formError("발송 실패, 재시도")로 표시된다.
+      if (error instanceof SendCodeError && error.kind === 'email-duplicated') {
+        handleEmailDuplicated(error.detail);
+      }
+    },
   });
 
   const handleSignedUp = (result: AuthSession) => {
@@ -73,16 +89,6 @@ export function SignupPage() {
       user: result.user,
       accessToken: result.accessToken,
     });
-  };
-
-  // 이메일 중복(409) → 토스트로 알리고 로그인 페이지로 보낸다(이미 가입된 계정 → 로그인 유도).
-  const handleEmailDuplicated = (detail: string | null) => {
-    toaster.create({
-      type: 'error',
-      title: '이미 가입된 이메일이에요',
-      description: detail ?? '로그인 페이지에서 로그인해주세요.',
-    });
-    navigate('/login');
   };
 
   const eyebrow =
@@ -100,23 +106,20 @@ export function SignupPage() {
       subtitle={subtitle}
     >
       {step === 1 ? (
-        <>
-          {/* Steam 소셜 가입 — 신규 유저 흐름(signup_required) (STEAM-INTER-FE-007) */}
-          <SteamButton label="Steam 계정으로 가입하기" />
-
-          {/* 구분선 "— 또는 이메일로 가입 —" */}
-          <AuthDivider>또는 이메일로 가입</AuthDivider>
-
-          <SignupForm
-            onSubmitStep1={(values) => sendCodeMutation.mutate(values)}
-            isSubmitting={sendCodeMutation.isPending}
-            formError={
-              sendCodeMutation.isError
-                ? '인증 코드 발송에 실패했어요. 잠시 후 다시 시도해주세요.'
-                : null
-            }
-          />
-        </>
+        <SignupForm
+          onSubmitStep1={(values) => sendCodeMutation.mutate(values)}
+          isSubmitting={sendCodeMutation.isPending}
+          formError={
+            // 409(이메일 중복)는 onError가 토스트+로그인 유도로 처리하므로 폼 에러로 띄우지 않는다.
+            sendCodeMutation.isError &&
+            !(
+              sendCodeMutation.error instanceof SendCodeError &&
+              sendCodeMutation.error.kind === 'email-duplicated'
+            )
+              ? '인증 코드 발송에 실패했어요. 잠시 후 다시 시도해주세요.'
+              : null
+          }
+        />
       ) : (
         signupContext && (
           <EmailVerificationForm
