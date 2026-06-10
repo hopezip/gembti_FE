@@ -251,11 +251,12 @@ export function ProfileEditPage() {
             >
               생년월일
             </label>
+            {/* 회원가입(STEP2)과 동일하게 type=date 달력으로 통일 (MYPAGE-FE-004). 값은 ISO YYYY-MM-DD. */}
             <input
               id="edit-birthdate"
+              type="date"
               value={birthdate}
               onChange={handleChange(setBirthdate)}
-              placeholder="YYYY.MM.DD"
               className={css({
                 w: 'full',
                 bg: 'bg.surface',
@@ -266,9 +267,9 @@ export function ProfileEditPage() {
                 py: '3',
                 fontSize: 'sm',
                 color: 'fg.default',
+                colorScheme: 'dark',
                 outline: 'none',
                 _focus: { borderColor: 'accent.default' },
-                _placeholder: { color: 'fg.subtle' },
               })}
             />
           </div>
