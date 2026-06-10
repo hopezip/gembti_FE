@@ -1,5 +1,7 @@
 # Next.js 마이그레이션 설계 — 1차(최소 이전)
 
+> ⚠️ **SUPERSEDED (이력 문서)**: 이 설계는 MIGRATE-FE-002에서 되돌려졌다. Next는 제거되고 Vite React SPA로 복귀했다(`index.html` + `src/main.tsx`, env는 `import.meta.env.VITE_*`). 아래 내용은 1차 당시 기록 보존용이며 현재 구조가 아니다. 현재 라우팅/엔트리 규칙은 `routing.md` 참조.
+
 - 티켓: `MIGRATE-FE-001`
 - 작성일: 2026-06-04
 - 흐름: cross (공통 빌드/엔트리/설정 + 풀팀 영향)

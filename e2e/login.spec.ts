@@ -180,9 +180,12 @@ test.describe('이메일 로그인 (/login)', () => {
     await form.password.fill(VALID_PASSWORD);
     await form.submit.click();
 
-    // /search SearchPage로 이동(검색 input placeholder로 확인)
+    // /search SearchPage로 이동(검색 input placeholder로 확인).
+    // exact:true — 헤더 전역 검색('🔍 게임, 장르, 태그 검색')과의 substring 충돌을 막는다.
     await expect(page).toHaveURL(/\/search$/);
-    await expect(page.getByPlaceholder('게임, 장르, 태그 검색')).toBeVisible();
+    await expect(
+      page.getByPlaceholder('게임, 장르, 태그 검색', { exact: true }),
+    ).toBeVisible();
   });
 
   test('성공 시 redirect가 없으면 홈(/)으로 이동한다', async ({ page }) => {

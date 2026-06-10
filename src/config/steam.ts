@@ -10,10 +10,10 @@
 
 // 스팀 OpenID 인증 시작 URL (REQ-003 A안 확정 — 백엔드 위임).
 //   FE는 이 백엔드 엔드포인트로 브라우저를 이동시키고, 백엔드가 Steam OpenID로 리다이렉트한다.
-//   기본값은 API 베이스 + GET /api/v1/auth/steam. env(NEXT_PUBLIC_STEAM_AUTH_START_URL)가 있으면 우선한다.
+//   기본값은 API 베이스 + GET /api/v1/auth/steam. env(VITE_STEAM_AUTH_START_URL)가 있으면 우선한다.
 export const STEAM_AUTH_START_URL =
-  process.env.NEXT_PUBLIC_STEAM_AUTH_START_URL ??
-  `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ''}/api/v1/auth/steam`;
+  import.meta.env.VITE_STEAM_AUTH_START_URL ??
+  `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1/auth/steam`;
 
 // 동기화 상태 폴링 주기(ms). 훅의 refetchInterval 기본값으로 쓴다.
 export const STEAM_POLL_INTERVAL_MS = 2000;

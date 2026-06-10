@@ -1,10 +1,10 @@
-# routing.md — 라우팅 (Next.js 호스팅 + React Router)
+# routing.md — 라우팅 (Vite React SPA + React Router)
 
 ## 핵심 규칙 (인라인 룰 추출용)
 
 - 라우트 정의는 `src/routes/`에 둔다 (React Router, 라우트 SSOT). **파일 라우팅으로 갈아엎지 않는다.**
-- Next는 `src/app/[[...slug]]` catch-all 하나로 이 React Router 앱을 클라이언트 마운트(`ssr:false`)만 한다. `src/app/api/`의 route handler는 LangChain 등 자체 서버용(MIGRATE-FE-001).
-- env는 `NEXT_PUBLIC_*`를 쓴다(`import.meta.env` 아님).
+- 앱 진입은 `index.html` → `src/main.tsx`(`createRoot`)에서 `App`을 마운트한다. (이력: MIGRATE-FE-001에서 Next `src/app/[[...slug]]` catch-all로 호스팅했으나 MIGRATE-FE-002에서 Next 제거하고 Vite SPA로 복귀.)
+- env는 `import.meta.env.VITE_*`를 쓴다(`NEXT_PUBLIC_*`/`process.env` 아님).
 - 라우트 접근 권한(REQ 3.1 사용자 상태)을 가드로 분기: Public / Public only / Auth.
 - 로그인 필요 화면은 비로그인 시 `/login`으로 보내고 `redirect` 값을 보존해 복귀시킨다.
 - 인증 보호 로직은 한 곳(route guard / API client boundary)에 모은다.

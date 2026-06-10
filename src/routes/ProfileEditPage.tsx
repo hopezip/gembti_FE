@@ -374,7 +374,6 @@ export function ProfileEditPage() {
                 })}
               >
                 {profile.avatarUrl ? (
-                  // biome-ignore lint/performance/noImgElement: 아바타는 외부 URL로 next/image 도메인 설정 불가
                   <img
                     src={profile.avatarUrl}
                     alt="preview"

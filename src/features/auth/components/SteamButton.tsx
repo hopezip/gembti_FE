@@ -13,7 +13,7 @@ import { STEAM_AUTH_START_URL } from '@/config/steam';
 //   mock 모드에서는 백엔드 OpenID 대신 콜백 URL로 직접 이동해 흐름을 끝까지 검증한다.
 //   - signup_required: 신규 유저 → complete-signup 화면까지 (complete-signup mock이 받음)
 //   - success: 기존 유저 (refresh+me는 실서버 의존이라 mock에선 /login으로 떨어진다 — 단위테스트로 검증)
-const IS_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+const IS_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 const MOCK_SIGNUP_TOKEN = 'mock_steam_signup_token';
 
 interface SteamButtonProps {
