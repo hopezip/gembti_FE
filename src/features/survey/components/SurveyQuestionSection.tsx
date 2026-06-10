@@ -1,57 +1,34 @@
 import { css } from 'styled-system/css';
+import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
+import { useSurveyQuestions } from '@/features/survey/api/surveyQuestions';
+import type { SurveyQuestion } from '@/features/survey/api/surveyQuestions';
+import type { SurveySubmitAnswer } from '@/features/survey/api/types';
 import { useSurveyQuestionSection } from '@/features/survey/hooks/useSurveyQuestionSection';
 import { SurveyAnswerScale } from './SurveyAnswerScale';
 import { SurveyQuestionControls } from './SurveyQuestionControls';
 import { SurveyStepIndicator } from './SurveyStepIndicator';
 
-interface SurveyQuestion {
-  id: string;
-  lines: string[];
-  accent: string;
-}
+const questionAccentMap: Record<number, string> = {
+  1: '낯선 경험',
+  2: '빠른 판단',
+  3: '성장',
+  4: '전략',
+  5: '이야기',
+  6: '협력하거나 경쟁',
+  7: '완성도',
+};
 
-// TODO(SURVEY-FE-002): API/MSW 연결 시 이 임시 문항 데이터는
-// MSW survey handler의 mock response로 이동하고, 화면은 서비스/API 응답을 사용한다.
-const surveyQuestions: SurveyQuestion[] = [
-  {
-    id: 'q1',
-    lines: [
-      '새로운 게임을 고를 때 검증된 인기작보다',
-      '낯선 경험을 먼저 찾는다',
-    ],
-    accent: '낯선 경험',
-  },
-  {
-    id: 'q2',
-    lines: ['플레이 중에는 빠른 판단과 손맛이 있는', '순간에 가장 몰입한다'],
-    accent: '빠른 판단',
-  },
-  {
-    id: 'q3',
-    lines: ['스트레스 없이 즐기는데도 적을 휘어잡는', '성장을 선호한다'],
-    accent: '성장',
-  },
-  {
-    id: 'q4',
-    lines: ['게임의 규칙을 파악하고 최적의', '전략을 찾는 과정이 즐겁다'],
-    accent: '전략',
-  },
-  {
-    id: 'q5',
-    lines: ['캐릭터와 세계관의 이야기가 오래 기억나는', '게임을 좋아한다'],
-    accent: '이야기',
-  },
-  {
-    id: 'q6',
-    lines: ['친구와 협력하거나 경쟁하며 생기는', '변수를 즐기는 편이다'],
-    accent: '협력하거나 경쟁',
-  },
-  {
-    id: 'q7',
-    lines: ['수집, 업적, 장비 강화처럼 완성도를', '채워가는 플레이에 끌린다'],
-    accent: '완성도',
-  },
-];
+function splitQuestionLines(question: string) {
+  // 기존 시안처럼 두 줄 리듬을 유지하기 위해 첫 번째 자연스러운 공백 지점에서 나눈다.
+  // API가 줄바꿈 없는 문장을 내려주므로, 화면 전용 줄바꿈은 컴포넌트에서만 계산한다.
+  const midpoint = Math.ceil(question.length / 2);
+  const splitIndex = question.indexOf(' ', midpoint);
+  if (splitIndex === -1) return [question];
+
+  return [question.slice(0, splitIndex), question.slice(splitIndex + 1)];
+}
 
 function renderQuestion(text: string, accent: string) {
   const accentIndex = text.indexOf(accent);
@@ -74,13 +51,19 @@ function renderQuestion(text: string, accent: string) {
 }
 
 interface SurveyQuestionSectionProps {
-  onComplete?: () => void;
+  onComplete?: (answers: SurveySubmitAnswer[], totalQuestions: number) => void;
 }
 
-export function SurveyQuestionSection({
+interface SurveyQuestionContentProps {
+  questions: SurveyQuestion[];
+  onComplete?: (answers: SurveySubmitAnswer[], totalQuestions: number) => void;
+}
+
+function SurveyQuestionContent({
+  questions,
   onComplete,
-}: SurveyQuestionSectionProps) {
-  const totalSteps = surveyQuestions.length;
+}: SurveyQuestionContentProps) {
+  const totalSteps = questions.length;
   const {
     answers,
     completedCount,
@@ -91,8 +74,14 @@ export function SurveyQuestionSection({
     selectedValue,
     selectAnswer,
     skipQuestion,
-  } = useSurveyQuestionSection({ onComplete, totalSteps });
-  const currentQuestion = surveyQuestions[currentIndex];
+  } = useSurveyQuestionSection({
+    questions,
+    onComplete,
+  });
+  const currentQuestion = questions[currentIndex];
+  const questionLines = splitQuestionLines(currentQuestion.question);
+  const accent =
+    questionAccentMap[currentQuestion.id] ?? questionLines[0] ?? '';
 
   return (
     <>
@@ -127,14 +116,14 @@ export function SurveyQuestionSection({
           })}
           id="survey-question"
         >
-          {currentQuestion.lines.map((line) => (
+          {questionLines.map((line) => (
             <span
               className={css({
                 display: 'block',
               })}
               key={line}
             >
-              {renderQuestion(line, currentQuestion.accent)}
+              {renderQuestion(line, accent)}
             </span>
           ))}
         </h1>
@@ -153,5 +142,63 @@ export function SurveyQuestionSection({
         />
       </div>
     </>
+  );
+}
+
+export function SurveyQuestionSection({
+  onComplete,
+}: SurveyQuestionSectionProps) {
+  const {
+    data: surveyQuestions,
+    isError,
+    isLoading,
+    refetch,
+  } = useSurveyQuestions();
+
+  if (isLoading) {
+    return (
+      <div
+        className={css({
+          minH: '420px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+      >
+        <Spinner className={css({ color: 'accent.default' })} />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <EmptyState
+        action={
+          <Button type="button" variant="primary" onClick={() => refetch()}>
+            다시 불러오기
+          </Button>
+        }
+        description="잠시 후 다시 시도해 주세요."
+        title="설문 문항을 불러오지 못했어요"
+        type="notification"
+      />
+    );
+  }
+
+  if (!surveyQuestions?.length) {
+    return (
+      <EmptyState
+        description="설문 문항이 준비되면 다시 진행할 수 있어요."
+        title="표시할 설문 문항이 없어요"
+        type="notification"
+      />
+    );
+  }
+
+  return (
+    <SurveyQuestionContent
+      questions={surveyQuestions}
+      onComplete={onComplete}
+    />
   );
 }

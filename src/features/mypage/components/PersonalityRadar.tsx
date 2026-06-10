@@ -1,6 +1,9 @@
 import { css } from 'styled-system/css';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
+import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -46,6 +49,19 @@ const GRID_COLOR = 'rgba(255,255,255,0.12)';
 const AXIS_COLOR = 'rgba(255,255,255,0.08)';
 
 export function PersonalityRadar({ personality }: Props) {
+  const navigate = useNavigate();
+  // 설문을 완료한 사용자에게만 '취향 다시 진단' CTA를 노출한다.
+  const hasCompletedSurvey = useAuthStore(
+    (state) => state.user?.hasCompletedSurvey ?? false,
+  );
+  // 재진단 시 기존 설문 진행 상태를 초기화한다.
+  const resetSurveyProgress = useSurveyProgressStore(
+    (state) => state.resetProgress,
+  );
+  // 미응답 문항이 남아있는 경우 설문 이어하기 상태로 판단한다.
+  const hasSkippedQuestions = useSurveyProgressStore(
+    (state) => state.skippedQuestionIds.length > 0,
+  );
   const valuePts = personality
     .map((p, i) => pt(i, p.value / 10))
     .map((p) => `${p.x},${p.y}`)
@@ -71,9 +87,25 @@ export function PersonalityRadar({ personality }: Props) {
         >
           6대 성향 레이더
         </span>
-        <Button variant="ghost" size="sm">
-          취향 다시 진단
-        </Button>
+        {hasCompletedSurvey && (
+          // 미응답 문항이 남아있는 경우
+          // 기존 응답값을 유지한 채 설문을 이어서 진행한다.
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (hasSkippedQuestions) {
+                navigate('/survey');
+                return;
+              }
+
+              resetSurveyProgress();
+              navigate('/survey/intro');
+            }}
+          >
+            {hasSkippedQuestions ? '설문 이어하기' : '취향 다시 진단'}
+          </Button>
+        )}
       </div>
 
       {/* 차트 + 범례 */}

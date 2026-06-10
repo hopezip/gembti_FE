@@ -17,7 +17,7 @@
 |---|---|---|
 | `GlobalShell` | `GlobalShell.tsx` | layout 라우트 element. `<Header/>` → `<Outlet/>` → `<Footer/>`를 세로 스택으로 조립. `min-h 100vh` + flex column 으로 Footer를 하단 고정. 콘텐츠 컨테이너는 `<div>`(페이지가 `<main>`을 소유하므로 main landmark 중복 방지). |
 | `Header` | `Header.tsx` | `<header>`(60px·`bg.canvas`·border-bottom). `[Logo][Nav] … [Search][인증액션]`. Search = 기존 `ui/Input`(size sm) 재사용 + 인스턴스 override(`radii.full`·min-width 280·mono). 인증 액션 = `useAuthStore.status` 읽어 분기(`authenticated` → `Avatar`/마이페이지 링크, 그 외 → "로그인" 링크). |
-| `Nav` | `Nav.tsx` | `<nav aria-label>` landmark. `react-router` `NavLink` active 시 하단 2px `accent.default` 바, gap 22px. 항목: 홈 `/`·게임 추천 `/recommendations`(2개, routing.md Public 섹션). 검색은 헤더 검색창으로 분리. 커뮤니티는 MVP 구현 생략(보류, scaffold 유지)으로 비노출(TASK-DEVEX-016). |
+| `Nav` | `Nav.tsx` | `<nav aria-label>` landmark. `react-router` `NavLink` active 시 하단 2px `accent.default` 바, gap 22px. 항목: 홈 `/`·게임 추천 `/recommendations`. 설문 진입은 메인 배너 CTA로 제공한다. 검색은 헤더 검색창으로 분리. 커뮤니티는 MVP 구현 생략(보류, scaffold 유지)으로 비노출(TASK-DEVEX-016). |
 | `Logo` | `Logo.tsx` | `display` 폰트 italic·`letterSpacing.widest` "GAMBITI" 워드마크. `<Link to="/">`. |
 | `Footer` | `Footer.tsx` | `<footer>`(border-top). `caption`(mono·`fg.subtle`) 캡션. |
 | `PageContainer` | `PageContainer.tsx` | 페이지 좌우 거터/콘텐츠 폭 **단일 출처**. `pageGutter`(`px:'6'`=24px)·`pageContainer`(`maxW = calc(containerLg − spacing.6×2)` = 1232px·`mx:auto`, 카드 290 그리드 규격 — TASK-UI-011) 스타일 조각과, 둘을 2층으로 합친 `PageContainer` 컴포넌트(풀폭 bg/border 불필요한 일반 콘텐츠용)를 export. |

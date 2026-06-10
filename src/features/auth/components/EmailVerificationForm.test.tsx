@@ -20,7 +20,7 @@ vi.mock('@/services/auth', async (importOriginal) => {
   };
 });
 
-function renderForm(onSignedUp = vi.fn()) {
+function renderForm(onSignedUp = vi.fn(), onEmailDuplicated = vi.fn()) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -33,10 +33,11 @@ function renderForm(onSignedUp = vi.fn()) {
         termsAgreed
         privacyAgreed
         onSignedUp={onSignedUp}
+        onEmailDuplicated={onEmailDuplicated}
       />
     </QueryClientProvider>,
   );
-  return { onSignedUp };
+  return { onSignedUp, onEmailDuplicated };
 }
 
 // 6칸 OTP에 코드를 채운다(첫 칸 입력 후 자동 포커스 이동에 의존).
@@ -140,6 +141,25 @@ describe('EmailVerificationForm (STEP2)', () => {
     expect(
       await screen.findByText('이미 사용 중인 닉네임이에요'),
     ).toBeInTheDocument();
+  });
+
+  it('이메일 중복(email-duplicated)은 onEmailDuplicated 콜백을 부른다', async () => {
+    verifyEmail.mockResolvedValue(undefined);
+    signup.mockRejectedValue(
+      new SignupError('email-duplicated', '이미 가입된 이메일입니다.'),
+    );
+    const user = userEvent.setup();
+    const { onEmailDuplicated } = renderForm();
+
+    await fillOtp(user, '123456');
+    await fillProfile(user);
+    await user.click(screen.getByRole('button', { name: '가입 완료 →' }));
+
+    await waitFor(() =>
+      expect(onEmailDuplicated).toHaveBeenCalledWith(
+        '이미 가입된 이메일입니다.',
+      ),
+    );
   });
 
   it('signup 일반 오류는 코드 영역에 일반 에러로 표시한다', async () => {

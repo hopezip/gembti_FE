@@ -23,6 +23,8 @@ interface AuthState {
   setSession: (params: { user: AuthUser; accessToken: string }) => void;
   // refresh 재발급으로 access만 갱신한다. user/status는 유지한다.
   setTokens: (params: { accessToken: string }) => void;
+  // 설문 제출 성공 후 완료 여부를 현재 세션 사용자에 즉시 반영한다.
+  setSurveyCompleted: (completed: boolean) => void;
   // 로그아웃/세션 만료 시 호출 — access/user를 비우고 status를 'anonymous'로 되돌린다.
   clearAuth: () => void;
 }
@@ -36,6 +38,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   setTokens: ({ accessToken }) => {
     set({ accessToken });
+  },
+  setSurveyCompleted: (completed) => {
+    set((state) => ({
+      user: state.user
+        ? { ...state.user, hasCompletedSurvey: completed }
+        : state.user,
+    }));
   },
   clearAuth: () => {
     set({ status: 'anonymous', user: null, accessToken: null });

@@ -10,10 +10,12 @@ import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
 import { SteamCallbackPage } from './SteamCallbackPage';
+import { SteamCompleteSignupPage } from './SteamCompleteSignupPage';
 import { SteamOnboardingPage } from './SteamOnboardingPage';
 import { SurveyAnalysisLoadingPage } from './SurveyAnalysisLoadingPage';
 import { SurveyIntroPage } from './SurveyIntroPage';
 import { SurveyPage } from './SurveyPage';
+import { SurveyResultPage } from './SurveyResultPage';
 import { PlaceholderPage, type RouteAccess } from './PlaceholderPage';
 import { ProtectedRoute } from './guards/ProtectedRoute';
 import { PublicOnlyRoute } from './guards/PublicOnlyRoute';
@@ -36,8 +38,14 @@ const mvpRoutes: RouteDef[] = [
   { title: '회원가입', path: '/signup', access: 'Public only' },
   {
     title: 'Steam OAuth 콜백',
-    path: '/auth/steam/callback',
+    path: '/steam/callback',
     access: 'Technical',
+  },
+  {
+    // Steam 신규 유저 추가정보 입력(콜백이 signup_token과 함께 보낸다). 비로그인 신규 유저 접근이라 Public.
+    title: 'Steam 가입 완료',
+    path: '/steam/complete-signup',
+    access: 'Public',
   },
   { title: '스팀 연동', path: '/onboarding/steam', access: 'Auth' },
   {
@@ -45,12 +53,9 @@ const mvpRoutes: RouteDef[] = [
     path: '/onboarding/steam/result',
     access: 'Auth',
   },
-  // SURVEY-FE-001 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 인트로', path: '/survey/intro', access: 'Public' },
-  // SURVEY-FE-002 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 진행', path: '/survey', access: 'Public' },
-  // SURVEY-FE-003 UI 작업 중 비로그인에서도 확인할 수 있도록 임시 Public 처리.
-  { title: '설문 결과 분석', path: '/survey/loading', access: 'Public' },
+  { title: '설문 인트로', path: '/survey/intro', access: 'Auth' },
+  { title: '설문 진행', path: '/survey', access: 'Auth' },
+  { title: '설문 결과 분석', path: '/survey/loading', access: 'Auth' },
   { title: '설문 결과', path: '/survey/result', access: 'Auth' },
   { title: '검색', path: '/search', access: 'Public' },
   { title: '게임 추천', path: '/recommendations', access: 'Public' },
@@ -78,13 +83,15 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/recommendations') return <RecommendationsPage />;
   // 스팀 연동 온보딩 (STEAM-INTER-FE-001) — 단일 플로우(intro/syncing/result) + OAuth 콜백.
   if (path === '/onboarding/steam') return <SteamOnboardingPage />;
-  if (path === '/auth/steam/callback') return <SteamCallbackPage />;
+  if (path === '/steam/callback') return <SteamCallbackPage />;
+  if (path === '/steam/complete-signup') return <SteamCompleteSignupPage />;
   if (path === '/survey/intro') return <SurveyIntroPage />;
   if (path === '/survey') return <SurveyPage />;
 
   // 게임별 상세 (REC-DET-FE-001) — 라우트 정의/권한(Public)은 변경하지 않고 화면만 교체.
   if (path === '/games/:gameId') return <GameDetailPage />;
   if (path === '/survey/loading') return <SurveyAnalysisLoadingPage />;
+  if (path === '/survey/result') return <SurveyResultPage />;
   if (path === '/mypage') return <MyPage />;
   if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;

@@ -7,6 +7,7 @@ import { AuthTabs } from '@/features/auth/components/AuthTabs';
 import { EmailVerificationForm } from '@/features/auth/components/EmailVerificationForm';
 import { SignupForm } from '@/features/auth/components/SignupForm';
 import { SteamButton } from '@/features/auth/components/SteamButton';
+import { toaster } from '@/components/ui/Toast';
 import type { AuthSession } from '@/services/auth';
 import { sendEmailCode } from '@/services/auth';
 import { useAuthStore } from '@/lib/store/useAuthStore';
@@ -74,6 +75,16 @@ export function SignupPage() {
     });
   };
 
+  // 이메일 중복(409) → 토스트로 알리고 로그인 페이지로 보낸다(이미 가입된 계정 → 로그인 유도).
+  const handleEmailDuplicated = (detail: string | null) => {
+    toaster.create({
+      type: 'error',
+      title: '이미 가입된 이메일이에요',
+      description: detail ?? '로그인 페이지에서 로그인해주세요.',
+    });
+    navigate('/login');
+  };
+
   const eyebrow =
     step === 1 ? 'STEP 1 / 2 · 계정 정보' : 'STEP 2 / 2 · 인증 및 프로필';
   const subtitle =
@@ -90,8 +101,11 @@ export function SignupPage() {
     >
       {step === 1 ? (
         <>
-          {/* Steam 소셜 가입 자리(비활성, 후속 LOGIN-FE-002) */}
-          <SteamButton label="Steam 계정으로 가입하기" />
+          {/* Steam 소셜 가입 — 신규 유저 흐름(signup_required) (STEAM-INTER-FE-007) */}
+          <SteamButton
+            label="Steam 계정으로 가입하기"
+            mockResult="signup_required"
+          />
 
           {/* 구분선 "— 또는 이메일로 가입 —" */}
           <AuthDivider>또는 이메일로 가입</AuthDivider>
@@ -115,6 +129,7 @@ export function SignupPage() {
             termsAgreed={signupContext.termsAgreed}
             privacyAgreed={signupContext.privacyAgreed}
             onSignedUp={handleSignedUp}
+            onEmailDuplicated={handleEmailDuplicated}
           />
         )
       )}

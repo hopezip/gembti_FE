@@ -93,12 +93,13 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     const res = await api
       .post('api/v1/auth/login', { json: payload satisfies LoginRequest })
       .json<AuthResponse>();
-    // ky가 비정상 응답에 throw하지 않은 경우 방어(에러 바디를 200처럼 파싱한 상황 등):
-    //   토큰/유저가 없으면 자격증명 실패로 본다.
-    if (!res?.access_token || !res.user) {
+    // STEAM-INTER-FE-005: AuthResponse에서 user가 제거됐다(access만 응답). user는 me로 조회한다.
+    //   토큰이 없으면 자격증명 실패로 본다.
+    if (!res?.access_token) {
       throw new LoginError('invalid-credentials');
     }
-    return { user: mapAuthUser(res.user), accessToken: res.access_token };
+    const user = await getMe(res.access_token);
+    return { user, accessToken: res.access_token };
   } catch (error) {
     if (error instanceof LoginError) throw error;
     if (error instanceof HTTPError && error.response.status === 401) {
@@ -181,8 +182,12 @@ export interface SignupPayload {
 
 // 회원가입 실패 유형.
 // - 'nickname-duplicated': detail이 닉네임 중복을 가리킴 — 닉네임 필드 에러로 표시
+// - 'email-duplicated': 409(또는 detail이 이메일 중복) — 이미 가입된 이메일, 토스트+로그인 유도
 // - 'generic': 그 외(서버 detail 메시지를 그대로 노출)
-export type SignupErrorKind = 'nickname-duplicated' | 'generic';
+export type SignupErrorKind =
+  | 'nickname-duplicated'
+  | 'email-duplicated'
+  | 'generic';
 
 export class SignupError extends Error {
   readonly kind: SignupErrorKind;
@@ -212,16 +217,24 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
     const res = await api
       .post('api/v1/auth/signup', { json: body })
       .json<AuthResponse>();
-    if (!res?.access_token || !res.user) {
+    // STEAM-INTER-FE-005: AuthResponse에서 user가 제거됐다(access만 응답). user는 me로 조회한다.
+    if (!res?.access_token) {
       throw new SignupError('generic');
     }
-    return { user: mapAuthUser(res.user), accessToken: res.access_token };
+    const user = await getMe(res.access_token);
+    return { user, accessToken: res.access_token };
   } catch (error) {
     if (error instanceof SignupError) throw error;
     const detail = await parseDetail(error);
-    // error_code가 없으므로 detail 문구로 닉네임 중복을 추정한다(백엔드 메시지 변경 시 generic으로 폴백).
+    const status = error instanceof HTTPError ? error.response.status : null;
+    // error_code가 없으므로 detail 문구로 닉네임 중복을 먼저 추정한다(백엔드 메시지 변경 시 폴백).
     if (detail && /nickname|닉네임/i.test(detail)) {
       throw new SignupError('nickname-duplicated', detail);
+    }
+    // 이메일 중복 — 409(이메일 unique 위반) 또는 detail이 이메일을 가리키면 email-duplicated.
+    //   (닉네임이 위에서 먼저 걸러지므로, 남은 409는 이메일 중복으로 본다.)
+    if (status === 409 || (detail && /email|이메일/i.test(detail))) {
+      throw new SignupError('email-duplicated', detail);
     }
     throw new SignupError('generic', detail);
   }
@@ -242,9 +255,111 @@ export async function logout(): Promise<void> {
   await api.post('api/v1/auth/logout').catch(() => undefined);
 }
 
+// ── Steam 신규 유저 가입 완료 ─────────────────────────────────────────────────
+// STEAM-INTER-FE-007: Steam OpenID 콜백이 신규 계정이면 signup_token만 발급되고 users는 아직 없다.
+//   FE는 추가정보(이메일/닉네임/약관)를 받아 POST /api/v1/auth/steam/complete-signup으로 가입을 끝낸다.
+//   ⚠️ 이 엔드포인트는 백엔드 미구현(Swagger 부재)이라 타입을 여기서 직접 정의한다(steam.ts 선례).
+//   응답은 login/signup(AuthResponse=access만)과 달리 user를 바디에 포함한다 → getMe 없이 직접 매핑한다.
+//     (신규 가입 직후라 hasCompletedSurvey는 항상 false로 둔다.)
+export interface SteamCompleteSignupPayload {
+  // 콜백에서 받은 임시 가입 토큰.
+  signupToken: string;
+  email: string;
+  // 서비스 닉네임(2~8자, 한글/영문/숫자 — 폼 Zod에서 1차 검증).
+  nickname: string;
+  termsAgreed: boolean;
+  privacyAgreed: boolean;
+  // gender/birth_date는 백엔드 정책 미확정(optional) — 시그니처만 열어두고 화면은 아직 안 보낸다.
+  gender?: string;
+  birthDate?: string;
+}
+
+// 가입 완료 실패 유형.
+// - 'invalid-signup-token': 400 INVALID_SIGNUP_TOKEN — 가입 세션 만료/무효 → 재로그인 유도
+// - 'generic': 그 외(닉네임 중복 등 — 서버 메시지 노출)
+export type SteamSignupErrorKind = 'invalid-signup-token' | 'generic';
+
+export class SteamSignupError extends Error {
+  readonly kind: SteamSignupErrorKind;
+  readonly detail: string | null;
+
+  constructor(kind: SteamSignupErrorKind, detail: string | null = null) {
+    super(detail ?? kind);
+    this.name = 'SteamSignupError';
+    this.kind = kind;
+    this.detail = detail;
+  }
+}
+
+// complete-signup 응답(미구현 계약). 201: { status, access_token, token_type, user }.
+interface SteamSignupRaw {
+  access_token: string;
+  user: {
+    id: number;
+    email: string;
+    nickname: string;
+    login_provider: string;
+    steam_linked: boolean;
+  };
+}
+
+export async function completeSteamSignup(
+  payload: SteamCompleteSignupPayload,
+): Promise<AuthSession> {
+  const body: Record<string, unknown> = {
+    signup_token: payload.signupToken,
+    email: payload.email,
+    nickname: payload.nickname,
+    terms_agreed: payload.termsAgreed,
+    privacy_agreed: payload.privacyAgreed,
+  };
+  if (payload.gender) body.gender = payload.gender;
+  if (payload.birthDate) body.birth_date = payload.birthDate;
+
+  try {
+    const res = await api
+      .post('api/v1/auth/steam/complete-signup', { json: body })
+      .json<SteamSignupRaw>();
+    if (!res?.access_token) throw new SteamSignupError('generic');
+    return {
+      accessToken: res.access_token,
+      user: {
+        id: res.user.id,
+        email: res.user.email,
+        nickname: res.user.nickname,
+        // 신규 가입 직후 — 설문 미완으로 간주(응답에 has_completed_survey 없음).
+        hasCompletedSurvey: false,
+      },
+    };
+  } catch (error) {
+    if (error instanceof SteamSignupError) throw error;
+    // 400 응답은 { code:"INVALID_SIGNUP_TOKEN", message } 형태(detail 아님). 가입 세션 만료로 본다.
+    if (error instanceof HTTPError && error.response.status === 400) {
+      const errBody = await error.response
+        .json<{ message?: string }>()
+        .catch(() => null);
+      throw new SteamSignupError(
+        'invalid-signup-token',
+        errBody?.message ?? null,
+      );
+    }
+    const detail = await parseDetail(error);
+    throw new SteamSignupError('generic', detail);
+  }
+}
+
 // ── 현재 사용자 ──────────────────────────────────────────────────────────────
 // 세션 복원에 사용(refresh로 access 재발급 후 user를 받아온다).
-export async function getMe(): Promise<AuthUser> {
-  const res = await api.get('api/v1/auth/me').json<UserResponse>();
+export async function getMe(accessToken?: string): Promise<AuthUser> {
+  // login/signup 직후엔 access가 아직 store에 없어 ky가 Bearer를 못 붙인다 → 명시적으로 부착한다.
+  //   (store에 토큰이 있으면 ky beforeRequest가 이 값을 덮어쓴다.) 인자가 없으면 기존대로 store 토큰을 쓴다.
+  const res = await api
+    .get(
+      'api/v1/auth/me',
+      accessToken
+        ? { headers: { Authorization: `Bearer ${accessToken}` } }
+        : undefined,
+    )
+    .json<UserResponse>();
   return mapAuthUser(res);
 }

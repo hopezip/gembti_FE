@@ -40,7 +40,8 @@ src/
 | 1 | 메인 | `/` | Public | 서비스 홈 / 추천 배너 / 게임 목록 |
 | 2 | 로그인 | `/login` | Public only | 로그인 사용자는 `/`로 리다이렉트 |
 | 3 | 회원가입 | `/signup` | Public only | 이메일 회원가입 / 이메일 인증 / 닉네임 중복확인 |
-| 4 | Steam OAuth 콜백 | `/auth/steam/callback` | Technical | 백엔드 OAuth 처리 방식 확정 전까지 후보 라우트 |
+| 4 | Steam OAuth 콜백 | `/steam/callback` | Technical | 백엔드 OpenID 콜백 착지점 — `result` 쿼리로 success/signup_required/failed 분기 (STEAM-INTER-FE-007) |
+| 4b | Steam 가입 완료 | `/steam/complete-signup` | Public | Steam 신규 유저 추가정보(이메일·닉네임·약관) 입력, signup_token 동반 (STEAM-INTER-FE-007) |
 | 5 | 스팀 연동 | `/onboarding/steam` | Auth | **단일 플로우** — 연동 안내 / 연동하기 / 로딩 / 결과(성공·비공개·실패)를 한 페이지 step으로 처리 |
 | ~~6~~ | ~~스팀 연동 결과~~ | ~~`/onboarding/steam/result`~~ | — | **제거**(STEAM-INTER-FE-001) — 결과는 별도 라우트가 아니라 `/onboarding/steam`의 result step으로 통합. cross-route 왕복이 냈던 되돌이 버그 제거 |
 | 7 | 설문 인트로 | `/survey/intro` | Auth | 설문 시작 안내 |
@@ -81,7 +82,7 @@ src/
 | 순서 | 단계 | 라우트 |
 |---:|---|---|
 | 1 | 기본 라우터 + 가드 | `/`, `/login` |
-| 2 | 인증/온보딩 | `/signup`, `/auth/steam/callback`, `/onboarding/steam` |
+| 2 | 인증/온보딩 | `/signup`, `/steam/callback`, `/steam/complete-signup`, `/onboarding/steam` |
 | 3 | 설문/성향 | `/survey/intro`, `/survey`, `/survey/result` |
 | 4 | 게임 탐색 | `/search`, `/recommendations`, `/games/:gameId` |
 | 5 | 마이페이지 | `/mypage`, `/mypage/edit`, `/mypage/follow` |
@@ -93,7 +94,7 @@ src/
 
 | 항목 | 확인 내용 | 기본 결정 |
 |---|---|---|
-| Steam OAuth callback | FE가 콜백을 받을지, 백엔드가 받을지 | `/auth/steam/callback` 후보 유지 |
+| Steam OAuth callback | FE가 콜백을 받을지, 백엔드가 받을지 | 백엔드 처리형 확정 — FE 착지점 `/steam/callback` (STEAM-INTER-FE-007) |
 | 회원가입 인증 단계 | `/signup` 내부 step vs 별도 route | `/signup` 내부 step |
 | 타인 프로필 | MVP 포함 여부 | 추가기능 라우트로 유지 |
 

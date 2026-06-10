@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import ky from 'ky';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
@@ -32,7 +33,10 @@ import { OtpInput } from './OtpInput';
 // "가입 완료"는 순차 처리한다: ① verify(email, code) — 검증만, ② signup(전체 필드 직접 전송).
 //   verify를 통과해야 signup이 200(미통과 시 403). 코드 오류는 OTP 영역 에러로,
 //   닉네임 중복은 닉네임 필드 에러로 표시한다.
-// ⚠️ signup_token 흐름 폐기 · 닉네임 실시간 중복확인 제거(백엔드 엔드포인트 없음) · 타이머는 상수 TTL.
+// ⚠️ signup_token 흐름 폐기 · 타이머는 상수 TTL.
+// 닉네임 중복확인(LOGIN-FE-010): "중복 확인" 버튼으로 미리 안내(보조용). 실서버 엔드포인트가 없어
+//   MSW(GET /api/users/check-nickname) 전용이며 가입을 강제로 막지 않는다. 최종 중복 검증은
+//   가입 단계 응답(nickname-duplicated 폴백)이 담당한다.
 
 // 코드 검증 실패 메시지 매핑.
 const CODE_ERROR_MESSAGE: Record<VerifyErrorKind, string> = {
@@ -55,6 +59,8 @@ interface EmailVerificationFormProps {
   initialExpiresInSeconds?: number;
   /** 가입 완료 시 호출(자동 로그인 세션 정보 전달, 이동은 페이지가 담당). */
   onSignedUp: (result: AuthSession) => void;
+  /** 이메일 중복(409) 시 호출 — 토스트/로그인 이동은 페이지가 담당. detail은 서버 원문. */
+  onEmailDuplicated?: (detail: string | null) => void;
 }
 
 export function EmailVerificationForm({
@@ -65,6 +71,7 @@ export function EmailVerificationForm({
   privacyAgreed,
   initialExpiresInSeconds = EMAIL_CODE_TTL_SECONDS,
   onSignedUp,
+  onEmailDuplicated,
 }: EmailVerificationFormProps) {
   const {
     handleSubmit,
@@ -90,9 +97,28 @@ export function EmailVerificationForm({
   const [isExpired, setIsExpired] = useState(false);
   // 코드 영역 에러(verify 실패) — RHF 필드 에러와 별개로 둔다.
   const [codeError, setCodeError] = useState<string | null>(null);
+  // 닉네임 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다.
+  const [nicknameCheck, setNicknameCheck] = useState<
+    'idle' | 'checking' | 'available' | 'taken'
+  >('idle');
   const cooldown = useResendCooldown();
 
   const nickname = watch('nickname') ?? '';
+
+  // 닉네임 중복 확인 — 기존 MSW 핸들러 재사용(실서버 엔드포인트 없음).
+  async function checkNickname() {
+    const value = nickname.trim();
+    if (!value) return;
+    setNicknameCheck('checking');
+    try {
+      const res = await ky
+        .get('/api/users/check-nickname', { searchParams: { nickname: value } })
+        .json<{ available: boolean }>();
+      setNicknameCheck(res.available ? 'available' : 'taken');
+    } catch {
+      setNicknameCheck('idle');
+    }
+  }
 
   // 가입 완료 — verify → signup 순차 처리.
   const submitMutation = useMutation({
@@ -128,6 +154,11 @@ export function EmailVerificationForm({
           message: error.detail ?? '이미 사용 중인 닉네임이에요',
         });
         setFocus('nickname');
+        return;
+      }
+      // 이메일 중복(409) → 토스트 + 로그인 이동(페이지 위임).
+      if (error instanceof SignupError && error.kind === 'email-duplicated') {
+        onEmailDuplicated?.(error.detail);
         return;
       }
       // 그 외 → 코드 영역에 일반(또는 서버 detail) 에러 표시.
@@ -301,35 +332,65 @@ export function EmailVerificationForm({
         })}
       />
 
-      {/* 닉네임 — 글자수 카운터(실시간 중복확인 없음) */}
-      <Field
-        label={`닉네임 (${NICKNAME_MAX_LENGTH}자 이내)`}
-        id="signup-nickname"
-        required
-        hint={`${nickname.length}/${NICKNAME_MAX_LENGTH}`}
-        error={errors.nickname?.message}
-      >
-        <Controller
-          control={control}
-          name="nickname"
-          render={({ field }) => (
-            <Input
+      {/* 닉네임 — 글자수 카운터 + 중복 확인 버튼(보조용) */}
+      <div className={vstack({ gap: '1.5', alignItems: 'stretch' })}>
+        <div className={hstack({ gap: '2', alignItems: 'flex-end' })}>
+          <div className={css({ flex: 1, minW: 0 })}>
+            <Field
+              label={`닉네임 (${NICKNAME_MAX_LENGTH}자 이내)`}
               id="signup-nickname"
-              type="text"
-              autoComplete="nickname"
-              placeholder="2~8자, 특수기호 불가"
-              maxLength={NICKNAME_MAX_LENGTH}
-              aria-invalid={Boolean(errors.nickname) || undefined}
-              disabled={isSubmitting}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              name={field.name}
-              ref={field.ref}
-            />
-          )}
-        />
-      </Field>
+              required
+              hint={`${nickname.length}/${NICKNAME_MAX_LENGTH}`}
+              error={errors.nickname?.message}
+            >
+              <Controller
+                control={control}
+                name="nickname"
+                render={({ field }) => (
+                  <Input
+                    id="signup-nickname"
+                    type="text"
+                    autoComplete="nickname"
+                    placeholder="2~8자, 특수기호 불가"
+                    maxLength={NICKNAME_MAX_LENGTH}
+                    aria-invalid={Boolean(errors.nickname) || undefined}
+                    disabled={isSubmitting}
+                    value={field.value}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // 닉네임을 수정하면 이전 확인 결과를 초기화한다.
+                      if (nicknameCheck !== 'idle') setNicknameCheck('idle');
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                )}
+              />
+            </Field>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={checkNickname}
+            disabled={
+              isSubmitting || nicknameCheck === 'checking' || !nickname.trim()
+            }
+          >
+            {nicknameCheck === 'checking' ? '확인 중…' : '중복 확인'}
+          </Button>
+        </div>
+        {nicknameCheck === 'available' && (
+          <span className={css({ textStyle: 'body.sm', color: 'success.fg' })}>
+            사용 가능한 닉네임이에요
+          </span>
+        )}
+        {nicknameCheck === 'taken' && (
+          <span className={css({ textStyle: 'body.sm', color: 'danger.fg' })}>
+            이미 사용 중인 닉네임이에요
+          </span>
+        )}
+      </div>
 
       {/* 생년월일 + 성별 2열 */}
       <div
