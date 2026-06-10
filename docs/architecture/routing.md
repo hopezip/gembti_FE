@@ -40,8 +40,8 @@ src/
 | 1 | 메인 | `/` | Public | 서비스 홈 / 추천 배너 / 게임 목록 |
 | 2 | 로그인 | `/login` | Public only | 로그인 사용자는 `/`로 리다이렉트 |
 | 3 | 회원가입 | `/signup` | Public only | 이메일 회원가입 / 이메일 인증 / 닉네임 중복확인 |
-| 4 | Steam OAuth 콜백 | `/steam/callback` | Technical | 백엔드 OpenID 콜백 착지점 — `result` 쿼리로 success/signup_required/failed 분기 (STEAM-INTER-FE-007) |
-| 4b | Steam 가입 완료 | `/steam/complete-signup` | Public | Steam 신규 유저 추가정보(이메일·닉네임·약관) 입력, signup_token 동반 (STEAM-INTER-FE-007) |
+| 4 | Steam OAuth 콜백 | `/steam/callback` | Technical | 백엔드 OpenID 콜백 착지점 — `result` 쿼리로 success/failed 분기. `signup_required`(신규 유저)는 Steam 가입 미지원이라(LOGIN-FE-014) "이메일로 가입" 안내 후 `/signup`으로 |
+| ~~4b~~ | ~~Steam 가입 완료~~ | ~~`/steam/complete-signup`~~ | — | **제거**(LOGIN-FE-014) — Steam 신규 가입 흐름 폐기(`complete-signup` 백엔드 미구현). Steam 소셜 로그인은 기존 유저 전용으로 유지 |
 | 5 | 스팀 연동 | `/onboarding/steam` | Auth | **단일 플로우** — 연동 안내 / 연동하기 / 로딩 / 결과(성공·비공개·실패)를 한 페이지 step으로 처리 |
 | ~~6~~ | ~~스팀 연동 결과~~ | ~~`/onboarding/steam/result`~~ | — | **제거**(STEAM-INTER-FE-001) — 결과는 별도 라우트가 아니라 `/onboarding/steam`의 result step으로 통합. cross-route 왕복이 냈던 되돌이 버그 제거 |
 | 7 | 설문 인트로 | `/survey/intro` | Auth | 설문 시작 안내 |
@@ -82,7 +82,7 @@ src/
 | 순서 | 단계 | 라우트 |
 |---:|---|---|
 | 1 | 기본 라우터 + 가드 | `/`, `/login` |
-| 2 | 인증/온보딩 | `/signup`, `/steam/callback`, `/steam/complete-signup`, `/onboarding/steam` |
+| 2 | 인증/온보딩 | `/signup`, `/steam/callback`, `/onboarding/steam` |
 | 3 | 설문/성향 | `/survey/intro`, `/survey`, `/survey/result` |
 | 4 | 게임 탐색 | `/search`, `/recommendations`, `/games/:gameId` |
 | 5 | 마이페이지 | `/mypage`, `/mypage/edit`, `/mypage/follow` |

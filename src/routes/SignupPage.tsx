@@ -2,11 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { AuthDivider } from '@/features/auth/components/AuthDivider';
 import { AuthTabs } from '@/features/auth/components/AuthTabs';
 import { EmailVerificationForm } from '@/features/auth/components/EmailVerificationForm';
 import { SignupForm } from '@/features/auth/components/SignupForm';
-import { SteamButton } from '@/features/auth/components/SteamButton';
 import { toaster } from '@/components/ui/Toast';
 import type { AuthSession } from '@/services/auth';
 import { sendEmailCode } from '@/services/auth';
@@ -100,23 +98,18 @@ export function SignupPage() {
       subtitle={subtitle}
     >
       {step === 1 ? (
-        <>
-          {/* Steam 소셜 가입 — 신규 유저 흐름(signup_required) (STEAM-INTER-FE-007) */}
-          <SteamButton label="Steam 계정으로 가입하기" />
-
-          {/* 구분선 "— 또는 이메일로 가입 —" */}
-          <AuthDivider>또는 이메일로 가입</AuthDivider>
-
-          <SignupForm
-            onSubmitStep1={(values) => sendCodeMutation.mutate(values)}
-            isSubmitting={sendCodeMutation.isPending}
-            formError={
-              sendCodeMutation.isError
-                ? '인증 코드 발송에 실패했어요. 잠시 후 다시 시도해주세요.'
-                : null
-            }
-          />
-        </>
+        // Steam 신규 가입은 미지원 — 회원가입은 이메일 전용이다(LOGIN-FE-014).
+        //   Steam 소셜 로그인은 LoginPage에 유지되며, 신규 유저가 Steam 로그인을 시도하면
+        //   콜백(SteamCallbackPage)이 "이메일로 가입" 안내로 돌린다.
+        <SignupForm
+          onSubmitStep1={(values) => sendCodeMutation.mutate(values)}
+          isSubmitting={sendCodeMutation.isPending}
+          formError={
+            sendCodeMutation.isError
+              ? '인증 코드 발송에 실패했어요. 잠시 후 다시 시도해주세요.'
+              : null
+          }
+        />
       ) : (
         signupContext && (
           <EmailVerificationForm
