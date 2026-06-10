@@ -27,10 +27,7 @@ function renderAt(search: string) {
     <MemoryRouter initialEntries={[`/steam/callback${search}`]}>
       <Routes>
         <Route path="/steam/callback" element={<SteamCallbackPage />} />
-        <Route
-          path="/steam/complete-signup"
-          element={<div>COMPLETE SIGNUP</div>}
-        />
+        <Route path="/signup" element={<div>SIGNUP</div>} />
         <Route path="/" element={<div>HOME</div>} />
         <Route path="/login" element={<div>LOGIN</div>} />
       </Routes>
@@ -63,10 +60,12 @@ describe('SteamCallbackPage', () => {
     expect(useAuthStore.getState().user?.nickname).toBe('SteamUser');
   });
 
-  it('result=signup_required → signup_token을 들고 가입 화면으로 이동한다', async () => {
+  it('result=signup_required → Steam 가입 불가 안내 토스트 후 /signup으로 이동한다', async () => {
+    // Steam 신규 가입은 미지원이다(LOGIN-FE-014). 가입 화면이 아니라 이메일 회원가입으로 돌린다.
     renderAt('?result=signup_required&signup_token=abc123');
 
-    expect(await screen.findByText('COMPLETE SIGNUP')).toBeInTheDocument();
+    expect(await screen.findByText('SIGNUP')).toBeInTheDocument();
+    expect(toastCreate).toHaveBeenCalled();
     // 세션 복원 경로는 타지 않는다.
     expect(refreshAccessToken).not.toHaveBeenCalled();
   });
@@ -87,12 +86,5 @@ describe('SteamCallbackPage', () => {
     expect(getMe).not.toHaveBeenCalled();
     expect(toastCreate).toHaveBeenCalled();
     expect(useAuthStore.getState().status).toBe('anonymous');
-  });
-
-  it('signup_required인데 signup_token 누락 → 토스트 후 로그인으로 이동한다', async () => {
-    renderAt('?result=signup_required');
-
-    expect(await screen.findByText('LOGIN')).toBeInTheDocument();
-    expect(toastCreate).toHaveBeenCalled();
   });
 });
