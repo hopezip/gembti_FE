@@ -101,7 +101,7 @@ const MOCK_PROFILE: MockUserProfile = {
   steamNickname: 'My_Steam_ID',
   steamSyncedAt: '2025-05-28T10:30:00Z',
   email: 'my_email@example.com',
-  birthdate: '1995.05.14',
+  birthdate: '1995-05-14',
   gender: '남성',
   bio: '오픈 월드 RPG 중독자. 퀘스트 100% 클리어가 목표.',
   website: null,

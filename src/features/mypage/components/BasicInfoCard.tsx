@@ -10,21 +10,6 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
 
-function daysInMonth(year: string, month: string): number {
-  const m = Number(month);
-  if (!m) return 0;
-  const y = Number(year) || 2000;
-  return new Date(y, m, 0).getDate();
-}
-
-const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: CURRENT_YEAR - 1930 + 1 }, (_, i) =>
-  String(CURRENT_YEAR - i),
-);
-const MONTHS = Array.from({ length: 12 }, (_, i) =>
-  String(i + 1).padStart(2, '0'),
-);
-
 interface Props {
   profile: MockUserProfile;
 }
@@ -40,11 +25,6 @@ export function BasicInfoCard({ profile }: Props) {
   const [fieldValue, setFieldValue] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
-  const [birthParts, setBirthParts] = useState({
-    year: '',
-    month: '',
-    day: '',
-  });
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<MockUserProfile>) =>
@@ -60,14 +40,6 @@ export function BasicInfoCard({ profile }: Props) {
     setFieldValue(
       field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? ''),
     );
-    if (field === 'birthdate') {
-      const parts = (profile.birthdate ?? '').split('.');
-      setBirthParts({
-        year: parts[0] ?? '',
-        month: parts[1] ?? '',
-        day: parts[2] ?? '',
-      });
-    }
     setNicknameCheck('idle');
   }
 
@@ -88,15 +60,11 @@ export function BasicInfoCard({ profile }: Props) {
 
   function handleSave() {
     if (!editingField) return;
-    let value: string | null;
-    if (editingField === 'gender') {
-      value = fieldValue || null;
-    } else if (editingField === 'birthdate') {
-      const { year, month, day } = birthParts;
-      value = year && month && day ? `${year}.${month}.${day}` : null;
-    } else {
-      value = fieldValue.trim() || null;
-    }
+    // gender는 빈 값 그대로(null), 나머지(nickname/birthdate)는 trim. birthdate는 ISO YYYY-MM-DD.
+    const value =
+      editingField === 'gender'
+        ? fieldValue || null
+        : fieldValue.trim() || null;
     mutation.mutate({ [editingField]: value });
   }
 
@@ -247,110 +215,21 @@ export function BasicInfoCard({ profile }: Props) {
           <span className={labelCss}>생년월일</span>
           {editingField === 'birthdate' ? (
             <>
-              <div
-                className={css({ display: 'flex', gap: '1', flex: 1, minW: 0 })}
-              >
-                <select
-                  value={birthParts.year}
-                  onChange={(e) =>
-                    setBirthParts((p) => ({ ...p, year: e.target.value }))
-                  }
-                  className={css({
-                    flex: 2,
-                    bg: 'bg.surfaceRaised',
-                    border: '1px solid',
-                    borderColor: 'accent.default',
-                    borderRadius: 'md',
-                    px: '1',
-                    py: '1',
-                    fontSize: 'sm',
-                    color: 'fg.default',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    minW: 0,
-                  })}
-                >
-                  <option value="">연도</option>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={birthParts.month}
-                  onChange={(e) =>
-                    setBirthParts((p) => ({
-                      ...p,
-                      month: e.target.value,
-                      day: '',
-                    }))
-                  }
-                  className={css({
-                    flex: 1,
-                    bg: 'bg.surfaceRaised',
-                    border: '1px solid',
-                    borderColor: 'accent.default',
-                    borderRadius: 'md',
-                    px: '1',
-                    py: '1',
-                    fontSize: 'sm',
-                    color: 'fg.default',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    minW: 0,
-                  })}
-                >
-                  <option value="">월</option>
-                  {MONTHS.map((m) => (
-                    <option key={m} value={m}>
-                      {Number(m)}월
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={birthParts.day}
-                  onChange={(e) =>
-                    setBirthParts((p) => ({ ...p, day: e.target.value }))
-                  }
-                  className={css({
-                    flex: 1,
-                    bg: 'bg.surfaceRaised',
-                    border: '1px solid',
-                    borderColor: 'accent.default',
-                    borderRadius: 'md',
-                    px: '1',
-                    py: '1',
-                    fontSize: 'sm',
-                    color: 'fg.default',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    minW: 0,
-                  })}
-                >
-                  <option value="">일</option>
-                  {Array.from(
-                    {
-                      length: daysInMonth(birthParts.year, birthParts.month),
-                    },
-                    (_, i) => String(i + 1).padStart(2, '0'),
-                  ).map((d) => (
-                    <option key={d} value={d}>
-                      {Number(d)}일
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* 회원가입(STEP2)과 동일하게 type=date 달력으로 통일 (MYPAGE-FE-004). 값은 ISO YYYY-MM-DD. */}
+              <Input
+                size="sm"
+                type="date"
+                value={fieldValue}
+                onChange={(e) => setFieldValue(e.target.value)}
+                className={css({ flex: 1, minW: 0, colorScheme: 'dark' })}
+                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
+                autoFocus
+              />
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handleSave}
-                disabled={
-                  mutation.isPending ||
-                  !birthParts.year ||
-                  !birthParts.month ||
-                  !birthParts.day
-                }
+                disabled={mutation.isPending || !fieldValue}
               >
                 저장
               </Button>
