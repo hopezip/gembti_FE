@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
 import { vstack } from 'styled-system/patterns';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { type SignupStep1Input, signupStep1Schema } from '@/lib/schemas/auth';
+import { checkEmail as checkEmailApi } from '@/services/users';
 import { Checkbox } from './Checkbox';
 import { PasswordInput } from './PasswordInput';
 import { PasswordRules } from './PasswordRules';
@@ -64,6 +66,25 @@ export function SignupForm({
   });
 
   const password = watch('password') ?? '';
+  const email = watch('email') ?? '';
+
+  // 이메일 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다. (LOGIN-FE-012, 닉네임 대칭)
+  const [emailCheck, setEmailCheck] = useState<
+    'idle' | 'checking' | 'available' | 'taken'
+  >('idle');
+
+  // 이메일 중복 확인 — MSW 핸들러(GET /api/v1/users/check-email) 호출(실서버 엔드포인트 없음).
+  async function checkEmail() {
+    const value = email.trim();
+    if (!value) return;
+    setEmailCheck('checking');
+    try {
+      const res = await checkEmailApi(value);
+      setEmailCheck(res.available ? 'available' : 'taken');
+    } catch {
+      setEmailCheck('idle');
+    }
+  }
 
   const onInvalid = () => {
     if (errors.email) setFocus('email');

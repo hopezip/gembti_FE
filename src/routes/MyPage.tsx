@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
 import { css } from 'styled-system/css';
 import { vstack } from 'styled-system/patterns';
 import { button } from 'styled-system/recipes';
+import { getMyProfile } from '@/features/mypage/api/mypage';
 import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
 import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
 import { PersonalityRadar } from '@/features/mypage/components/PersonalityRadar';
 import { LibrarySection } from '@/features/mypage/components/LibrarySection';
-import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 export function MyPage() {
   const {
@@ -19,7 +18,7 @@ export function MyPage() {
     isFetching,
   } = useQuery({
     queryKey: ['mypage', 'profile'],
-    queryFn: () => ky.get('/api/mypage/profile').json<MockUserProfile>(),
+    queryFn: getMyProfile,
   });
 
   if (isLoading) {

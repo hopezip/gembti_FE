@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
+import { getLibrary } from '@/features/mypage/api/mypage';
 import type { MockLibraryItem } from '@/mocks/handlers/mypage';
 
 type LibrarySort = 'recent' | 'oldest';
@@ -15,13 +15,6 @@ const SORT_OPTIONS: { key: LibrarySort; label: string }[] = [
   { key: 'recent', label: '최근 플레이순' },
   { key: 'oldest', label: '오래된 순' },
 ];
-
-interface LibraryResponse {
-  total: number;
-  items: MockLibraryItem[];
-  hasMore: boolean;
-  allGenres: string[];
-}
 
 function LibraryGameCard({ item }: { item: MockLibraryItem }) {
   return (
@@ -108,12 +101,7 @@ export function LibrarySection() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['mypage', 'library', genre, sort, search, page],
-    queryFn: () =>
-      ky
-        .get('/api/mypage/library', {
-          searchParams: { genre, sort, search, page },
-        })
-        .json<LibraryResponse>(),
+    queryFn: () => getLibrary({ genre, sort, search, page }),
     placeholderData: (prev) => prev,
   });
 
