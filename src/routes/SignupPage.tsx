@@ -7,7 +7,7 @@ import { EmailVerificationForm } from '@/features/auth/components/EmailVerificat
 import { SignupForm } from '@/features/auth/components/SignupForm';
 import { toaster } from '@/components/ui/Toast';
 import type { AuthSession } from '@/services/auth';
-import { sendEmailCode } from '@/services/auth';
+import { SendCodeError, sendEmailCode } from '@/services/auth';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 
 // /signup 페이지 엔트리 — Figma auth-modal(signup) 2단계 (LOGIN-FE-005 재구성).
@@ -30,12 +30,14 @@ export function SignupPage() {
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
   const [step, setStep] = useState<1 | 2>(1);
-  // STEP2로 넘길 가입 컨텍스트(이메일 + 비밀번호 + 약관 동의). 최종 signup까지 페이지가 보관한다.
+  // send-code 409(이미 가입된 이메일) — 이메일 입력칸 아래 인라인 표시. mutate 시 리셋, 이메일 변경 시 클리어.
+  const [emailDuplicated, setEmailDuplicated] = useState<string | null>(null);
+  // STEP2로 넘길 가입 컨텍스트(이메일 + 비밀번호 + 15세 확인). 최종 signup까지 페이지가 보관한다.
+  //   ageConfirmed는 signup 시 terms_agreed/privacy_agreed 두 필드에 채워 전송된다(EmailVerificationForm 매핑).
   const [signupContext, setSignupContext] = useState<{
     email: string;
     password: string;
-    termsAgreed: boolean;
-    privacyAgreed: boolean;
+    ageConfirmed: boolean;
   } | null>(null);
 
   // STEP1 제출 → send-code → STEP2 전환.
@@ -45,15 +47,24 @@ export function SignupPage() {
     }: {
       email: string;
       password: string;
-      termsAgreed: boolean;
-      privacyAgreed: boolean;
+      ageConfirmed: boolean;
     }) => sendEmailCode(email),
+    onMutate: () => {
+      // 재시도 시 이전 409 인라인 에러를 먼저 비운다.
+      setEmailDuplicated(null);
+    },
+    onError: (error) => {
+      // 이미 가입된 이메일(409) → 이메일 입력칸 아래 인라인 표시(토스트/이동 없음).
+      //   generic 오류는 SignupForm formError(파생)로 표시된다(409와 이중노출 방지).
+      if (error instanceof SendCodeError && error.kind === 'email-duplicated') {
+        setEmailDuplicated('이미 있는 이메일입니다');
+      }
+    },
     onSuccess: (_data, variables) => {
       setSignupContext({
         email: variables.email,
         password: variables.password,
-        termsAgreed: variables.termsAgreed,
-        privacyAgreed: variables.privacyAgreed,
+        ageConfirmed: variables.ageConfirmed,
       });
       setStep(2);
       // 가입 완료 시 PublicOnlyRoute가 인증 사용자를 온보딩으로 보내도록 redirect를 미리 심는다.
@@ -104,8 +115,14 @@ export function SignupPage() {
         <SignupForm
           onSubmitStep1={(values) => sendCodeMutation.mutate(values)}
           isSubmitting={sendCodeMutation.isPending}
+          emailError={emailDuplicated}
+          onEmailChange={() => {
+            // 이메일을 수정하면 409 인라인 에러를 비운다(generic 폼 에러도 함께 리셋).
+            if (sendCodeMutation.isError) sendCodeMutation.reset();
+            setEmailDuplicated(null);
+          }}
           formError={
-            sendCodeMutation.isError
+            sendCodeMutation.isError && !emailDuplicated
               ? '인증 코드 발송에 실패했어요. 잠시 후 다시 시도해주세요.'
               : null
           }
@@ -116,8 +133,8 @@ export function SignupPage() {
             email={signupContext.email}
             password={signupContext.password}
             passwordConfirm={signupContext.password}
-            termsAgreed={signupContext.termsAgreed}
-            privacyAgreed={signupContext.privacyAgreed}
+            termsAgreed={signupContext.ageConfirmed}
+            privacyAgreed={signupContext.ageConfirmed}
             onSignedUp={handleSignedUp}
             onEmailDuplicated={handleEmailDuplicated}
           />
