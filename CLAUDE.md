@@ -99,8 +99,8 @@ cross 강제 영역 (무조건 cross):
 ## 절대 하면 안 되는 것 (요약)
 
 1. 티켓 없이 구현 시작 (풀팀이라 micro 예외 없음)
-2. `docs/03-api/openapi.json` 직접 편집 (백엔드 출처)
-3. `src/types/api.ts`, `src/lib/api/`, `src/mocks/handlers/` 직접 편집 (자동 생성물)
+2. `docs/03-api/openapi.json` 직접 편집 (백엔드 확정 미러 — `/api-sync`만 갱신). ⚠️ **예외**: `docs/03-api/openapi.draft.json`은 프론트 임시 계약이라 **사람이 수동 작성·편집 허용**(TASK-DEVEX-018, path마다 `x-status: frontend-draft` + `api/v1/` 프리픽스). `.openapi.merged.json`은 병합 중간 산물이라 손대지 않음.
+3. `src/types/api.ts`, `src/lib/api/`, `src/mocks/handlers/` 직접 편집 (자동 생성물 — `api:gen` 재생성으로만 갱신)
 4. `panda.config.ts` 토큰을 임의로 추가/변경 (디자인 SSOT는 DesignEx)
 5. semantic token 대신 primitive(`gray.900` 등) 직접 사용
 6. 범위 밖 리팩터링

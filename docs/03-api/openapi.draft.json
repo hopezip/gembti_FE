@@ -1,0 +1,1232 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GamBTI API (frontend draft)",
+    "version": "0.0.0-draft",
+    "description": "프론트가 임시로 작성한 미확정 도메인 계약(games/home/survey/recommendations/mypage/users). 백엔드 Swagger가 확정되면 해당 도메인을 openapi.json으로 옮기고 여기서 삭제한다. 모든 path는 x-status: frontend-draft + api/v1/ 프리픽스로 통일. 코드 호출/MSW 핸들러에서 역추출(TASK-DEVEX-018)."
+  },
+  "paths": {
+    "/api/v1/games/search": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Games"],
+        "summary": "게임 검색 (SEARCH-FE-001)",
+        "operationId": "search_games_api_v1_games_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1, "minimum": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 12, "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "검색 결과",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GameSearchEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/filter-options": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Games"],
+        "summary": "검색 필터 옵션 (SEARCH-FE-003)",
+        "operationId": "get_game_filter_options_api_v1_games_filter_options_get",
+        "responses": {
+          "200": {
+            "description": "필터 옵션",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameFilterOptionsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/games/{gameId}": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Games"],
+        "summary": "게임 상세 (REC-DET-FE-001)",
+        "operationId": "get_game_detail_api_v1_games_gameId_get",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "게임 상세",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GameDetailEnvelope" }
+              }
+            }
+          },
+          "404": {
+            "description": "게임 없음",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/home/guest": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Home"],
+        "summary": "비로그인 홈 (MAIN-FE-003)",
+        "operationId": "get_guest_home_api_v1_home_guest_get",
+        "responses": {
+          "200": {
+            "description": "배너 + 신규 + 인기",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GuestHomeEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/home/personalized": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Home"],
+        "summary": "개인화 홈 (MAIN-FE-006)",
+        "operationId": "get_personalized_home_api_v1_home_personalized_get",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "1순위 추천 + 성향태그 + 추천 그리드 + 신규",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalizedHomeEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/surveys/questions": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Survey"],
+        "summary": "설문 문항 조회 (SURVEY-FE-002)",
+        "operationId": "get_survey_questions_api_v1_surveys_questions_get",
+        "responses": {
+          "200": {
+            "description": "설문 문항 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SurveyQuestion" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/surveys/submit": {
+      "x-status": "frontend-draft",
+      "post": {
+        "tags": ["Survey"],
+        "summary": "설문 응답 제출 (SURVEY-FE-002)",
+        "operationId": "submit_survey_api_v1_surveys_submit_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SurveySubmitRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "제출 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveySubmitResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "유효하지 않은 설문 응답",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorMessage" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/surveys/result": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Survey"],
+        "summary": "최신 설문 결과 조회 (SURVEY-FE-003)",
+        "operationId": "get_survey_result_api_v1_surveys_result_get",
+        "responses": {
+          "200": {
+            "description": "최신 설문 결과",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SurveyLatestResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/generate": {
+      "x-status": "frontend-draft",
+      "post": {
+        "tags": ["Recommendations"],
+        "summary": "설문 기반 추천 생성 (SURVEY-FE-003)",
+        "operationId": "generate_recommendations_api_v1_recommendations_generate_post",
+        "responses": {
+          "201": {
+            "description": "추천 게임 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyRecommendations"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/profile": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "내 프로필 조회 (MYPAGE-FE-001)",
+        "operationId": "get_mypage_profile_api_v1_mypage_profile_get",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "프로필",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MyPageProfile" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["MyPage"],
+        "summary": "내 프로필 수정 (MYPAGE-FE-003)",
+        "operationId": "patch_mypage_profile_api_v1_mypage_profile_patch",
+        "security": [{ "HTTPBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MyPageProfilePatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "갱신된 프로필",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MyPageProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/steam/sync": {
+      "x-status": "frontend-draft",
+      "post": {
+        "tags": ["MyPage"],
+        "summary": "스팀 동기화 (MYPAGE-FE-002)",
+        "operationId": "post_mypage_steam_sync_api_v1_mypage_steam_sync_post",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "동기화 후 프로필",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MyPageProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/steam/disconnect": {
+      "x-status": "frontend-draft",
+      "post": {
+        "tags": ["MyPage"],
+        "summary": "스팀 연동 해제 (MYPAGE-FE-002)",
+        "operationId": "post_mypage_steam_disconnect_api_v1_mypage_steam_disconnect_post",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "해제 후 프로필",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MyPageProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/wishlist": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "위시리스트 조회 (MYPAGE-FE-005)",
+        "operationId": "get_mypage_wishlist_api_v1_mypage_wishlist_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1, "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "위시리스트 페이지",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WishlistPage" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/library": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "라이브러리 조회 (MYPAGE-FE-006)",
+        "operationId": "get_mypage_library_api_v1_mypage_library_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "genre",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "recent" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1, "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "라이브러리 페이지",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LibraryPage" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/following": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "팔로잉 목록 (MYPAGE-FE-007)",
+        "operationId": "get_mypage_following_api_v1_mypage_following_get",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "팔로잉 목록",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FollowUserList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/followers": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "팔로워 목록 (MYPAGE-FE-007)",
+        "operationId": "get_mypage_followers_api_v1_mypage_followers_get",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "팔로워 목록",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FollowUserList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/follow/{userId}": {
+      "x-status": "frontend-draft",
+      "post": {
+        "tags": ["MyPage"],
+        "summary": "팔로우 (MYPAGE-FE-007)",
+        "operationId": "post_mypage_follow_api_v1_mypage_follow_userId_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "팔로우 결과",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["MyPage"],
+        "summary": "언팔로우 (MYPAGE-FE-007)",
+        "operationId": "delete_mypage_follow_api_v1_mypage_follow_userId_delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "언팔로우 결과",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mypage/activity": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["MyPage"],
+        "summary": "활동(리뷰/채팅/알림) (MYPAGE-FE-008)",
+        "operationId": "get_mypage_activity_api_v1_mypage_activity_get",
+        "security": [{ "HTTPBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "활동 묶음",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MyPageActivity" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/check-nickname": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Users"],
+        "summary": "닉네임 중복 확인 (EmailVerificationForm)",
+        "operationId": "check_nickname_api_v1_users_check_nickname_get",
+        "parameters": [
+          {
+            "name": "nickname",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "사용 가능 여부",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/check-email": {
+      "x-status": "frontend-draft",
+      "get": {
+        "tags": ["Users"],
+        "summary": "이메일 중복 확인 (SignupForm, LOGIN-FE-012)",
+        "operationId": "check_email_api_v1_users_check_email_get",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "email" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "사용 가능 여부",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PriceInfo": {
+        "type": "object",
+        "required": ["original_price", "sale_price", "discount_rate"],
+        "properties": {
+          "original_price": { "type": "integer" },
+          "sale_price": { "type": ["integer", "null"] },
+          "discount_rate": { "type": "integer" }
+        }
+      },
+      "GameSearchItem": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "thumbnail_url",
+          "genres",
+          "tags",
+          "rating",
+          "price_info"
+        ],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "rating": { "type": ["number", "null"] },
+          "price_info": { "$ref": "#/components/schemas/PriceInfo" }
+        }
+      },
+      "GameSearchEnvelope": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": ["games", "total_count", "has_more"],
+            "properties": {
+              "games": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/GameSearchItem" }
+              },
+              "total_count": { "type": "integer" },
+              "has_more": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "PriceRange": {
+        "type": "object",
+        "required": ["label", "min", "max"],
+        "properties": {
+          "label": { "type": "string" },
+          "min": { "type": "integer" },
+          "max": { "type": "integer" }
+        }
+      },
+      "PlayModeOption": {
+        "type": "object",
+        "required": ["value", "label"],
+        "properties": {
+          "value": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      },
+      "GameFilterOptionsEnvelope": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": ["genres", "tags", "price_ranges", "play_modes"],
+            "properties": {
+              "genres": { "type": "array", "items": { "type": "string" } },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "price_ranges": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PriceRange" }
+              },
+              "play_modes": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PlayModeOption" }
+              }
+            }
+          }
+        }
+      },
+      "GameSummary": {
+        "type": "object",
+        "required": ["game_id", "title", "thumbnail_url", "genres", "rating"],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "rating": { "type": ["number", "null"] }
+        }
+      },
+      "SystemRequirement": {
+        "type": "object",
+        "required": ["os", "processor", "memory", "graphics", "storage"],
+        "properties": {
+          "os": { "type": "string" },
+          "processor": { "type": "string" },
+          "memory": { "type": "string" },
+          "graphics": { "type": "string" },
+          "storage": { "type": "string" }
+        }
+      },
+      "AiMatch": {
+        "type": "object",
+        "required": ["match_rate", "reason_summary"],
+        "properties": {
+          "match_rate": { "type": "integer" },
+          "score": { "type": "integer" },
+          "reason_summary": { "type": "string" },
+          "reason": { "type": "string" },
+          "match_tags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ReviewStats": {
+        "type": "object",
+        "required": ["total_count", "positive_rate"],
+        "properties": {
+          "average": { "type": "number" },
+          "total_count": { "type": "integer" },
+          "positive_rate": { "type": "integer" },
+          "distribution": {
+            "type": "object",
+            "additionalProperties": { "type": "integer" }
+          }
+        }
+      },
+      "GameDetail": {
+        "type": "object",
+        "required": ["game_id", "title", "genres", "tags", "price_info"],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "full_description": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "rating": { "type": ["number", "null"] },
+          "review_count": { "type": "integer" },
+          "price_info": { "$ref": "#/components/schemas/PriceInfo" },
+          "developer": { "type": "string" },
+          "publisher": { "type": "string" },
+          "release_date": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "theme_image_url": { "type": "string" },
+          "banner_url": { "type": "string" },
+          "screenshot_urls": { "type": "array", "items": { "type": "string" } },
+          "trailer_url": { "type": "string" },
+          "system_requirements": {
+            "type": "object",
+            "properties": {
+              "minimum": { "$ref": "#/components/schemas/SystemRequirement" },
+              "recommended": {
+                "$ref": "#/components/schemas/SystemRequirement"
+              }
+            }
+          },
+          "audio_languages": { "type": "array", "items": { "type": "string" } },
+          "interface_languages": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "play_modes": { "type": "array", "items": { "type": "string" } },
+          "korean_sub": { "type": "boolean" },
+          "age_rating": { "type": "string" },
+          "on_sale": { "type": "boolean" },
+          "similar_games": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GameSummary" }
+          },
+          "developer_games": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GameSummary" }
+          },
+          "ai_match": { "$ref": "#/components/schemas/AiMatch" },
+          "review_stats": { "$ref": "#/components/schemas/ReviewStats" }
+        }
+      },
+      "GameDetailEnvelope": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/GameDetail" }
+        }
+      },
+      "NotFoundEnvelope": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string" }
+        }
+      },
+      "CurationBanner": {
+        "type": "object",
+        "required": [
+          "main_copy",
+          "sub_copy",
+          "button_text",
+          "background_image_url"
+        ],
+        "properties": {
+          "main_copy": { "type": "string" },
+          "sub_copy": { "type": "string" },
+          "button_text": { "type": "string" },
+          "background_image_url": { "type": "string" }
+        }
+      },
+      "HomeGame": {
+        "type": "object",
+        "required": ["game_id", "title", "thumbnail_url", "genres", "rating"],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "rating": { "type": ["number", "null"] },
+          "is_new": { "type": "boolean" }
+        }
+      },
+      "GuestHomeEnvelope": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": ["curation_banner", "new_releases", "trending_games"],
+            "properties": {
+              "curation_banner": {
+                "$ref": "#/components/schemas/CurationBanner"
+              },
+              "new_releases": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/HomeGame" }
+              },
+              "trending_games": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/HomeGame" }
+              }
+            }
+          }
+        }
+      },
+      "TopRecommendation": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "match_rate",
+          "reason_summary",
+          "background_url"
+        ],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "match_rate": { "type": "integer" },
+          "reason_summary": { "type": "string" },
+          "background_url": { "type": "string" }
+        }
+      },
+      "PersonalizedGame": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "thumbnail_url",
+          "genres",
+          "rating",
+          "match_rate",
+          "reason_tagline"
+        ],
+        "properties": {
+          "game_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "rating": { "type": ["number", "null"] },
+          "match_rate": { "type": "integer" },
+          "reason_tagline": { "type": "string" }
+        }
+      },
+      "RecommendationProfile": {
+        "type": "object",
+        "required": [
+          "challenge_tags",
+          "liked_meta",
+          "challenge_meta",
+          "last_updated_text"
+        ],
+        "properties": {
+          "challenge_tags": { "type": "array", "items": { "type": "string" } },
+          "liked_meta": { "type": "string" },
+          "challenge_meta": { "type": "string" },
+          "last_updated_text": { "type": "string" }
+        }
+      },
+      "PersonalizedHomeEnvelope": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": [
+              "top_recommendation",
+              "user_interest_tags",
+              "recommended_games",
+              "new_releases"
+            ],
+            "properties": {
+              "top_recommendation": {
+                "$ref": "#/components/schemas/TopRecommendation"
+              },
+              "user_interest_tags": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "recommended_games": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PersonalizedGame" }
+              },
+              "new_releases": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/HomeGame" }
+              },
+              "recommendation_profile": {
+                "$ref": "#/components/schemas/RecommendationProfile"
+              }
+            }
+          }
+        }
+      },
+      "SurveyQuestionOption": {
+        "type": "object",
+        "required": ["value", "label"],
+        "properties": {
+          "value": { "type": "integer" },
+          "label": { "type": "string" }
+        }
+      },
+      "SurveyQuestion": {
+        "type": "object",
+        "required": ["question_id", "text"],
+        "properties": {
+          "question_id": { "type": "integer" },
+          "text": { "type": "string" },
+          "options": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SurveyQuestionOption" }
+          }
+        }
+      },
+      "SurveyAnswer": {
+        "type": "object",
+        "required": ["question_id", "answer"],
+        "properties": {
+          "question_id": { "type": "integer" },
+          "answer": { "type": "integer" }
+        }
+      },
+      "SurveySubmitRequest": {
+        "type": "object",
+        "required": ["answers"],
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SurveyAnswer" }
+          }
+        }
+      },
+      "SurveyTendencyStat": {
+        "type": "object",
+        "required": ["label", "score"],
+        "properties": {
+          "label": { "type": "string" },
+          "score": { "type": "number" }
+        }
+      },
+      "SurveySubmitResponse": {
+        "type": "object",
+        "required": ["survey_id", "stats"],
+        "properties": {
+          "survey_id": { "type": "integer" },
+          "type": { "type": "string" },
+          "stats": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SurveyTendencyStat" }
+          },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SurveyLatestResult": {
+        "type": "object",
+        "required": ["survey_id", "stats"],
+        "properties": {
+          "survey_id": { "type": "integer" },
+          "type": { "type": "string" },
+          "stats": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SurveyTendencyStat" }
+          },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SurveyRecommendations": {
+        "type": "object",
+        "required": ["games"],
+        "properties": {
+          "games": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GameSummary" }
+          }
+        }
+      },
+      "ErrorMessage": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "MyPageStats": {
+        "type": "object",
+        "required": ["following", "followers", "totalPlayHours", "reviewCount"],
+        "properties": {
+          "following": { "type": "integer" },
+          "followers": { "type": "integer" },
+          "totalPlayHours": { "type": "integer" },
+          "reviewCount": { "type": "integer" }
+        }
+      },
+      "MyPagePersonality": {
+        "type": "object",
+        "required": ["label", "value"],
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "integer" }
+        }
+      },
+      "MyPageProfile": {
+        "type": "object",
+        "required": ["id", "nickname", "handle", "email"],
+        "properties": {
+          "id": { "type": "string" },
+          "nickname": { "type": "string" },
+          "handle": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"] },
+          "joinedAt": { "type": "string" },
+          "isPublic": { "type": "boolean" },
+          "steamConnected": { "type": "boolean" },
+          "steamId": { "type": ["string", "null"] },
+          "steamNickname": { "type": ["string", "null"] },
+          "steamSyncedAt": { "type": ["string", "null"] },
+          "email": { "type": "string" },
+          "birthdate": { "type": "string" },
+          "gender": {
+            "type": ["string", "null"],
+            "enum": ["남성", "여성", "기타", null]
+          },
+          "bio": { "type": "string" },
+          "website": { "type": ["string", "null"] },
+          "favoriteGenres": { "type": "array", "items": { "type": "string" } },
+          "stats": { "$ref": "#/components/schemas/MyPageStats" },
+          "personality": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MyPagePersonality" }
+          }
+        }
+      },
+      "MyPageProfilePatch": {
+        "type": "object",
+        "description": "프로필 부분 수정 — MyPageProfile의 부분집합.",
+        "properties": {
+          "nickname": { "type": "string" },
+          "handle": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"] },
+          "isPublic": { "type": "boolean" },
+          "bio": { "type": "string" },
+          "website": { "type": ["string", "null"] },
+          "birthdate": { "type": "string" },
+          "gender": {
+            "type": ["string", "null"],
+            "enum": ["남성", "여성", "기타", null]
+          },
+          "favoriteGenres": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "WishlistItem": {
+        "type": "object",
+        "required": ["id", "title", "genres", "price", "onSale", "addedAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "price": { "type": "integer" },
+          "salePrice": { "type": ["integer", "null"] },
+          "onSale": { "type": "boolean" },
+          "addedAt": { "type": "string" }
+        }
+      },
+      "WishlistPage": {
+        "type": "object",
+        "required": ["total", "items", "hasMore"],
+        "properties": {
+          "total": { "type": "integer" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WishlistItem" }
+          },
+          "hasMore": { "type": "boolean" }
+        }
+      },
+      "LibraryItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "genres",
+          "playHours",
+          "myRating",
+          "status",
+          "lastPlayedAt"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "playHours": { "type": "number" },
+          "myRating": { "type": ["number", "null"] },
+          "status": {
+            "type": "string",
+            "enum": ["unplayed", "playing", "cleared", "dropped"]
+          },
+          "lastPlayedAt": { "type": ["string", "null"] }
+        }
+      },
+      "LibraryPage": {
+        "type": "object",
+        "required": ["total", "items", "hasMore", "allGenres"],
+        "properties": {
+          "total": { "type": "integer" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LibraryItem" }
+          },
+          "hasMore": { "type": "boolean" },
+          "allGenres": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "FollowUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "nickname",
+          "handle",
+          "avatarColor",
+          "bio",
+          "genres",
+          "isMutualFollow",
+          "isFollowing"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "nickname": { "type": "string" },
+          "handle": { "type": "string" },
+          "avatarColor": { "type": "string" },
+          "bio": { "type": "string" },
+          "genres": { "type": "array", "items": { "type": "string" } },
+          "isMutualFollow": { "type": "boolean" },
+          "isFollowing": { "type": "boolean" }
+        }
+      },
+      "FollowUserList": {
+        "type": "object",
+        "required": ["users"],
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FollowUser" }
+          }
+        }
+      },
+      "OkResponse": {
+        "type": "object",
+        "required": ["ok"],
+        "properties": {
+          "ok": { "type": "boolean" }
+        }
+      },
+      "ReviewItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "gameTitle",
+          "content",
+          "rating",
+          "likeCount",
+          "createdAt"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "gameTitle": { "type": "string" },
+          "content": { "type": "string" },
+          "rating": { "type": "number" },
+          "likeCount": { "type": "integer" },
+          "createdAt": { "type": "string" }
+        }
+      },
+      "ChatItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "gameTitle",
+          "preview",
+          "participants",
+          "isActive",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "gameTitle": { "type": "string" },
+          "preview": { "type": "string" },
+          "participants": { "type": "integer" },
+          "isActive": { "type": "boolean" },
+          "updatedAt": { "type": "string" }
+        }
+      },
+      "NotificationItem": {
+        "type": "object",
+        "required": ["id", "type", "message", "isRead", "createdAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["follow", "like", "comment", "system"]
+          },
+          "message": { "type": "string" },
+          "isRead": { "type": "boolean" },
+          "createdAt": { "type": "string" }
+        }
+      },
+      "MyPageActivity": {
+        "type": "object",
+        "required": ["reviews", "chats", "notifications"],
+        "properties": {
+          "reviews": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReviewItem" }
+          },
+          "chats": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ChatItem" }
+          },
+          "notifications": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/NotificationItem" }
+          }
+        }
+      },
+      "AvailabilityResponse": {
+        "type": "object",
+        "required": ["available"],
+        "properties": {
+          "available": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
