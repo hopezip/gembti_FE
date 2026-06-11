@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
 
 // 한시적 수동 작성 핸들러 (SEARCH-FE-001).
 // 백엔드 계약 확정 후 /api-sync 자동 생성 핸들러로 교체 예정.
@@ -383,6 +383,12 @@ export const gameHandlers = [
       },
     });
   }),
+
+  // 게스트 홈 인기·신규는 실서버(games/trending·new-releases)를 그대로 쓴다(passthrough, API-SYNC-FE-001).
+  //   ⚠️ 아래 '*/api/v1/games/:id'(상세) 핸들러가 'trending'/'new-releases'를 게임 id로 오인해 404를 주므로,
+  //   그보다 먼저 명시적 passthrough를 등록해 실서버로 보낸다(onUnhandledRequest:'bypass'만으론 가로채짐).
+  http.get('*/api/v1/games/trending', () => passthrough()),
+  http.get('*/api/v1/games/new-releases', () => passthrough()),
 
   // MAIN-FE-006 개인화 홈(로그인+설문완료) — 1순위 추천 + 성향태그 + 추천 그리드 + 신규를 한 응답으로 제공한다.
   // 백엔드 계약(GET /api/v1/home/personalized, 인증✅, snake_case)에 맞춘 한시적 수동 핸들러.
