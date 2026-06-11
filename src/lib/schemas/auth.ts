@@ -48,8 +48,9 @@ export const nicknameSchema = z
   .regex(NICKNAME_PATTERN, '닉네임에 특수기호는 쓸 수 없어요');
 
 // ── STEP1 (계정정보) ─────────────────────────────────────────────────────────
-// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 이용약관 동의 + [필수] 개인정보 처리방침 동의.
-//   약관 2개는 GEMBTI_API SignupRequest의 terms_agreed / privacy_agreed(필수 boolean)로 전송된다.
+// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 15세 이상 확인.
+//   백엔드 SignupRequest는 terms_agreed/privacy_agreed가 필수 boolean이고 연령 필드가 없다 →
+//   UI는 "15세 확인" 1개로 받고, signup 시 두 필드를 ageConfirmed 값으로 채워 보낸다(SignupPage 매핑).
 export const signupStep1Schema = z
   .object({
     email: z
@@ -68,11 +69,10 @@ export const signupStep1Schema = z
       )
       .refine(hasSpecial, '특수문자를 1개 이상 포함해야 합니다'),
     passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요'),
-    // 필수 약관 동의 2개 — boolean + refine(true).
-    termsAgreed: z.boolean().refine((v) => v, '이용약관에 동의해주세요'),
-    privacyAgreed: z
+    // [필수] 만 15세 이상 확인 — boolean + refine(true).
+    ageConfirmed: z
       .boolean()
-      .refine((v) => v, '개인정보 처리방침에 동의해주세요'),
+      .refine((v) => v, '만 15세 이상만 가입할 수 있어요'),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     path: ['passwordConfirm'],

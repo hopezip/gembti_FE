@@ -113,9 +113,37 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 // 발송 응답은 MessageResponse(expires_in 없음). 카운트다운은 FE 상수 TTL을 쓴다.
 // purpose는 회원가입 흐름 고정값 'SIGNUP'을 서비스 레이어에서 채운다(EmailCodeSendRequest 계약).
 //   PASSWORD_RESET 흐름은 요구사항 밖이라 파라미터화하지 않는다.
+
+// send-code 실패 유형 (LOGIN-FE-015).
+// - 'email-duplicated': 409(또는 detail이 이메일/가입을 가리킴) — 이미 가입된 이메일
+// - 'generic': 그 외(네트워크/서버 오류)
+export type SendCodeErrorKind = 'email-duplicated' | 'generic';
+
+export class SendCodeError extends Error {
+  readonly kind: SendCodeErrorKind;
+  readonly detail: string | null;
+
+  constructor(kind: SendCodeErrorKind, detail: string | null = null) {
+    super(detail ?? kind);
+    this.name = 'SendCodeError';
+    this.kind = kind;
+    this.detail = detail;
+  }
+}
+
 export async function sendEmailCode(email: string): Promise<void> {
   const body = { email, purpose: 'SIGNUP' } satisfies EmailCodeSendRequest;
-  await api.post('api/v1/auth/email/send-code', { json: body }).json();
+  try {
+    await api.post('api/v1/auth/email/send-code', { json: body }).json();
+  } catch (error) {
+    const status = error instanceof HTTPError ? error.response.status : null;
+    const detail = await parseDetail(error);
+    // 409(이메일 unique 위반) 또는 detail이 이메일/가입을 가리키면 이미 가입된 이메일로 본다.
+    if (status === 409 || (detail && /email|이메일|가입/i.test(detail))) {
+      throw new SendCodeError('email-duplicated', detail);
+    }
+    throw new SendCodeError('generic', detail);
+  }
 }
 
 // ── 인증 코드 검증 ───────────────────────────────────────────────────────────
