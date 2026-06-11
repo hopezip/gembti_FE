@@ -43,16 +43,6 @@ export interface MockFollowUser {
   isFollowing: boolean;
 }
 
-export interface MockWishlistItem {
-  id: string;
-  title: string;
-  genres: string[];
-  price: number;
-  salePrice: number | null;
-  onSale: boolean;
-  addedAt: string;
-}
-
 export interface MockLibraryItem {
   id: string;
   title: string;
@@ -61,32 +51,6 @@ export interface MockLibraryItem {
   myRating: number | null;
   status: 'unplayed' | 'playing' | 'cleared' | 'dropped';
   lastPlayedAt: string | null;
-}
-
-export interface MockReviewItem {
-  id: string;
-  gameTitle: string;
-  content: string;
-  rating: number;
-  likeCount: number;
-  createdAt: string;
-}
-
-export interface MockChatItem {
-  id: string;
-  gameTitle: string;
-  preview: string;
-  participants: number;
-  isActive: boolean;
-  updatedAt: string;
-}
-
-export interface MockNotification {
-  id: string;
-  type: 'follow' | 'like' | 'comment' | 'system';
-  message: string;
-  isRead: boolean;
-  createdAt: string;
 }
 
 const MOCK_PROFILE: MockUserProfile = {
@@ -121,16 +85,6 @@ const MOCK_PROFILE: MockUserProfile = {
     { label: '합동', value: 3 },
   ],
 };
-
-const MOCK_WISHLIST: MockWishlistItem[] = Array.from({ length: 6 }, (_, i) => ({
-  id: `wish-${i + 1}`,
-  title: `위시리스트 0${i + 1}`,
-  genres: [['RPG', '액션', 'FPS', '전략', '어드벤처', '시뮬레이션'][i % 6]],
-  price: [66000, 57000, 55000, 57000, 22000, 65000][i],
-  salePrice: i === 1 ? 40000 : null,
-  onSale: i === 1,
-  addedAt: `2026-0${i + 1}-28`,
-}));
 
 const MOCK_LIBRARY: MockLibraryItem[] = Array.from({ length: 12 }, (_, i) => ({
   id: `lib-${i + 1}`,
@@ -172,83 +126,6 @@ const MOCK_LIBRARY: MockLibraryItem[] = Array.from({ length: 12 }, (_, i) => ({
   lastPlayedAt:
     i === 3 || i === 7 || i === 11 ? null : `2026-0${(i % 5) + 1}-15`,
 }));
-
-const MOCK_REVIEWS: MockReviewItem[] = [
-  {
-    id: 'r1',
-    gameTitle: '게임 타이틀 01',
-    content: '생각보다 전혀 않다고 전도전, 강추 추천',
-    rating: 4.5,
-    likeCount: 24,
-    createdAt: '2026-05-15',
-  },
-  {
-    id: 'r2',
-    gameTitle: '게임 타이틀 02',
-    content: '귀뚜라 선과, 후 반 추천 당신도 즐거버인 물락',
-    rating: 3.8,
-    likeCount: 44,
-    createdAt: '2026-05-08',
-  },
-  {
-    id: 'r3',
-    gameTitle: '게임 타이틀 03',
-    content: '무닌한 색상 주주의 당신도 즐기시는 물락',
-    rating: 4.2,
-    likeCount: 8,
-    createdAt: '2026-05-01',
-  },
-];
-
-const MOCK_CHATS: MockChatItem[] = [
-  {
-    id: 'c1',
-    gameTitle: '게임 타이틀 01',
-    preview: '[게임 타이틀 01] 보스 레이드 같이 가실 분',
-    participants: 15,
-    isActive: true,
-    updatedAt: '2026-05-20',
-  },
-  {
-    id: 'c2',
-    gameTitle: '게임 타이틀 01',
-    preview: '[게임 타이틀 01] 이번 주 파 추천 단곡 클리어 팀원',
-    participants: 8,
-    isActive: false,
-    updatedAt: '2026-05-15',
-  },
-];
-
-const MOCK_NOTIFICATIONS: MockNotification[] = [
-  {
-    id: 'n1',
-    type: 'follow',
-    message: '유저닉네임_02 님이 나 라이프에 댓글을 달았어요.',
-    isRead: false,
-    createdAt: '2026-05-28',
-  },
-  {
-    id: 'n2',
-    type: 'like',
-    message: '내가 모집한 파티에 1명이 참여 신청했어요.',
-    isRead: false,
-    createdAt: '2026-05-27',
-  },
-  {
-    id: 'n3',
-    type: 'system',
-    message: 'Steam 라이브러리/데이터가 자동 동기화(v2)됐습니다.',
-    isRead: true,
-    createdAt: '2026-05-26',
-  },
-  {
-    id: 'n4',
-    type: 'comment',
-    message: '취향에 맞는 친구 추천 한도 6시간이 도착했어요.',
-    isRead: true,
-    createdAt: '2026-05-25',
-  },
-];
 
 const MOCK_FOLLOWING: MockFollowUser[] = [
   {
@@ -372,19 +249,6 @@ export const mypageHandlers = [
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.get('*/api/v1/mypage/wishlist', ({ request }) => {
-    const url = new URL(request.url);
-    const page = Number(url.searchParams.get('page') ?? 1);
-    const pageSize = 6;
-    const start = (page - 1) * pageSize;
-    const items = MOCK_WISHLIST.slice(start, start + pageSize);
-    return HttpResponse.json({
-      total: MOCK_WISHLIST.length,
-      items,
-      hasMore: start + pageSize < MOCK_WISHLIST.length,
-    });
-  }),
-
   http.get('*/api/v1/mypage/library', ({ request }) => {
     const url = new URL(request.url);
     const genre = url.searchParams.get('genre') ?? '';
@@ -449,13 +313,5 @@ export const mypageHandlers = [
     const inFollowers = MOCK_FOLLOWERS.find((u) => u.id === params.userId);
     if (inFollowers) inFollowers.isFollowing = false;
     return HttpResponse.json({ ok: true });
-  }),
-
-  http.get('*/api/v1/mypage/activity', () => {
-    return HttpResponse.json({
-      reviews: MOCK_REVIEWS,
-      chats: MOCK_CHATS,
-      notifications: MOCK_NOTIFICATIONS,
-    });
   }),
 ];

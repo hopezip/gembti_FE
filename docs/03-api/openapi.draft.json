@@ -313,33 +313,6 @@
         }
       }
     },
-    "/api/v1/mypage/wishlist": {
-      "x-status": "frontend-draft",
-      "get": {
-        "tags": ["MyPage"],
-        "summary": "위시리스트 조회 (MYPAGE-FE-005)",
-        "operationId": "get_mypage_wishlist_api_v1_mypage_wishlist_get",
-        "security": [{ "HTTPBearer": [] }],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "default": 1, "minimum": 1 }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "위시리스트 페이지",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/WishlistPage" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/mypage/library": {
       "x-status": "frontend-draft",
       "get": {
@@ -468,25 +441,6 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/OkResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/mypage/activity": {
-      "x-status": "frontend-draft",
-      "get": {
-        "tags": ["MyPage"],
-        "summary": "활동(리뷰/채팅/알림) (MYPAGE-FE-008)",
-        "operationId": "get_mypage_activity_api_v1_mypage_activity_get",
-        "security": [{ "HTTPBearer": [] }],
-        "responses": {
-          "200": {
-            "description": "활동 묶음",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/MyPageActivity" }
               }
             }
           }
@@ -1048,31 +1002,6 @@
           "favoriteGenres": { "type": "array", "items": { "type": "string" } }
         }
       },
-      "WishlistItem": {
-        "type": "object",
-        "required": ["id", "title", "genres", "price", "onSale", "addedAt"],
-        "properties": {
-          "id": { "type": "string" },
-          "title": { "type": "string" },
-          "genres": { "type": "array", "items": { "type": "string" } },
-          "price": { "type": "integer" },
-          "salePrice": { "type": ["integer", "null"] },
-          "onSale": { "type": "boolean" },
-          "addedAt": { "type": "string" }
-        }
-      },
-      "WishlistPage": {
-        "type": "object",
-        "required": ["total", "items", "hasMore"],
-        "properties": {
-          "total": { "type": "integer" },
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/WishlistItem" }
-          },
-          "hasMore": { "type": "boolean" }
-        }
-      },
       "LibraryItem": {
         "type": "object",
         "required": [
@@ -1148,76 +1077,6 @@
         "required": ["ok"],
         "properties": {
           "ok": { "type": "boolean" }
-        }
-      },
-      "ReviewItem": {
-        "type": "object",
-        "required": [
-          "id",
-          "gameTitle",
-          "content",
-          "rating",
-          "likeCount",
-          "createdAt"
-        ],
-        "properties": {
-          "id": { "type": "string" },
-          "gameTitle": { "type": "string" },
-          "content": { "type": "string" },
-          "rating": { "type": "number" },
-          "likeCount": { "type": "integer" },
-          "createdAt": { "type": "string" }
-        }
-      },
-      "ChatItem": {
-        "type": "object",
-        "required": [
-          "id",
-          "gameTitle",
-          "preview",
-          "participants",
-          "isActive",
-          "updatedAt"
-        ],
-        "properties": {
-          "id": { "type": "string" },
-          "gameTitle": { "type": "string" },
-          "preview": { "type": "string" },
-          "participants": { "type": "integer" },
-          "isActive": { "type": "boolean" },
-          "updatedAt": { "type": "string" }
-        }
-      },
-      "NotificationItem": {
-        "type": "object",
-        "required": ["id", "type", "message", "isRead", "createdAt"],
-        "properties": {
-          "id": { "type": "string" },
-          "type": {
-            "type": "string",
-            "enum": ["follow", "like", "comment", "system"]
-          },
-          "message": { "type": "string" },
-          "isRead": { "type": "boolean" },
-          "createdAt": { "type": "string" }
-        }
-      },
-      "MyPageActivity": {
-        "type": "object",
-        "required": ["reviews", "chats", "notifications"],
-        "properties": {
-          "reviews": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/ReviewItem" }
-          },
-          "chats": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/ChatItem" }
-          },
-          "notifications": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/NotificationItem" }
-          }
         }
       },
       "AvailabilityResponse": {
