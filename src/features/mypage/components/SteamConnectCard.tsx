@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import ky from 'ky';
 import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
+import { disconnectSteam, syncSteam } from '@/features/mypage/api/mypage';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -27,15 +27,14 @@ export function SteamConnectCard({ profile }: Props) {
   const navigate = useNavigate();
 
   const syncMutation = useMutation({
-    mutationFn: () => ky.post('/api/mypage/steam/sync').json<MockUserProfile>(),
+    mutationFn: syncSteam,
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
     },
   });
 
   const disconnectMutation = useMutation({
-    mutationFn: () =>
-      ky.post('/api/mypage/steam/disconnect').json<MockUserProfile>(),
+    mutationFn: disconnectSteam,
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
     },

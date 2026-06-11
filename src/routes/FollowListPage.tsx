@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ky from 'ky';
 import { css } from 'styled-system/css';
-import type { MockFollowUser, MockUserProfile } from '@/mocks/handlers/mypage';
+import {
+  followUser,
+  getFollowers,
+  getFollowing,
+  getMyProfile,
+  unfollowUser,
+} from '@/features/mypage/api/mypage';
+import type { MockFollowUser } from '@/mocks/handlers/mypage';
 
 export function FollowListPage() {
   const [tab, setTab] = useState<'following' | 'followers'>('following');
@@ -11,24 +17,21 @@ export function FollowListPage() {
 
   const { data: profile } = useQuery({
     queryKey: ['mypage', 'profile'],
-    queryFn: () => ky.get('/api/mypage/profile').json<MockUserProfile>(),
+    queryFn: getMyProfile,
   });
 
   const { data: followingData } = useQuery({
     queryKey: ['mypage', 'following'],
-    queryFn: () =>
-      ky.get('/api/mypage/following').json<{ users: MockFollowUser[] }>(),
+    queryFn: getFollowing,
   });
 
   const { data: followersData } = useQuery({
     queryKey: ['mypage', 'followers'],
-    queryFn: () =>
-      ky.get('/api/mypage/followers').json<{ users: MockFollowUser[] }>(),
+    queryFn: getFollowers,
   });
 
   const followMutation = useMutation({
-    mutationFn: (userId: string) =>
-      ky.post(`/api/mypage/follow/${userId}`).json(),
+    mutationFn: (userId: string) => followUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mypage', 'following'] });
       queryClient.invalidateQueries({ queryKey: ['mypage', 'followers'] });
@@ -36,8 +39,7 @@ export function FollowListPage() {
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: (userId: string) =>
-      ky.delete(`/api/mypage/follow/${userId}`).json(),
+    mutationFn: (userId: string) => unfollowUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mypage', 'following'] });
       queryClient.invalidateQueries({ queryKey: ['mypage', 'followers'] });

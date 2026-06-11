@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import ky from 'ky';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { type SignupStep1Input, signupStep1Schema } from '@/lib/schemas/auth';
+import { checkEmail as checkEmailApi } from '@/services/users';
 import { Checkbox } from './Checkbox';
 import { PasswordInput } from './PasswordInput';
 import { PasswordRules } from './PasswordRules';
@@ -67,15 +67,13 @@ export function SignupForm({
     'idle' | 'checking' | 'available' | 'taken'
   >('idle');
 
-  // 이메일 중복 확인 — MSW 핸들러(GET /api/users/check-email) 호출(실서버 엔드포인트 없음).
+  // 이메일 중복 확인 — MSW 핸들러(GET /api/v1/users/check-email) 호출(실서버 엔드포인트 없음).
   async function checkEmail() {
     const value = email.trim();
     if (!value) return;
     setEmailCheck('checking');
     try {
-      const res = await ky
-        .get('/api/users/check-email', { searchParams: { email: value } })
-        .json<{ available: boolean }>();
+      const res = await checkEmailApi(value);
       setEmailCheck(res.available ? 'available' : 'taken');
     } catch {
       setEmailCheck('idle');

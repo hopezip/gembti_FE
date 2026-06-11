@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import ky from 'ky';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
@@ -24,6 +23,7 @@ import {
   type VerifyErrorKind,
   verifyEmail,
 } from '@/services/auth';
+import { checkNickname as checkNicknameApi } from '@/services/users';
 import { CountdownTimer } from './CountdownTimer';
 import { GenderSelect } from './GenderSelect';
 import { OtpInput } from './OtpInput';
@@ -35,7 +35,7 @@ import { OtpInput } from './OtpInput';
 //   닉네임 중복은 닉네임 필드 에러로 표시한다.
 // ⚠️ signup_token 흐름 폐기 · 타이머는 상수 TTL.
 // 닉네임 중복확인(LOGIN-FE-010): "중복 확인" 버튼으로 미리 안내(보조용). 실서버 엔드포인트가 없어
-//   MSW(GET /api/users/check-nickname) 전용이며 가입을 강제로 막지 않는다. 최종 중복 검증은
+//   MSW(GET /api/v1/users/check-nickname) 전용이며 가입을 강제로 막지 않는다. 최종 중복 검증은
 //   가입 단계 응답(nickname-duplicated 폴백)이 담당한다.
 
 // 코드 검증 실패 메시지 매핑.
@@ -111,9 +111,7 @@ export function EmailVerificationForm({
     if (!value) return;
     setNicknameCheck('checking');
     try {
-      const res = await ky
-        .get('/api/users/check-nickname', { searchParams: { nickname: value } })
-        .json<{ available: boolean }>();
+      const res = await checkNicknameApi(value);
       setNicknameCheck(res.available ? 'available' : 'taken');
     } catch {
       setNicknameCheck('idle');
