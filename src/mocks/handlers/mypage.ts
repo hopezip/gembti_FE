@@ -328,7 +328,7 @@ const MOCK_FOLLOWERS: MockFollowUser[] = [
 ];
 
 export const mypageHandlers = [
-  http.get('/api/users/check-nickname', ({ request }) => {
+  http.get('*/api/v1/users/check-nickname', ({ request }) => {
     const url = new URL(request.url);
     const nickname = url.searchParams.get('nickname') ?? '';
     // 현재 사용 중인 닉네임은 중복으로 처리
@@ -338,7 +338,7 @@ export const mypageHandlers = [
     return HttpResponse.json({ available });
   }),
 
-  http.get('/api/users/check-email', ({ request }) => {
+  http.get('*/api/v1/users/check-email', ({ request }) => {
     const url = new URL(request.url);
     const email = url.searchParams.get('email') ?? '';
     // 현재 가입된 이메일은 중복으로 처리 (check-nickname 대칭, LOGIN-FE-012)
@@ -348,23 +348,23 @@ export const mypageHandlers = [
     return HttpResponse.json({ available });
   }),
 
-  http.get('/api/mypage/profile', () => {
+  http.get('*/api/v1/mypage/profile', () => {
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.patch('/api/mypage/profile', async ({ request }) => {
+  http.patch('*/api/v1/mypage/profile', async ({ request }) => {
     const patch = (await request.json()) as Partial<MockUserProfile>;
     Object.assign(MOCK_PROFILE, patch);
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.post('/api/mypage/steam/sync', async () => {
+  http.post('*/api/v1/mypage/steam/sync', async () => {
     await new Promise((r) => setTimeout(r, 1500));
     MOCK_PROFILE.steamSyncedAt = new Date().toISOString();
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.post('/api/mypage/steam/disconnect', () => {
+  http.post('*/api/v1/mypage/steam/disconnect', () => {
     MOCK_PROFILE.steamConnected = false;
     MOCK_PROFILE.steamId = null;
     MOCK_PROFILE.steamNickname = null;
@@ -372,7 +372,7 @@ export const mypageHandlers = [
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.get('/api/mypage/wishlist', ({ request }) => {
+  http.get('*/api/v1/mypage/wishlist', ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') ?? 1);
     const pageSize = 6;
@@ -385,7 +385,7 @@ export const mypageHandlers = [
     });
   }),
 
-  http.get('/api/mypage/library', ({ request }) => {
+  http.get('*/api/v1/mypage/library', ({ request }) => {
     const url = new URL(request.url);
     const genre = url.searchParams.get('genre') ?? '';
     const sort = url.searchParams.get('sort') ?? 'recent';
@@ -427,15 +427,15 @@ export const mypageHandlers = [
     });
   }),
 
-  http.get('/api/mypage/following', () => {
+  http.get('*/api/v1/mypage/following', () => {
     return HttpResponse.json({ users: MOCK_FOLLOWING });
   }),
 
-  http.get('/api/mypage/followers', () => {
+  http.get('*/api/v1/mypage/followers', () => {
     return HttpResponse.json({ users: MOCK_FOLLOWERS });
   }),
 
-  http.post('/api/mypage/follow/:userId', ({ params }) => {
+  http.post('*/api/v1/mypage/follow/:userId', ({ params }) => {
     const user =
       MOCK_FOLLOWING.find((u) => u.id === params.userId) ??
       MOCK_FOLLOWERS.find((u) => u.id === params.userId);
@@ -443,7 +443,7 @@ export const mypageHandlers = [
     return HttpResponse.json({ ok: true });
   }),
 
-  http.delete('/api/mypage/follow/:userId', ({ params }) => {
+  http.delete('*/api/v1/mypage/follow/:userId', ({ params }) => {
     const inFollowing = MOCK_FOLLOWING.find((u) => u.id === params.userId);
     if (inFollowing) inFollowing.isFollowing = false;
     const inFollowers = MOCK_FOLLOWERS.find((u) => u.id === params.userId);
@@ -451,7 +451,7 @@ export const mypageHandlers = [
     return HttpResponse.json({ ok: true });
   }),
 
-  http.get('/api/mypage/activity', () => {
+  http.get('*/api/v1/mypage/activity', () => {
     return HttpResponse.json({
       reviews: MOCK_REVIEWS,
       chats: MOCK_CHATS,

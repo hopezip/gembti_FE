@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ky from 'ky';
 import { css } from 'styled-system/css';
 import { Card } from '@/components/ui/GameCard';
+import { getMyProfile, updateMyProfile } from '@/features/mypage/api/mypage';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 const NICKNAME_MAX = 20;
@@ -24,7 +24,7 @@ export function ProfileEditPage() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['mypage', 'profile'],
-    queryFn: () => ky.get('/api/mypage/profile').json<MockUserProfile>(),
+    queryFn: getMyProfile,
   });
 
   const [nickname, setNickname] = useState('');
@@ -42,8 +42,7 @@ export function ProfileEditPage() {
   }, [profile]);
 
   const mutation = useMutation({
-    mutationFn: (patch: Partial<MockUserProfile>) =>
-      ky.patch('/api/mypage/profile', { json: patch }).json<MockUserProfile>(),
+    mutationFn: (patch: Partial<MockUserProfile>) => updateMyProfile(patch),
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
       setIsDirty(false);

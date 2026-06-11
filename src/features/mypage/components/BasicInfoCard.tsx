@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import ky from 'ky';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
 import { Tag } from '@/components/ui/Tag';
+import { updateMyProfile } from '@/features/mypage/api/mypage';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
+import { checkNickname as checkNicknameApi } from '@/services/users';
 
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
 
@@ -27,8 +28,7 @@ export function BasicInfoCard({ profile }: Props) {
     useState<NicknameCheckStatus>('idle');
 
   const mutation = useMutation({
-    mutationFn: (patch: Partial<MockUserProfile>) =>
-      ky.patch('/api/mypage/profile', { json: patch }).json<MockUserProfile>(),
+    mutationFn: (patch: Partial<MockUserProfile>) => updateMyProfile(patch),
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
       setEditingField(null);
@@ -47,11 +47,7 @@ export function BasicInfoCard({ profile }: Props) {
     if (!fieldValue.trim()) return;
     setNicknameCheck('checking');
     try {
-      const res = await ky
-        .get('/api/users/check-nickname', {
-          searchParams: { nickname: fieldValue.trim() },
-        })
-        .json<{ available: boolean }>();
+      const res = await checkNicknameApi(fieldValue.trim());
       setNicknameCheck(res.available ? 'available' : 'taken');
     } catch {
       setNicknameCheck('idle');
