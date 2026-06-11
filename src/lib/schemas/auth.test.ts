@@ -59,14 +59,13 @@ describe('loginSchema', () => {
   });
 });
 
-describe('signupStep1Schema (LOGIN-FE-006: 10자+특수문자, 약관 2개)', () => {
+describe('signupStep1Schema (LOGIN-FE-015: 10자+특수문자, 만 15세 확인)', () => {
   // 모든 필드가 유효한 기준 입력(각 케이스에서 일부만 덮어쓴다).
   const valid: SignupStep1Input = {
     email: 'new_user@example.com',
     password: 'abcde1234!', // 10자 + 특수문자
     passwordConfirm: 'abcde1234!',
-    termsAgreed: true,
-    privacyAgreed: true,
+    ageConfirmed: true,
   };
 
   it('유효한 입력을 통과시킨다', () => {
@@ -129,31 +128,16 @@ describe('signupStep1Schema (LOGIN-FE-006: 10자+특수문자, 약관 2개)', ()
     }
   });
 
-  it('이용약관 미동의 시 실패한다', () => {
+  it('만 15세 미확인 시 실패한다', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
-      termsAgreed: false,
+      ageConfirmed: false,
     });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
         result.error.issues.some(
-          (i) => i.message === '이용약관에 동의해주세요',
-        ),
-      ).toBe(true);
-    }
-  });
-
-  it('개인정보 처리방침 미동의 시 실패한다', () => {
-    const result = signupStep1Schema.safeParse({
-      ...valid,
-      privacyAgreed: false,
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(
-        result.error.issues.some(
-          (i) => i.message === '개인정보 처리방침에 동의해주세요',
+          (i) => i.message === '만 15세 이상만 가입할 수 있어요',
         ),
       ).toBe(true);
     }

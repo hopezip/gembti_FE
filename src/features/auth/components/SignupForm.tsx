@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { css } from 'styled-system/css';
-import { hstack, vstack } from 'styled-system/patterns';
+import { vstack } from 'styled-system/patterns';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
@@ -12,32 +12,39 @@ import { Checkbox } from './Checkbox';
 import { PasswordInput } from './PasswordInput';
 import { PasswordRules } from './PasswordRules';
 
-// 회원가입 STEP1 (계정정보) — LOGIN-FE-006.
-// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 이용약관 동의 + [필수] 개인정보 처리방침 동의.
-//   약관 2개는 GEMBTI_API SignupRequest의 terms_agreed/privacy_agreed로 STEP2 signup 시 전송된다.
-//   (이메일 실시간 중복확인 없음 — 백엔드에 check-email 엔드포인트가 없다. 중복은 가입 단계 서버 응답으로 처리.)
-// 제출 성공 시 send-code 호출은 페이지(SignupPage)가 담당한다. 이 폼은 검증된 계정정보 + 약관 동의를
-//   onSubmitStep1로 넘기기만 한다(비밀번호/약관은 STEP2 최종 signup까지 페이지 state로 보관).
+// 회원가입 STEP1 (계정정보) — LOGIN-FE-015.
+// 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 15세 이상 확인.
+//   15세 확인은 GEMBTI_API SignupRequest의 terms_agreed/privacy_agreed로 STEP2 signup 시 전송된다
+//   (백엔드에 연령 필드가 없어, 페이지가 두 필드를 ageConfirmed 값으로 채운다).
+// 이메일 실시간 중복확인은 제거했다(백엔드 check-email 엔드포인트 없음). 중복은 send-code 응답(409)으로
+//   이메일 입력칸 아래 인라인 표시(emailError)한다.
+// 제출 성공 시 send-code 호출은 페이지(SignupPage)가 담당한다. 이 폼은 검증된 계정정보 + 15세 확인을
+//   onSubmitStep1로 넘기기만 한다(비밀번호/15세 확인은 STEP2 최종 signup까지 페이지 state로 보관).
 
 interface SignupFormProps {
-  // STEP1 검증 성공 시 호출. 검증된 계정정보(이메일/비밀번호) + 약관 동의를 페이지로 넘긴다.
+  // STEP1 검증 성공 시 호출. 검증된 계정정보(이메일/비밀번호) + 15세 확인을 페이지로 넘긴다.
   //   페이지가 send-code 후 STEP2로 전환한다.
   onSubmitStep1: (values: {
     email: string;
     password: string;
-    termsAgreed: boolean;
-    privacyAgreed: boolean;
+    ageConfirmed: boolean;
   }) => void;
   // send-code 진행 중 여부(페이지가 제어) — 제출 버튼 로딩 표시.
   isSubmitting?: boolean;
-  // send-code 실패 등 페이지 레벨 에러 메시지.
+  // send-code 실패 등 페이지 레벨 에러 메시지(generic).
   formError?: string | null;
+  // 이메일 전용 외부 에러(send-code 409 중복) — 이메일 Field 아래 인라인 표시.
+  emailError?: string | null;
+  // 이메일 입력 변경 시 호출 — 페이지가 외부 emailError를 클리어한다.
+  onEmailChange?: () => void;
 }
 
 export function SignupForm({
   onSubmitStep1,
   isSubmitting = false,
   formError = null,
+  emailError = null,
+  onEmailChange,
 }: SignupFormProps) {
   const {
     register,
@@ -54,8 +61,7 @@ export function SignupForm({
       email: '',
       password: '',
       passwordConfirm: '',
-      termsAgreed: false,
-      privacyAgreed: false,
+      ageConfirmed: false,
     },
   });
 
@@ -90,8 +96,7 @@ export function SignupForm({
     onSubmitStep1({
       email: values.email,
       password: values.password,
-      termsAgreed: values.termsAgreed,
-      privacyAgreed: values.privacyAgreed,
+      ageConfirmed: values.ageConfirmed,
     });
   };
 
@@ -101,52 +106,24 @@ export function SignupForm({
       onSubmit={handleSubmit(onValid, onInvalid)}
       className={vstack({ gap: '5', alignItems: 'stretch' })}
     >
-      {/* 이메일 — 중복 확인 버튼(보조용, LOGIN-FE-012) */}
-      <div className={vstack({ gap: '1.5', alignItems: 'stretch' })}>
-        <div className={hstack({ gap: '2', alignItems: 'flex-end' })}>
-          <div className={css({ flex: 1, minW: 0 })}>
-            <Field
-              label="이메일"
-              id="signup-email"
-              required
-              error={errors.email?.message}
-            >
-              <Input
-                type="email"
-                autoComplete="email"
-                placeholder="name@example.com"
-                disabled={isSubmitting}
-                {...register('email', {
-                  // 이메일을 수정하면 이전 확인 결과를 초기화한다.
-                  onChange: () => {
-                    if (emailCheck !== 'idle') setEmailCheck('idle');
-                  },
-                })}
-              />
-            </Field>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={checkEmail}
-            disabled={
-              isSubmitting || emailCheck === 'checking' || !email.trim()
-            }
-          >
-            {emailCheck === 'checking' ? '확인 중…' : '중복 확인'}
-          </Button>
-        </div>
-        {emailCheck === 'available' && (
-          <span className={css({ textStyle: 'body.sm', color: 'success.fg' })}>
-            사용 가능한 이메일이에요
-          </span>
-        )}
-        {emailCheck === 'taken' && (
-          <span className={css({ textStyle: 'body.sm', color: 'danger.fg' })}>
-            이미 가입된 이메일이에요
-          </span>
-        )}
-      </div>
+      {/* 이메일 — 형식 에러 또는 send-code 409(emailError)를 Field 아래 인라인 표시 */}
+      <Field
+        label="이메일"
+        id="signup-email"
+        required
+        error={errors.email?.message ?? emailError ?? undefined}
+      >
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder="name@example.com"
+          disabled={isSubmitting}
+          {...register('email', {
+            // 이메일을 수정하면 페이지가 외부 중복(409) 에러를 초기화한다.
+            onChange: () => onEmailChange?.(),
+          })}
+        />
+      </Field>
 
       <Field
         label="비밀번호"
@@ -178,22 +155,22 @@ export function SignupForm({
         />
       </Field>
 
-      {/* [필수] 약관 동의 2개 — 이용약관 / 개인정보 처리방침 (GEMBTI_API terms_agreed/privacy_agreed) */}
+      {/* [필수] 만 15세 이상 확인 — signup 시 terms_agreed/privacy_agreed로 전송된다 */}
       <div className={vstack({ gap: '2', alignItems: 'stretch' })}>
         <Controller
           control={control}
-          name="termsAgreed"
+          name="ageConfirmed"
           render={({ field }) => (
             <Checkbox
               checked={field.value === true}
               onCheckedChange={field.onChange}
             >
               <span className={css({ color: 'accent.fg' })}>[필수]</span>
-              <span className={css({ ml: '1' })}>이용약관에 동의해요</span>
+              <span className={css({ ml: '1' })}>만 15세 이상입니다</span>
             </Checkbox>
           )}
         />
-        {errors.termsAgreed && (
+        {errors.ageConfirmed && (
           <p
             role="alert"
             className={css({
@@ -202,35 +179,7 @@ export function SignupForm({
               color: 'danger.default',
             })}
           >
-            {errors.termsAgreed.message}
-          </p>
-        )}
-
-        <Controller
-          control={control}
-          name="privacyAgreed"
-          render={({ field }) => (
-            <Checkbox
-              checked={field.value === true}
-              onCheckedChange={field.onChange}
-            >
-              <span className={css({ color: 'accent.fg' })}>[필수]</span>
-              <span className={css({ ml: '1' })}>
-                개인정보 처리방침에 동의해요
-              </span>
-            </Checkbox>
-          )}
-        />
-        {errors.privacyAgreed && (
-          <p
-            role="alert"
-            className={css({
-              fontFamily: 'mono',
-              fontSize: 'sm',
-              color: 'danger.default',
-            })}
-          >
-            {errors.privacyAgreed.message}
+            {errors.ageConfirmed.message}
           </p>
         )}
       </div>
