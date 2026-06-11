@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
 
 // 한시적 수동 작성 핸들러 (SEARCH-FE-001).
 // 백엔드 계약 확정 후 /api-sync 자동 생성 핸들러로 교체 예정.
@@ -384,55 +384,11 @@ export const gameHandlers = [
     });
   }),
 
-  // MAIN-FE-003 비로그인 홈 — 배너 + 신규 + 인기를 한 응답으로 제공한다.
-  // 백엔드 계약(GET /api/v1/home/guest, 인증 불필요, snake_case)에 맞춘 한시적 수동 핸들러.
-  // 백엔드 계약 확정 후 /api-sync 자동 생성물로 교체.
-  http.get('*/api/v1/home/guest', () => {
-    // 평점이 있는 게임만 추천 풀로 사용(★ 0.0 placeholder 방지) + 평점 내림차순.
-    const byRating = MOCK_GAMES.filter((g) => g.rating != null).sort(
-      (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
-    );
-
-    // 인기(trending) — 더 보기(12개씩) 시연을 위해 36건 합성(평점순 순환).
-    const trending_games = Array.from({ length: 36 }, (_, i) => {
-      const base = byRating[i % byRating.length];
-      return {
-        game_id: i + 1,
-        title: `게임 타이틀 ${String(i + 1).padStart(2, '0')}`,
-        thumbnail_url: base.coverImageUrl ?? '',
-        genres: base.genres,
-        rating: base.rating ?? 0,
-      };
-    });
-
-    // 신규(new_releases) — 더 보기(12개씩) 시연을 위해 36건 합성(평점순 순환).
-    // ⚠️ 실제 "이번 주 신규"는 소수일 수 있음 — 백엔드 연결 시 실제 건수로 대체된다.
-    const new_releases = Array.from({ length: 36 }, (_, i) => {
-      const base = byRating[i % byRating.length];
-      return {
-        game_id: 200 + i + 1,
-        title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
-        thumbnail_url: base.coverImageUrl ?? '',
-        genres: base.genres,
-        rating: base.rating ?? 0,
-        is_new: true,
-      };
-    });
-
-    return HttpResponse.json({
-      status: 'SUCCESS',
-      data: {
-        curation_banner: {
-          main_copy: '당신의 다음 인생 게임을 찾아보세요',
-          sub_copy: 'AI가 당신의 취향을 분석해 완벽한 게임을 추천해드려요',
-          button_text: '게임 찾기',
-          background_image_url: '',
-        },
-        new_releases,
-        trending_games,
-      },
-    });
-  }),
+  // 게스트 홈 인기·신규는 실서버(games/trending·new-releases)를 그대로 쓴다(passthrough, API-SYNC-FE-001).
+  //   ⚠️ 아래 '*/api/v1/games/:id'(상세) 핸들러가 'trending'/'new-releases'를 게임 id로 오인해 404를 주므로,
+  //   그보다 먼저 명시적 passthrough를 등록해 실서버로 보낸다(onUnhandledRequest:'bypass'만으론 가로채짐).
+  http.get('*/api/v1/games/trending', () => passthrough()),
+  http.get('*/api/v1/games/new-releases', () => passthrough()),
 
   // MAIN-FE-006 개인화 홈(로그인+설문완료) — 1순위 추천 + 성향태그 + 추천 그리드 + 신규를 한 응답으로 제공한다.
   // 백엔드 계약(GET /api/v1/home/personalized, 인증✅, snake_case)에 맞춘 한시적 수동 핸들러.
