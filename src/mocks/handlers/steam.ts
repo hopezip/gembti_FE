@@ -90,6 +90,7 @@ const steamApiHandlers = [
         steam_avatar_url: null,
         steam_sync_status: null,
         last_synced_at: null,
+        library_games_count: 0,
       };
       return HttpResponse.json(res);
     }
@@ -101,6 +102,7 @@ const steamApiHandlers = [
       steam_avatar_url: MOCK_AVATAR_URL,
       steam_sync_status: status,
       last_synced_at: MOCK_LAST_SYNCED_AT,
+      library_games_count: 42,
     };
     return HttpResponse.json(res);
   }),
