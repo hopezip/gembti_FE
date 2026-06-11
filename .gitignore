@@ -22,6 +22,9 @@ Thumbs.db
 styled-system/
 src/types/api.ts
 
+# OpenAPI 병합 중간 산물 (merge-openapi.mjs 출력, 빌드시 재생성)
+.openapi.merged.json
+
 # Test coverage (Vitest)
 coverage/
 

@@ -9,7 +9,7 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "codegen": "panda codegen && openapi-typescript docs/03-api/openapi.json -o src/types/api.ts",
+    "codegen": "panda codegen && node scripts/merge-openapi.mjs && openapi-typescript .openapi.merged.json -o src/types/api.ts",
     "prepare": "pnpm codegen",
     "dev": "pnpm codegen && vite",
     "build": "pnpm codegen && tsc --noEmit && vite build",
@@ -20,7 +20,7 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "api:gen": "openapi-typescript docs/03-api/openapi.json -o src/types/api.ts",
+    "api:gen": "node scripts/merge-openapi.mjs && openapi-typescript .openapi.merged.json -o src/types/api.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
