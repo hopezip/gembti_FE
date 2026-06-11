@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -6,16 +6,19 @@ import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { GameSummaryCard } from '@/features/game/components/GameSummaryCard';
 import { SearchFilterBox } from '@/features/game/components/SearchFilterBox';
-import { useFilterOptions } from '@/features/game/api/filterOptions';
+import {
+  CATEGORY_OPTIONS,
+  GENRE_OPTIONS,
+} from '@/features/game/api/filterOptions';
 import {
   type SearchGameSummary,
   useSearchGames,
 } from '@/features/game/api/searchGames';
 
-// SEARCH-FE-001/003/004 검색 결과 페이지 — Figma 검색 결과 페이지 기준 전면 재작성.
-// 구조(위→아래): 검색창 → 결과 텍스트 → "필터" 헤딩 → 필터박스(장르·태그 칩) → 4×N 그리드 → 더 보기.
-// 데이터: 서버 페이지네이션(더 보기 12개씩 누적) + 칩은 클라이언트 AND 필터(받아온 결과만 거름).
-// 칩 개수(facet)는 백엔드 미제공이라 표시하지 않는다. 정렬 UI는 현 디자인에 없어 relevance 고정.
+// SEARCH-FE-001/003/004/005 검색 결과 페이지 — Figma 검색 결과 페이지 기준.
+// 구조(위→아래): 검색창 → 결과 텍스트 → "필터" 헤딩 → 필터박스(장르·카테고리 칩) → 4×N 그리드 → 더 보기.
+// 데이터: 서버 페이지네이션(더 보기 12개씩 누적) + 칩은 서버사이드 필터(genre[]/category[]로 재요청).
+// 칩 개수(facet)는 백엔드 미제공이라 표시하지 않는다. 정렬 UI는 현 디자인에 없어 popular 고정.
 
 const styles = {
   page: css({
@@ -118,7 +121,7 @@ export function SearchPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // URL 변경 시 입력창 동기화
   useEffect(() => {
@@ -136,17 +139,26 @@ export function SearchPage() {
     return () => clearTimeout(timer);
   }, [inputValue, query, setSearchParams]);
 
-  // 검색어 변경 시 페이지·누적·선택 필터 리셋
+  // 검색어 변경 시 선택 필터 리셋(새 검색어엔 이전 필터를 끌고 가지 않는다)
   // biome-ignore lint/correctness/useExhaustiveDependencies: query 변경에만 반응하는 reset 이펙트
+  useEffect(() => {
+    setSelectedGenres([]);
+    setSelectedCategories([]);
+  }, [query]);
+
+  // 검색어/필터 변경 시 페이지·누적 리셋 → 서버사이드로 1페이지부터 재요청
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 검색 조건 변경에만 반응하는 reset 이펙트
   useEffect(() => {
     setPage(1);
     setAccumulated([]);
-    setSelectedGenres([]);
-    setSelectedTags([]);
-  }, [query]);
+  }, [query, selectedGenres, selectedCategories]);
 
-  const { data, isFetching, isError } = useSearchGames(query, page);
-  const { data: filterOptions } = useFilterOptions();
+  const { data, isFetching, isError } = useSearchGames({
+    q: query,
+    page,
+    genres: selectedGenres,
+    categories: selectedCategories,
+  });
 
   // 페이지 데이터 누적 (page===1이면 교체, 그 외 추가)
   // biome-ignore lint/correctness/useExhaustiveDependencies: data 변경에만 반응하는 accumulate 이펙트
@@ -159,32 +171,17 @@ export function SearchPage() {
     setHasMore(data.hasMore);
   }, [data]);
 
-  // 칩 클라이언트 AND 필터 — 선택한 장르·태그를 모두 만족하는 게임만 통과.
-  const filteredGames = useMemo(() => {
-    return accumulated.filter((g) => {
-      if (
-        selectedGenres.length > 0 &&
-        !selectedGenres.every((sg) => g.genres.includes(sg))
-      )
-        return false;
-      if (
-        selectedTags.length > 0 &&
-        !selectedTags.every((st) => g.tags.includes(st))
-      )
-        return false;
-      return true;
-    });
-  }, [accumulated, selectedGenres, selectedTags]);
-
   function toggleGenre(genre: string) {
     setSelectedGenres((prev) =>
       prev.includes(genre) ? prev.filter((x) => x !== genre) : [...prev, genre],
     );
   }
 
-  function toggleTag(tag: string) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag],
+  function toggleCategory(category: string) {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((x) => x !== category)
+        : [...prev, category],
     );
   }
 
@@ -228,12 +225,12 @@ export function SearchPage() {
         {/* 필터 */}
         <h2 className={styles.filterHeading}>필터</h2>
         <SearchFilterBox
-          genres={filterOptions?.genres ?? []}
-          tags={filterOptions?.tags ?? []}
+          genres={GENRE_OPTIONS}
+          categories={CATEGORY_OPTIONS}
           selectedGenres={selectedGenres}
-          selectedTags={selectedTags}
+          selectedCategories={selectedCategories}
           onToggleGenre={toggleGenre}
-          onToggleTag={toggleTag}
+          onToggleCategory={toggleCategory}
         />
 
         {/* 결과 그리드 / 로딩 / 빈 상태 */}
@@ -247,11 +244,11 @@ export function SearchPage() {
           </div>
         ) : isInitialError ? (
           <p className={styles.fallback}>검색 중 문제가 발생했어요</p>
-        ) : filteredGames.length === 0 ? (
+        ) : accumulated.length === 0 ? (
           <EmptyState type="search" target={query || undefined} />
         ) : (
           <div className={styles.grid}>
-            {filteredGames.map((game) => (
+            {accumulated.map((game) => (
               <Link
                 key={game.gameId}
                 to={`/games/${game.gameId}`}
@@ -269,7 +266,7 @@ export function SearchPage() {
         )}
 
         {/* 더 보기 (서버 페이지네이션) */}
-        {hasMore && filteredGames.length > 0 && (
+        {hasMore && accumulated.length > 0 && (
           <div className={styles.moreRow}>
             <button
               type="button"
