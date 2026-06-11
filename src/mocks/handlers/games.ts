@@ -384,7 +384,57 @@ export const gameHandlers = [
     });
   }),
 
+  // MAIN-FE / API-SYNC-FE-001 인기 게임 — 백엔드 계약(GET /api/v1/games/trending, 인증 불필요).
+  // 응답: { status, data: HomeGameItem[] }. useGuestHome이 신규와 병렬로 조합한다(집계 /home/guest 대체).
+  http.get('*/api/v1/games/trending', ({ request }) => {
+    const url = new URL(request.url);
+    const limitRaw = Number(url.searchParams.get('limit'));
+    const byRating = MOCK_GAMES.filter((g) => g.rating != null).sort(
+      (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
+    );
+    // 더 보기(12개씩) 시연을 위해 36건 합성(평점순 순환).
+    const all = Array.from({ length: 36 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: i + 1,
+        title: `게임 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? null,
+        genres: base.genres,
+        rating: base.rating ?? null,
+        is_new: false,
+      };
+    });
+    const data =
+      Number.isFinite(limitRaw) && limitRaw >= 1 ? all.slice(0, limitRaw) : all;
+    return HttpResponse.json({ status: 'SUCCESS', data });
+  }),
+
+  // MAIN-FE / API-SYNC-FE-001 신규 게임 — 백엔드 계약(GET /api/v1/games/new-releases, 인증 불필요).
+  // 응답: { status, data: HomeGameItem[] }(is_new=true). useGuestHome이 인기와 병렬로 조합한다.
+  http.get('*/api/v1/games/new-releases', ({ request }) => {
+    const url = new URL(request.url);
+    const limitRaw = Number(url.searchParams.get('limit'));
+    const byRating = MOCK_GAMES.filter((g) => g.rating != null).sort(
+      (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
+    );
+    const all = Array.from({ length: 36 }, (_, i) => {
+      const base = byRating[i % byRating.length];
+      return {
+        game_id: 200 + i + 1,
+        title: `신규 타이틀 ${String(i + 1).padStart(2, '0')}`,
+        thumbnail_url: base.coverImageUrl ?? null,
+        genres: base.genres,
+        rating: base.rating ?? null,
+        is_new: true,
+      };
+    });
+    const data =
+      Number.isFinite(limitRaw) && limitRaw >= 1 ? all.slice(0, limitRaw) : all;
+    return HttpResponse.json({ status: 'SUCCESS', data });
+  }),
+
   // MAIN-FE-003 비로그인 홈 — 배너 + 신규 + 인기를 한 응답으로 제공한다.
+  // ⚠️ API-SYNC-FE-001에서 useGuestHome이 games/trending·new-releases 조합으로 전환 → 이 핸들러는 현재 미사용(레거시).
   // 백엔드 계약(GET /api/v1/home/guest, 인증 불필요, snake_case)에 맞춘 한시적 수동 핸들러.
   // 백엔드 계약 확정 후 /api-sync 자동 생성물로 교체.
   http.get('*/api/v1/home/guest', () => {
