@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
-import { Tag } from '@/components/ui/Tag';
 import { useBannerImages } from '@/features/main/api/bannerImages';
 import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroundCarousel';
 import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
@@ -53,8 +52,6 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
   }),
-  // Tag recipe 기본(tone neutral: fg.muted/medium)을 Figma 칩(#7a7a82·Regular)에 맞춰 override.
-  label: css({ mb: '5', color: 'fg.subtle', fontWeight: 'normal' }),
   headline: css({
     textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
@@ -109,8 +106,6 @@ export function HeroBanner() {
       <div className={cx(css(pageGutter), styles.gutter)}>
         <div className={css(pageContainer)}>
           <div className={styles.content}>
-            <Tag className={styles.label}>오늘의 추천</Tag>
-
             <h1 className={styles.headline}>
               당신의 <span className={styles.accentWord}>다음</span>
               <br />
