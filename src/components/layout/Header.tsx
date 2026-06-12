@@ -44,34 +44,42 @@ export function Header() {
         >
           <Logo />
 
-          <div className={css({ display: { base: 'none', sm: 'block' } })}>
+          <div
+            className={css({
+              display: { base: 'none', sm: 'block' },
+              flexShrink: 0,
+            })}
+          >
             <Nav />
           </div>
 
           <div className={css({ flex: '1', minW: '0' })} />
 
-          <SearchInput
-            containerClassName={css({
+          <div
+            className={css({
               display: { base: 'none', sm: 'block' },
-              w: '280px',
+              w: { sm: '180px', md: '280px' },
               flexShrink: 0,
             })}
-            size="sm"
-            aria-label="검색"
-            placeholder="게임, 장르, 태그 검색"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') submitSearch();
-            }}
-            onClick={() => navigate('/search')}
-            className={css({
-              borderRadius: 'full',
-              fontFamily: 'mono',
-              fontSize: 'md',
-              cursor: 'text',
-            })}
-          />
+          >
+            <SearchInput
+              size="sm"
+              aria-label="검색"
+              placeholder="게임, 장르, 태그 검색"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submitSearch();
+              }}
+              onClick={() => navigate('/search')}
+              className={css({
+                borderRadius: 'full',
+                fontFamily: 'mono',
+                fontSize: 'md',
+                cursor: 'text',
+              })}
+            />
+          </div>
 
           <div className={css({ flexShrink: 0 })}>
             <HeaderProfileMenu />
