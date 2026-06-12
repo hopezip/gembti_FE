@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
+import { useBannerImages } from '@/features/main/api/bannerImages';
+import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroundCarousel';
 import { usePersonalizedHome } from '@/features/main/api/personalizedHome';
 import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
 
@@ -23,7 +25,7 @@ const styles = {
     borderBottom: '1px solid',
     borderColor: 'border.default',
   }),
-  // ① 배경 레이어 — background_url이 있으면 인라인 style로 url 주입(런타임 데이터), 없으면 surface 단색.
+  // ① 배경 레이어 — 단색 fallback. 실제 배경은 위에 겹치는 HeroBackgroundCarousel이 담당(MAIN-FE-009).
   bgLayer: css({
     position: 'absolute',
     inset: '0',
@@ -107,29 +109,22 @@ const styles = {
 
 export function PersonalizedHeroBanner() {
   const { data } = usePersonalizedHome();
+  // 배경은 캐러셀(인기 상위 5개 커버, 10초 자동 전환)이 담당한다 (MAIN-FE-009).
+  const bannerImages = useBannerImages();
   // 건너뛴 문항이 존재하는 경우 설문 이어하기 버튼을 노출한다.
   const hasSkippedQuestions = useSurveyProgressStore(
     (state) => state.skippedQuestionIds.length > 0,
   );
   const top = data?.topRecommendation;
 
-  // 배경은 top_recommendation.background_url만 사용. 없으면 surface 단색 + 그라데이션 fallback.
-  // 카피·CTA는 데이터와 무관하게 항상 렌더된다(개인화 카피는 하드코딩 유지).
-  const backgroundUrl = top?.backgroundUrl;
-  const hasCover = Boolean(backgroundUrl);
   // 1순위 상세 이동 — 게임 id가 있을 때만 실제 경로, 없으면(로딩 등) 추천 목록으로 폴백.
   const detailTo = top ? `/games/${top.gameId}` : '/recommendations';
 
   return (
     <section className={styles.section} aria-label="당신을 위한 1순위 추천">
-      {/* ① 배경: 1순위 커버 이미지(런타임 url) 또는 surface 단색 */}
-      <div
-        className={styles.bgLayer}
-        style={
-          hasCover ? { backgroundImage: `url(${backgroundUrl})` } : undefined
-        }
-        aria-hidden="true"
-      />
+      {/* ① 배경: 단색 fallback + 그 위 이미지 캐러셀(이미지 없으면 단색만 노출) */}
+      <div className={styles.bgLayer} aria-hidden="true" />
+      <HeroBackgroundCarousel images={bannerImages} />
 
       {/* ② 그라데이션 오버레이 */}
       <div className={styles.overlay} aria-hidden="true" />
