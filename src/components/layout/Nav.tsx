@@ -29,6 +29,7 @@ const linkBase = css({
   fontWeight: 'medium',
   color: 'fg.muted',
   textDecoration: 'none',
+  whiteSpace: 'nowrap',
   py: '2',
   transition: 'color {durations.fast}',
   _hover: { color: 'fg.default' },
