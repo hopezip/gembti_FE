@@ -107,13 +107,14 @@ export function MyPage() {
     >
       <ProfileHeader profile={profile} />
 
-      {/* 3컬럼 동등 크기 */}
+      {/* 3컬럼 동등 크기 (모바일 ≤768px: 1열 — RESPONSIVE-FE-001) */}
       <div
         className={css({
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '4',
           alignItems: 'stretch',
+          '@media (max-width: 768px)': { gridTemplateColumns: '1fr' },
         })}
       >
         <BasicInfoCard profile={profile} />

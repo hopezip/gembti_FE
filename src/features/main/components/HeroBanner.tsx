@@ -24,6 +24,8 @@ const styles = {
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
+    // 모바일(≤768px): 높이를 줄여 과한 빈 공간 방지(데스크탑 전용 예외 — RESPONSIVE-FE-001).
+    '@media (max-width: 768px)': { minH: '380px' },
   }),
   // ① 배경 레이어 — 단색 fallback. 실제 배경은 위에 겹치는 HeroBackgroundCarousel이 담당(MAIN-FE-009).
   bgLayer: css({
@@ -55,6 +57,8 @@ const styles = {
   headline: css({
     textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
+    // 모바일(≤768px): 54px는 너무 커서 30px(6xl)로 축소(RESPONSIVE-FE-001).
+    '@media (max-width: 768px)': { fontSize: '6xl', lineHeight: 'tight' },
   }),
   accentWord: css({ color: 'accent.default' }),
   subcopy: css({
@@ -67,6 +71,9 @@ const styles = {
     alignItems: 'center',
     gap: '3',
     mt: '8',
+    // CTA가 좁은 폭에서 가로로 넘쳐 잘리지 않도록 줄바꿈 허용(RESPONSIVE-FE-001).
+    flexWrap: 'wrap',
+    '@media (max-width: 768px)': { gap: '2', mt: '6' },
   }),
   // CTA hover 시 살짝 떠오르는 피드백(기존 durations 토큰만 사용).
   ctaLift: css({
