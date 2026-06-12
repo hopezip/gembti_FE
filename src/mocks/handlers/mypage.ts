@@ -145,12 +145,7 @@ export const mypageHandlers = [
     return HttpResponse.json(MOCK_PROFILE);
   }),
 
-  http.post('*/api/v1/mypage/steam/sync', async () => {
-    await new Promise((r) => setTimeout(r, 1500));
-    MOCK_PROFILE.steamSyncedAt = new Date().toISOString();
-    return HttpResponse.json(MOCK_PROFILE);
-  }),
-
+  // /mypage/steam/sync 핸들러 제거됨(MYPAGE-FE-008): 재동기화는 실서버 POST /steam/sync로 이전.
   http.post('*/api/v1/mypage/steam/disconnect', () => {
     MOCK_PROFILE.steamConnected = false;
     MOCK_PROFILE.steamId = null;

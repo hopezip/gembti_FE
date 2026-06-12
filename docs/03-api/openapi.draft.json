@@ -275,25 +275,6 @@
         }
       }
     },
-    "/api/v1/mypage/steam/sync": {
-      "x-status": "frontend-draft",
-      "post": {
-        "tags": ["MyPage"],
-        "summary": "스팀 동기화 (MYPAGE-FE-002)",
-        "operationId": "post_mypage_steam_sync_api_v1_mypage_steam_sync_post",
-        "security": [{ "HTTPBearer": [] }],
-        "responses": {
-          "200": {
-            "description": "동기화 후 프로필",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/MyPageProfile" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/mypage/steam/disconnect": {
       "x-status": "frontend-draft",
       "post": {
