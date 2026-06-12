@@ -5,7 +5,6 @@ import { LoginPage } from './LoginPage';
 import { MainPage } from './MainPage';
 import { MyPage } from './MyPage';
 import { NotFoundPage } from './NotFoundPage';
-import { ProfileEditPage } from './ProfileEditPage';
 import { RecommendationsPage } from './RecommendationsPage';
 import { SearchPage } from './SearchPage';
 import { SignupPage } from './SignupPage';
@@ -59,7 +58,6 @@ const mvpRoutes: RouteDef[] = [
 // 커뮤니티(`/community*` 7개)는 MVP 구현 생략(보류, scaffold 유지)으로 라우트 미노출 — TASK-DEVEX-016.
 const extraRoutes: RouteDef[] = [
   { title: '마이페이지', path: '/mypage', access: 'Auth' },
-  { title: '프로필 편집', path: '/mypage/edit', access: 'Auth' },
   { title: '타인 프로필', path: '/users/:userId', access: 'Public' },
 ];
 
@@ -84,7 +82,6 @@ function pageElement({ title, path, access }: RouteDef) {
   if (path === '/survey/loading') return <SurveyAnalysisLoadingPage />;
   if (path === '/survey/result') return <SurveyResultPage />;
   if (path === '/mypage') return <MyPage />;
-  if (path === '/mypage/edit') return <ProfileEditPage />;
   return <PlaceholderPage title={title} route={path} access={access} />;
 }
 

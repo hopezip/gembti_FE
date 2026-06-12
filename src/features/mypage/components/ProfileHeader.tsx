@@ -1,7 +1,5 @@
-import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -10,7 +8,6 @@ interface Props {
 
 export function ProfileHeader({ profile }: Props) {
   const { nickname, avatarUrl, stats } = profile;
-  const navigate = useNavigate();
 
   const statItems = [
     { label: '보유', value: stats.following },
@@ -63,14 +60,6 @@ export function ProfileHeader({ profile }: Props) {
           ))}
         </div>
       </div>
-
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => navigate('/mypage/edit')}
-      >
-        프로필 편집
-      </Button>
     </div>
   );
 }
