@@ -6,10 +6,7 @@
 //   응답 타입은 한시적 mock 핸들러 타입을 재사용한다(백엔드 계약 확정 시 자동 생성물로 교체 예정).
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
-import type {
-  MockLibraryItem,
-  MockUserProfile,
-} from '@/mocks/handlers/mypage';
+import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
 
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
 //   통계·성향·관심장르·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
