@@ -6,11 +6,7 @@
 //   응답 타입은 한시적 mock 핸들러 타입을 재사용한다(백엔드 계약 확정 시 자동 생성물로 교체 예정).
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
-import type {
-  MockFollowUser,
-  MockLibraryItem,
-  MockUserProfile,
-} from '@/mocks/handlers/mypage';
+import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
 
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
 //   통계·성향·관심장르·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
@@ -117,22 +113,4 @@ export function getLibrary(query: LibraryQuery): Promise<LibraryResponse> {
     .json<LibraryResponse>();
 }
 
-// GET /api/v1/mypage/following — 내가 팔로우하는 사용자 목록.
-export function getFollowing(): Promise<{ users: MockFollowUser[] }> {
-  return api.get('api/v1/mypage/following').json<{ users: MockFollowUser[] }>();
-}
-
-// GET /api/v1/mypage/followers — 나를 팔로우하는 사용자 목록.
-export function getFollowers(): Promise<{ users: MockFollowUser[] }> {
-  return api.get('api/v1/mypage/followers').json<{ users: MockFollowUser[] }>();
-}
-
-// POST /api/v1/mypage/follow/{userId} — 팔로우.
-export function followUser(userId: string): Promise<unknown> {
-  return api.post(`api/v1/mypage/follow/${userId}`).json();
-}
-
-// DELETE /api/v1/mypage/follow/{userId} — 언팔로우.
-export function unfollowUser(userId: string): Promise<unknown> {
-  return api.delete(`api/v1/mypage/follow/${userId}`).json();
-}
+// 팔로잉/팔로워/팔로우/언팔로우 API 제거됨 (MYPAGE-FE-006): 팔로우 기능 미사용으로 폐기.

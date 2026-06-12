@@ -60,7 +60,6 @@ const mvpRoutes: RouteDef[] = [
 const extraRoutes: RouteDef[] = [
   { title: '마이페이지', path: '/mypage', access: 'Auth' },
   { title: '프로필 편집', path: '/mypage/edit', access: 'Auth' },
-  { title: '팔로우 리스트', path: '/mypage/follow', access: 'Auth' },
   { title: '타인 프로필', path: '/users/:userId', access: 'Public' },
 ];
 
