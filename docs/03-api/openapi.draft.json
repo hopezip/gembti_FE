@@ -358,95 +358,6 @@
         }
       }
     },
-    "/api/v1/mypage/following": {
-      "x-status": "frontend-draft",
-      "get": {
-        "tags": ["MyPage"],
-        "summary": "팔로잉 목록 (MYPAGE-FE-007)",
-        "operationId": "get_mypage_following_api_v1_mypage_following_get",
-        "security": [{ "HTTPBearer": [] }],
-        "responses": {
-          "200": {
-            "description": "팔로잉 목록",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/FollowUserList" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/mypage/followers": {
-      "x-status": "frontend-draft",
-      "get": {
-        "tags": ["MyPage"],
-        "summary": "팔로워 목록 (MYPAGE-FE-007)",
-        "operationId": "get_mypage_followers_api_v1_mypage_followers_get",
-        "security": [{ "HTTPBearer": [] }],
-        "responses": {
-          "200": {
-            "description": "팔로워 목록",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/FollowUserList" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/mypage/follow/{userId}": {
-      "x-status": "frontend-draft",
-      "post": {
-        "tags": ["MyPage"],
-        "summary": "팔로우 (MYPAGE-FE-007)",
-        "operationId": "post_mypage_follow_api_v1_mypage_follow_userId_post",
-        "security": [{ "HTTPBearer": [] }],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "팔로우 결과",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/OkResponse" }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["MyPage"],
-        "summary": "언팔로우 (MYPAGE-FE-007)",
-        "operationId": "delete_mypage_follow_api_v1_mypage_follow_userId_delete",
-        "security": [{ "HTTPBearer": [] }],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "언팔로우 결과",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/OkResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/users/check-nickname": {
       "x-status": "frontend-draft",
       "get": {
@@ -1037,39 +948,6 @@
           },
           "hasMore": { "type": "boolean" },
           "allGenres": { "type": "array", "items": { "type": "string" } }
-        }
-      },
-      "FollowUser": {
-        "type": "object",
-        "required": [
-          "id",
-          "nickname",
-          "handle",
-          "avatarColor",
-          "bio",
-          "genres",
-          "isMutualFollow",
-          "isFollowing"
-        ],
-        "properties": {
-          "id": { "type": "string" },
-          "nickname": { "type": "string" },
-          "handle": { "type": "string" },
-          "avatarColor": { "type": "string" },
-          "bio": { "type": "string" },
-          "genres": { "type": "array", "items": { "type": "string" } },
-          "isMutualFollow": { "type": "boolean" },
-          "isFollowing": { "type": "boolean" }
-        }
-      },
-      "FollowUserList": {
-        "type": "object",
-        "required": ["users"],
-        "properties": {
-          "users": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/FollowUser" }
-          }
         }
       },
       "OkResponse": {
