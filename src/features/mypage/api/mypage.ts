@@ -7,7 +7,6 @@
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
 import type {
-  MockFollowUser,
   MockLibraryItem,
   MockUserProfile,
 } from '@/mocks/handlers/mypage';
