@@ -16,18 +16,20 @@ const DEFAULT_PAGE_SIZE = 12;
 const styles = {
   grid: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    // minmax(0, 1fr): 1fr의 기본 최소값(min-content)이 nowrap 긴 제목에 밀려 트랙을 넓히는 것을 막아
+    // 모든 칸을 정확히 균등하게 만든다(긴 제목은 의도대로 ellipsis 처리).
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     columnGap: '6', // Figma 카드 가로 간격 24px
     rowGap: '6', // 카드 아래 여백 24px
     // 데스크탑 전용 — 1100px 미만에서는 1열로 떨어뜨려 카드 찌부러짐 방지.
-    '@media (max-width: 1100px)': { gridTemplateColumns: '1fr' },
+    '@media (max-width: 1100px)': { gridTemplateColumns: 'minmax(0, 1fr)' },
   }),
   // 스켈레톤은 텍스트가 없어 행간 0이면 붙어 보이므로 별도 그리드로 24px 간격을 준다.
   skeletonGrid: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     gap: '6',
-    '@media (max-width: 1100px)': { gridTemplateColumns: '1fr' },
+    '@media (max-width: 1100px)': { gridTemplateColumns: 'minmax(0, 1fr)' },
   }),
   heading: css({
     textStyle: 'heading.h3',
