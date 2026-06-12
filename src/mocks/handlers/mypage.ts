@@ -225,10 +225,8 @@ export const mypageHandlers = [
     return HttpResponse.json({ available });
   }),
 
-  http.get('*/api/v1/mypage/profile', () => {
-    return HttpResponse.json(MOCK_PROFILE);
-  }),
-
+  // GET /mypage/profile 핸들러 제거됨(MYPAGE-FE-005): 프로필 조회는 실서버 auth/me로 이전했다.
+  //   PATCH(프로필 수정 저장)는 백엔드 미구현이라 계속 mock으로 둔다.
   http.patch('*/api/v1/mypage/profile', async ({ request }) => {
     const patch = (await request.json()) as Partial<MockUserProfile>;
     Object.assign(MOCK_PROFILE, patch);

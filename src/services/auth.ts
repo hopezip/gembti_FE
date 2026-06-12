@@ -298,3 +298,10 @@ export async function getMe(accessToken?: string): Promise<AuthUser> {
     .json<UserResponse>();
   return mapAuthUser(res);
 }
+
+// auth/me 원본 응답(UserResponse 전체)을 그대로 반환한다 (MYPAGE-FE-005).
+//   getMe()의 AuthUser(4필드)로는 부족한 마이페이지 프로필(bio·스팀 연동 필드)을 위해 원본이 필요하다.
+//   매핑은 소비 도메인(features/mypage)이 담당한다 — AuthUser 계약을 건드리지 않아 auth 회귀가 없다.
+export async function getMeRaw(): Promise<UserResponse> {
+  return api.get('api/v1/auth/me').json<UserResponse>();
+}
