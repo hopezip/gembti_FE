@@ -17,6 +17,7 @@ export type SteamLinkRequest = components['schemas']['SteamLinkRequest'];
 export type SteamLinkResponse = components['schemas']['SteamLinkResponse'];
 export type SteamStatusResponse = components['schemas']['SteamStatusResponse'];
 export type SteamSyncStatus = components['schemas']['SteamSyncStatus'];
+export type SteamSyncResponse = components['schemas']['SteamSyncResponse'];
 
 // 스팀 계정 연동. steam_id는 17자리 숫자 문자열(SteamID64).
 export function linkSteam(body: SteamLinkRequest): Promise<SteamLinkResponse> {
@@ -28,4 +29,10 @@ export function linkSteam(body: SteamLinkRequest): Promise<SteamLinkResponse> {
 // 현재 스팀 연동 상태 조회. 미연동이면 steam_linked=false + nullable 필드들이 null.
 export function getSteamStatus(): Promise<SteamStatusResponse> {
   return api.get('api/v1/steam/status').json<SteamStatusResponse>();
+}
+
+// 스팀 라이브러리 수동 재동기화(마이페이지). 백엔드가 재동기화를 수행하고 결과 요약을 반환한다.
+//   (MSW 미등록이라 실서버로 직결된다.) 화면의 최종 동기화 시각 등은 호출부가 프로필을 갱신해 반영한다.
+export function syncSteamLibrary(): Promise<SteamSyncResponse> {
+  return api.post('api/v1/steam/sync').json<SteamSyncResponse>();
 }

@@ -4,7 +4,8 @@ import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
-import { disconnectSteam, syncSteam } from '@/features/mypage/api/mypage';
+import { disconnectSteam } from '@/features/mypage/api/mypage';
+import { syncSteamLibrary } from '@/lib/api/steam';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -27,9 +28,11 @@ export function SteamConnectCard({ profile }: Props) {
   const navigate = useNavigate();
 
   const syncMutation = useMutation({
-    mutationFn: syncSteam,
-    onSuccess: (updated) => {
-      queryClient.setQueryData(['mypage', 'profile'], updated);
+    mutationFn: syncSteamLibrary,
+    // 실 sync 응답은 프로필 전체가 아니므로(요약만), 프로필(auth/me 기반)을 무효화해
+    // 최종 동기화 시각 등을 재조회로 갱신한다.
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
     },
   });
 

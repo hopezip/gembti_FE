@@ -89,12 +89,9 @@ export function updateMyProfile(
     .json<MockUserProfile>();
 }
 
-// POST /api/v1/mypage/steam/sync — Steam 라이브러리 수동 재동기화.
-export function syncSteam(): Promise<MockUserProfile> {
-  return api.post('api/v1/mypage/steam/sync').json<MockUserProfile>();
-}
+// 스팀 수동 재동기화는 실 API(POST /api/v1/steam/sync, lib/api/steam.syncSteamLibrary)로 이전됨 (MYPAGE-FE-008).
 
-// POST /api/v1/mypage/steam/disconnect — Steam 연동 해제.
+// POST /api/v1/mypage/steam/disconnect — Steam 연동 해제(백엔드 미구현, mock 유지).
 export function disconnectSteam(): Promise<MockUserProfile> {
   return api.post('api/v1/mypage/steam/disconnect').json<MockUserProfile>();
 }
