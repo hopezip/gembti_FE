@@ -37,7 +37,7 @@ describe('라우트 골격', () => {
   it('대표 Public 경로(/search)가 SearchPage를 렌더한다', () => {
     renderAt('/search');
     expect(
-      screen.getByPlaceholderText('게임, 장르, 태그 검색'),
+      screen.getByRole('searchbox', { name: '게임 검색' }),
     ).toBeInTheDocument();
   });
 
@@ -211,7 +211,7 @@ describe('라우트 골격', () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument(); // <footer>
     // 페이지 콘텐츠도 함께 렌더(셸이 페이지를 덮어쓰지 않음).
     expect(
-      screen.getByPlaceholderText('게임, 장르, 태그 검색'),
+      screen.getByRole('searchbox', { name: '게임 검색' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '설문조사' }),

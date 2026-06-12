@@ -1,5 +1,5 @@
 import { css } from 'styled-system/css';
-import { Avatar } from '@/components/ui/Avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function ProfileHeader({ profile }: Props) {
-  const { nickname, avatarUrl, stats } = profile;
+  const { nickname, stats } = profile;
 
   const statItems = [
     { label: '보유', value: stats.following },
@@ -28,7 +28,7 @@ export function ProfileHeader({ profile }: Props) {
         borderColor: 'border.default',
       })}
     >
-      <Avatar size="xl" src={avatarUrl ?? undefined} name={nickname} />
+      <ProfileAvatar size="profile" />
 
       <div className={css({ flex: 1, minW: 0 })}>
         <p
