@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
-import { Input } from '@/components/ui/Input';
+import { SearchInput } from '@/components/ui/SearchInput';
 import { GameSummaryCard } from '@/features/game/components/GameSummaryCard';
 import { SearchFilterBox } from '@/features/game/components/SearchFilterBox';
 import {
@@ -25,23 +25,6 @@ const styles = {
     py: '8',
     display: 'flex',
     flexDirection: 'column',
-  }),
-  searchWrap: css({
-    position: 'relative',
-  }),
-  searchIcon: css({
-    position: 'absolute',
-    left: '4',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    // Input recipe의 불투명 bg(bg.surface)가 DOM상 뒤에 그려져 아이콘을 덮으므로 위로 올린다.
-    zIndex: '1',
-    fontSize: 'lg',
-    color: 'fg.subtle',
-    pointerEvents: 'none',
-  }),
-  searchInput: css({
-    pl: '12',
   }),
   resultText: css({
     mt: '3',
@@ -201,19 +184,13 @@ export function SearchPage() {
       <PageContainer className={styles.page}>
         {/* 검색창 */}
         <form onSubmit={handleSubmit}>
-          <div className={styles.searchWrap}>
-            <span className={styles.searchIcon} aria-hidden="true">
-              🔍
-            </span>
-            <Input
-              size="lg"
-              type="search"
-              placeholder="게임, 장르, 태그 검색"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className={styles.searchInput}
-            />
-          </div>
+          <SearchInput
+            size="lg"
+            aria-label="게임 검색"
+            placeholder="게임, 장르, 태그 검색"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
         </form>
 
         {/* 결과 텍스트 */}

@@ -5,7 +5,7 @@ import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
-import { Input } from '@/components/ui/Input';
+import { SearchInput } from '@/components/ui/SearchInput';
 import { getLibrary } from '@/features/mypage/api/mypage';
 import type { MockLibraryItem } from '@/mocks/handlers/mypage';
 
@@ -237,20 +237,14 @@ export function LibrarySection() {
         </div>
 
         {/* 검색 */}
-        <form
-          onSubmit={handleSearch}
-          className={css({ display: 'flex', gap: '1', alignItems: 'center' })}
-        >
-          <Input
+        <form onSubmit={handleSearch} className={css({ w: '52' })}>
+          <SearchInput
             size="sm"
+            aria-label="내 라이브러리 검색"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="내 라이브러리에서 검색..."
-            className={css({ w: '52' })}
           />
-          <Button variant="primary" size="sm" type="submit">
-            🔍
-          </Button>
         </form>
       </div>
 

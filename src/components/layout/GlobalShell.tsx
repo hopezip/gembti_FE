@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { ScrollToTopButton } from './ScrollToTopButton';
 import { Toaster } from '@/components/ui/Toast';
 
 // 글로벌 셸 (DESIGN_SYSTEM 4.1) — 모든 라우트를 감싸는 공통 레이아웃 라우트의 element.
@@ -33,11 +34,13 @@ export function GlobalShell() {
           minW: '0',
           display: 'flex',
           flexDirection: 'column',
+          pb: { base: 'calc(64px + env(safe-area-inset-bottom))', sm: '0' },
         })}
       >
         <Outlet />
       </div>
       <Footer />
+      <ScrollToTopButton />
       <Toaster />
     </div>
   );

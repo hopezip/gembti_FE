@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { css } from 'styled-system/css';
 import type { MockGame } from '@/mocks/handlers/games';
 import { GameSummaryCard } from './GameSummaryCard';
@@ -37,7 +38,11 @@ export function SearchEmptyState({
           gap: '3',
         })}
       >
-        <span className={css({ fontSize: '4xl', lineHeight: '1' })}>🔍</span>
+        <Search
+          size={28}
+          aria-hidden="true"
+          className={css({ color: 'fg.subtle' })}
+        />
         <p
           className={css({
             fontSize: 'xl',
@@ -83,9 +88,7 @@ export function SearchEmptyState({
               _hover: { borderColor: 'border.emphasized' },
             })}
           >
-            <span className={css({ color: 'fg.subtle', fontSize: 'xs' })}>
-              ●
-            </span>
+            <Search size={14} aria-hidden="true" />
             {suggestion}
           </button>
           <button
