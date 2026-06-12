@@ -62,12 +62,20 @@ export function useGuestHome() {
     queryKey: ['home', 'guest'],
     // TanStack Query가 주는 signal을 ky에 연결 — 언마운트/리페치 시 진행 중 요청 취소.
     queryFn: async ({ signal }) => {
+      // limit 미지정 시 백엔드가 12개만 줘서 그리드 더보기(>12) 조건을 못 넘긴다.
+      // 백엔드 상한(50)을 요청해 가능한 만큼 받아오고, 노출/더보기는 GameGridSection이 클라이언트에서 처리한다.
       const [trending, newReleases] = await Promise.all([
         api
-          .get('api/v1/games/trending', { signal })
+          .get('api/v1/games/trending', {
+            searchParams: { limit: 50 },
+            signal,
+          })
           .json<TrendingGamesResponse>(),
         api
-          .get('api/v1/games/new-releases', { signal })
+          .get('api/v1/games/new-releases', {
+            searchParams: { limit: 50 },
+            signal,
+          })
           .json<NewReleasesResponse>(),
       ]);
       return {
