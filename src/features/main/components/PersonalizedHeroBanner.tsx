@@ -24,6 +24,8 @@ const styles = {
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
+    // 모바일(≤768px): 높이 축소(데스크탑 전용 예외 — RESPONSIVE-FE-001).
+    '@media (max-width: 768px)': { minH: '380px' },
   }),
   // ① 배경 레이어 — 단색 fallback. 실제 배경은 위에 겹치는 HeroBackgroundCarousel이 담당(MAIN-FE-009).
   bgLayer: css({
@@ -82,11 +84,15 @@ const styles = {
     color: 'fg.default',
     letterSpacing: '-0.3px',
     mb: '2',
+    // 모바일(≤768px): 20px로 축소(RESPONSIVE-FE-001).
+    '@media (max-width: 768px)': { fontSize: '3xl' },
   }),
   // 큰 헤드라인(h1) — 30px Black, 자간 좁힘.
   headline: css({
     textStyle: 'heading.h1', // 30px extrabold(Figma 32px에 가장 근접한 토큰)
     color: 'fg.default',
+    // 모바일(≤768px): 24px로 축소(RESPONSIVE-FE-001).
+    '@media (max-width: 768px)': { fontSize: '5xl' },
   }),
   accentWord: css({ color: 'accent.default' }),
   subcopy: css({
@@ -99,6 +105,9 @@ const styles = {
     alignItems: 'center',
     gap: '3',
     mt: '8',
+    // CTA가 좁은 폭에서 잘리지 않도록 줄바꿈 허용(RESPONSIVE-FE-001).
+    flexWrap: 'wrap',
+    '@media (max-width: 768px)': { gap: '2', mt: '6' },
   }),
   // CTA hover 시 살짝 떠오르는 피드백(기존 durations 토큰만 사용).
   ctaLift: css({
