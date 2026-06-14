@@ -75,6 +75,13 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 'medium',
     _hover: { bg: 'bg.surfaceRaised', borderColor: 'accent.default' },
+    _disabled: {
+      cursor: 'default',
+      color: 'fg.subtle',
+      borderColor: 'border.default',
+      opacity: '0.7',
+      _hover: { bg: 'bg.surface', borderColor: 'border.default' },
+    },
   }),
 };
 
@@ -93,6 +100,8 @@ interface GameGridSectionProps<T> {
   emptyText: string;
   /** 초기 노출 개수 + 더보기 클릭당 추가 노출 개수. 미지정 시 12(기존 호출부 무영향). 게임 상세 카드 섹션은 4 전달. */
   pageSize?: number;
+  /** 모든 항목을 노출한 뒤에도 더보기 버튼 자리를 유지한다. */
+  persistMoreButton?: boolean;
 }
 
 export function GameGridSection<T>({
@@ -104,6 +113,7 @@ export function GameGridSection<T>({
   errorText,
   emptyText,
   pageSize = DEFAULT_PAGE_SIZE,
+  persistMoreButton = false,
 }: GameGridSectionProps<T>) {
   const [visible, setVisible] = useState(pageSize);
 
@@ -142,7 +152,7 @@ export function GameGridSection<T>({
             {shown.map((game) => renderCard(game))}
           </div>
 
-          {hasMore && (
+          {(hasMore || persistMoreButton) && (
             <div className={styles.moreRow}>
               <button
                 type="button"
@@ -152,8 +162,9 @@ export function GameGridSection<T>({
                 }
                 className={styles.moreButton}
                 aria-label={`${title} 더 보기`}
+                disabled={!hasMore}
               >
-                더 보기 ↓
+                {hasMore ? '더 보기 ↓' : '모두 불러왔어요'}
               </button>
             </div>
           )}

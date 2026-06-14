@@ -23,6 +23,7 @@ export function PersonalizedRecommendedGames() {
           key={game.gameId}
           title={game.title}
           thumbnailUrl={game.thumbnailUrl}
+          imageBadge={`취향률 ${game.matchRate}%`}
           reasonTagline={game.reasonTagline}
         />
       )}
