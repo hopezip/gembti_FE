@@ -1,103 +1,121 @@
 import { Link } from 'react-router-dom';
 import { css } from 'styled-system/css';
-import { button } from 'styled-system/recipes';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { RecommendedGames } from '@/features/main/components/RecommendedGames';
+import { Button } from '@/components/ui/Button';
 
-// REC-GUEST-FE-001 게스트(비로그인/설문미완) 추천 섹션.
-// /recommendations는 Public이라 비인증도 진입한다. 개인화 데이터가 없는 상태에서도
-// 인기 기반 추천(useGuestHome.trendingGames)을 RecommendedGames로 그대로 노출하고,
-// 상단에 로그인/설문 유도 CTA 배너를 둔다(이전 RecommendationsGate의 분기 문구를 흡수).
-// 개인화 컴포넌트(usePersonalizedHome)는 여기서 렌더하지 않으므로 로그아웃 후 캐시 노출 누출이 없다.
-// 두 분기: ① 비로그인 → 로그인 유도, ② 로그인했으나 설문 미완 → 설문 유도.
-// 색은 semantic token만, 신규 토큰/recipe 없음. 다크·데스크탑 전용.
-
-const styles = {
-  // 헤더 — 페이지 주제(인기 추천). 좌우 거터·maxW는 PageContainer 소유.
-  header: css({
-    pt: '12', // 48px
-    pb: '2',
-  }),
-  title: css({
-    textStyle: 'heading.h1', // 30px extrabold
-    color: 'fg.default',
-  }),
-  // CTA 배너 — 헤더 아래. surface 박스에 안내 문구(좌) + 버튼(우).
-  banner: css({
+const loginStyles = {
+  page: css({
+    flex: '1',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '6',
-    flexWrap: 'wrap', // 1100px 미만 fallback에서 줄바꿈 허용.
-    mt: '5',
-    p: '6',
-    bg: 'bg.surface',
-    border: '1px solid',
-    borderColor: 'border.default',
-    borderRadius: 'xl',
+    justifyContent: 'center',
+    py: { base: '4', md: '16' },
+    px: '6',
   }),
-  bannerText: css({
+  card: css({
+    display: 'flex',
+    flexDirection: { base: 'column', md: 'row' },
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: { base: '5', md: '16' },
+    w: 'full',
+    maxW: { base: '400px', md: '860px' },
+    bg: 'transparent',
+    border: 'none',
+    p: { base: '8', md: '0' },
+  }),
+  mascot: css({
+    w: { base: '180px', md: '300px' },
+    flexShrink: 0,
+    objectFit: 'contain',
+  }),
+  content: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: '1',
+    gap: { base: '4', md: '5' },
+    alignItems: { base: 'center', md: 'flex-start' },
+    textAlign: { base: 'center', md: 'start' },
+    w: { base: 'full', md: 'auto' },
   }),
-  bannerTitle: css({
-    fontSize: 'xl', // 16px
-    fontWeight: 'bold',
+  title: css({
+    fontSize: { base: '2xl', md: '4xl' },
+    fontWeight: 'extrabold',
     color: 'fg.default',
+    lineHeight: 'tight',
   }),
-  bannerDesc: css({
-    textStyle: 'body.sm',
+  accent: css({ color: 'accent.default' }),
+  desc: css({
+    fontSize: { base: 'md', md: 'lg' },
     color: 'fg.muted',
+    lineHeight: 'relaxed',
+  }),
+  btnWrap: css({
+    mt: { base: '0', md: '2' },
+    w: { base: 'full', md: 'auto' },
   }),
 };
-
-// 분기별 CTA 문구·이동 경로. 비로그인=로그인 유도 / 로그인+설문미완=설문 유도.
-function ctaContent(isAuthenticated: boolean) {
-  if (isAuthenticated) {
-    return {
-      title: '취향 분석을 완료하고 개인화 추천을 받아보세요',
-      desc: '설문으로 취향을 분석하면 매칭률 기반 추천을 보여드려요.',
-      to: '/survey',
-      label: '설문 시작하기',
-    };
-  }
-  return {
-    title: '로그인하고 나만의 게임 추천을 받아보세요',
-    desc: '로그인 후 취향 분석을 완료하면 매칭률 기반 개인화 추천을 보여드려요.',
-    to: '/login',
-    label: '로그인하기',
-  };
-}
 
 export function GuestRecommendations({
   isAuthenticated,
 }: {
   isAuthenticated: boolean;
 }) {
-  const cta = ctaContent(isAuthenticated);
+  if (!isAuthenticated) {
+    return (
+      <div className={loginStyles.page}>
+        <div className={loginStyles.card}>
+          <img
+            src="/images/gami-guide.png"
+            alt="감비 캐릭터"
+            className={loginStyles.mascot}
+          />
+          <div className={loginStyles.content}>
+            <h1 className={loginStyles.title}>
+              <span className={loginStyles.accent}>취향 맞춤</span> 게임 추천,
+              <br />
+              지금 바로 받아보세요
+            </h1>
+            <p className={loginStyles.desc}>
+              로그인 후 취향 분석을 완료하면
+              <br />
+              나만을 위한 게임 추천을 바로 받을 수 있어요.
+            </p>
+            <div className={loginStyles.btnWrap}>
+              <Button variant="primary" size="lg" asChild>
+                <Link to="/login">로그인하고 추천받기 ›</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <PageContainer className={styles.header}>
-        <h1 className={styles.title}>지금 인기 있는 게임</h1>
-        {/* CTA 배너 — landmark로 노출(aria-label). 제목/설명은 문단으로, heading 레벨 점프를 피한다. */}
-        <section className={styles.banner} aria-label="맞춤 추천 안내">
-          <div className={styles.bannerText}>
-            <p className={styles.bannerTitle}>{cta.title}</p>
-            <p className={styles.bannerDesc}>{cta.desc}</p>
+    <div className={loginStyles.page}>
+      <div className={loginStyles.card}>
+        <img
+          src="/images/gami-guide.png"
+          alt="감비 캐릭터"
+          className={loginStyles.mascot}
+        />
+        <div className={loginStyles.content}>
+          <h1 className={loginStyles.title}>
+            <span className={loginStyles.accent}>취향 분석</span>을 완료하면
+            <br />
+            맞춤 추천을 받을 수 있어요
+          </h1>
+          <p className={loginStyles.desc}>
+            간단한 설문으로 취향을 분석하면
+            <br />
+            나만을 위한 게임 추천을 바로 받을 수 있어요.
+          </p>
+          <div className={loginStyles.btnWrap}>
+            <Button variant="primary" size="lg" asChild>
+              <Link to="/survey">설문조사 진행하기 ›</Link>
+            </Button>
           </div>
-          <Link
-            to={cta.to}
-            className={button({ variant: 'primary', size: 'md' })}
-          >
-            {cta.label}
-          </Link>
-        </section>
-      </PageContainer>
-
-      {/* 인기 기반 추천 그리드 — 데이터·로딩·에러·빈·더보기는 RecommendedGames/GameGridSection이 소유. */}
-      <RecommendedGames />
-    </>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -23,7 +23,6 @@ export function PersonalizedRecommendedGames() {
           key={game.gameId}
           title={game.title}
           thumbnailUrl={game.thumbnailUrl}
-          matchRate={game.matchRate}
           reasonTagline={game.reasonTagline}
         />
       )}

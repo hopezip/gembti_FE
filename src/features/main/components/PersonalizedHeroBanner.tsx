@@ -5,7 +5,6 @@ import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
 import { useBannerImages } from '@/features/main/api/bannerImages';
 import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroundCarousel';
 import { usePersonalizedHome } from '@/features/main/api/personalizedHome';
-import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
 
 // MAIN-FE-006 개인화 메인 Hero 배너 (Figma Hero 387:5567).
 // 구조(3층): ① 배경(top_recommendation.background_url 또는 그라데이션 placeholder)
@@ -120,10 +119,6 @@ export function PersonalizedHeroBanner() {
   const { data } = usePersonalizedHome();
   // 배경은 캐러셀(인기 상위 5개 커버, 10초 자동 전환)이 담당한다 (MAIN-FE-009).
   const bannerImages = useBannerImages();
-  // 건너뛴 문항이 존재하는 경우 설문 이어하기 버튼을 노출한다.
-  const hasSkippedQuestions = useSurveyProgressStore(
-    (state) => state.skippedQuestionIds.length > 0,
-  );
   const top = data?.topRecommendation;
 
   // 1순위 상세 이동 — 게임 id가 있을 때만 실제 경로, 없으면(로딩 등) 추천 목록으로 폴백.
@@ -184,18 +179,6 @@ export function PersonalizedHeroBanner() {
               >
                 다른 추천
               </Link>
-              {hasSkippedQuestions && (
-                // 임시 저장된 설문 응답을 이어서 진행할 수 있도록 설문 페이지로 이동한다.
-                <Link
-                  to="/survey"
-                  className={cx(
-                    button({ variant: 'secondary', size: 'md' }),
-                    styles.ctaLift,
-                  )}
-                >
-                  설문 이어하기
-                </Link>
-              )}
             </div>
           </div>
         </div>

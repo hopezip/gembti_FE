@@ -93,7 +93,6 @@ export function RecommendationHero() {
   const likedTags = data?.userInterestTags ?? [];
   const profile = data?.recommendationProfile;
   const challengeTags = profile?.challengeTags ?? [];
-  const lastUpdatedText = profile?.lastUpdatedText;
 
   return (
     <PageContainer className={styles.section}>
@@ -103,11 +102,7 @@ export function RecommendationHero() {
         <span className={styles.accentWord}>다음 게임</span>을 골라봤어요
       </h1>
 
-      {/* 메타 캡션 — 마지막 업데이트는 값 있을 때만 덧붙인다(항상 렌더되는 앞부분 + 조건부 뒷부분). */}
-      <p className={styles.meta}>
-        현재 취향 기준 추천
-        {lastUpdatedText ? ` · 마지막 업데이트 ${lastUpdatedText}` : ''}
-      </p>
+      <p className={styles.meta}>현재 취향 기준 추천</p>
 
       {/* 취향 2그룹 — 칩이 하나라도 있는 그룹만 렌더(데이터 의존부). */}
       {(likedTags.length > 0 || challengeTags.length > 0) && (
