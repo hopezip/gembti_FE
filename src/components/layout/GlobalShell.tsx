@@ -34,7 +34,7 @@ export function GlobalShell() {
           minW: '0',
           display: 'flex',
           flexDirection: 'column',
-          pb: { base: 'calc(64px + env(safe-area-inset-bottom))', sm: '0' },
+          pb: '0',
         })}
       >
         <Outlet />

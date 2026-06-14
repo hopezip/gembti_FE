@@ -34,10 +34,7 @@ export function ScrollToTopButton() {
       className={css({
         position: 'fixed',
         right: { base: '4', sm: '6' },
-        bottom: {
-          base: 'calc(64px + env(safe-area-inset-bottom) + 16px)',
-          sm: '6',
-        },
+        bottom: '6',
         zIndex: 'modal',
         display: 'inline-flex',
         alignItems: 'center',
