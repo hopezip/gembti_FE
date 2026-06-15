@@ -138,21 +138,21 @@ export function GameInfoTable({ detail }: GameInfoTableProps): JSX.Element {
         {/* 장르 — 배열을 ' · '로 join. */}
         <div className={styles.row}>
           <dt className={styles.label}>장르</dt>
-          <dd className={styles.value}>{genres.join(' · ')}</dd>
+          <dd className={styles.value}>{genres.join(' · ') || '미기재'}</dd>
         </div>
 
         {/* 플레이 모드 — 코드 배열을 PLAY_MODE_LABELS로 라벨 변환 후 ' · ' join. */}
         <div className={styles.row}>
           <dt className={styles.label}>플레이 모드</dt>
           <dd className={styles.value}>
-            {mapPlayModeLabels(playModes).join(' · ')}
+            {mapPlayModeLabels(playModes).join(' · ') || '미기재'}
           </dd>
         </div>
 
         {/* 연령 등급 — 원문 그대로. */}
         <div className={styles.row}>
           <dt className={styles.label}>연령 등급</dt>
-          <dd className={styles.value}>{ageRating}</dd>
+          <dd className={styles.value}>{ageRating || '미기재'}</dd>
         </div>
 
         {/* 한글 지원 — 자막(koreanSub)·음성(audioLanguages)·UI(interfaceLanguages) 각 지원 점. */}
@@ -171,7 +171,7 @@ export function GameInfoTable({ detail }: GameInfoTableProps): JSX.Element {
         <div className={styles.row}>
           <dt className={styles.label}>최소 사양</dt>
           <dd className={cx(styles.value, styles.specValue)}>
-            {joinSpec(systemRequirements.minimum)}
+            {joinSpec(systemRequirements.minimum) || '미기재'}
           </dd>
         </div>
 
@@ -179,7 +179,7 @@ export function GameInfoTable({ detail }: GameInfoTableProps): JSX.Element {
         <div className={styles.row}>
           <dt className={styles.label}>권장 사양</dt>
           <dd className={cx(styles.value, styles.specValue)}>
-            {joinSpec(systemRequirements.recommended)}
+            {joinSpec(systemRequirements.recommended) || '미기재'}
           </dd>
         </div>
       </dl>

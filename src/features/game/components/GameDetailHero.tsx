@@ -32,8 +32,8 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
     thumbnailUrl,
   } = detail;
 
-  // 배경 이미지 우선순위. 셋 다 없으면 undefined로 두고 bg.surfaceRaised fallback을 노출한다.
-  const coverUrl = themeImageUrl || bannerUrl || thumbnailUrl || undefined;
+  // 배경 이미지 우선순위 — 썸네일(헤더 이미지) 우선, 없으면 theme/banner. 셋 다 없으면 undefined→bg.surfaceRaised fallback.
+  const coverUrl = thumbnailUrl || themeImageUrl || bannerUrl || undefined;
 
   // 플레이 모드 코드 → 한국어 라벨. 빈 배열이면 메타 컬럼에 '-' 표기.
   const playModeLabel =
@@ -60,17 +60,7 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
       })}
       style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}
     >
-      {/* 좌→우 어두운 그라데이션 오버레이 — 좌측 텍스트 가독 확보. */}
-      <div
-        className={css({
-          position: 'absolute',
-          inset: '0',
-          backgroundImage:
-            'linear-gradient(to right, {colors.bg.canvas} 0%, rgba(12,12,13,0.7) 45%, rgba(12,12,13,0.2) 100%)',
-        })}
-      />
-
-      {/* 콘텐츠 — PageContainer 폭(1232px). 오버레이 위로 띄우기 위해 position relative. */}
+      {/* 콘텐츠 — PageContainer 폭(1232px). 텍스트는 자체 text-shadow로 가독을 확보한다. */}
       <div className={cx(css(pageGutter), css({ position: 'relative' }))}>
         <div className={css(pageContainer)}>
           {/* 좌측 텍스트 컬럼 — 1232 컨테이너 안에서 좌측(flex-start)에 붙인다(Figma 좌측 정렬). */}
@@ -82,6 +72,9 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
               gap: '5',
               maxW: 'min(640px, 100%)',
               py: '16',
+              // 오버레이 없이 밝은 배경 이미지 위에서도 텍스트가 읽히도록 그림자(메인 배너와 동일 패턴).
+              textShadow:
+                '0 1px 6px token(colors.bg.canvas), 0 2px 16px token(colors.bg.canvas)',
             })}
           >
             {/* 카테고리 칩 — 외곽선 pill(neutral tone), 가로 나열. filled는 글자 안 보여 미사용. */}
@@ -255,7 +248,8 @@ function MetaColumn({ label, value }: { label: string; value: string }) {
   );
 }
 
-// 원화 가격 포맷(천 단위 콤마). 0/음수는 그대로 처리한다(백엔드가 무료/할인 표기를 줄 수 있음).
+// 원화 가격 포맷(천 단위 콤마). 0원 이하(무료 게임)는 '무료'로 표기한다.
 function formatPrice(price: number): string {
+  if (price <= 0) return '무료';
   return `${price.toLocaleString('ko-KR')}원`;
 }
