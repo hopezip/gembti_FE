@@ -17,8 +17,8 @@ features/auth/
 │   ├── OtpInput.tsx        6칸 OTP 인증코드 입력. 자동이동/백스페이스/화살표/붙여넣기. RHF Controller 제어.
 │   ├── GenderSelect.tsx    성별 select(남성/여성/선택안함=other). 공유 Input recipe 재사용.
 │   ├── LoginForm.tsx       RHF + Zod 로그인 폼. useMutation 제출. 성공 시 {user, accessToken}을 onSuccess로 전달.
-│   ├── SignupForm.tsx      STEP1 폼(이메일/비번/비번확인 + [필수] 이용약관 + [필수] 개인정보 약관 2개).
-│   │                       onSubmitStep1({email,password,termsAgreed,privacyAgreed})/isSubmitting/formError.
+│   ├── SignupForm.tsx      STEP1 폼(이메일/비번/비번확인 + [필수] 만 15세 이상 확인 1개).
+│   │                       onSubmitStep1({email,password,ageConfirmed})/isSubmitting/formError.
 │   ├── EmailVerificationForm.tsx  STEP2 "인증 + 프로필" 폼(Figma node 4003:2117).
 │   │                       안내배너 + OtpInput + CountdownTimer(상수 TTL)/재전송 + 닉네임 + 생년월일(date) + GenderSelect.
 │   │                       "가입 완료" = verify(검증만)→signup(전체 필드) 순차, onSignedUp(AuthSession) 콜백.
@@ -42,7 +42,7 @@ features/auth/
 - **PasswordRules**(LOGIN-FE-006: 10자+특수문자): 강도/규칙을 **표시만** 한다. 검증 SSOT는 `signupStep1Schema`이며 같은 헬퍼(`hasSpecial`/`PASSWORD_MIN_LENGTH`)를 공유. 규칙: **10자↑·특수문자=필수, 영문·숫자=권장(선택)**.
 - **OtpInput**: 6칸 분리 셀. 형식 검증 출처는 `verifyCodeSchema`(셀은 표시/입력만).
 - **GenderSelect**(LOGIN-FE-006): 공유 Input recipe 재사용 `<select>`(남성/여성/**선택안함=other**). RHF Controller 제어. GEMBTI_API Gender enum과 1:1.
-- **Checkbox**(LOGIN-FE-003): auth 로컬 토큰 기반 체크박스(전역 recipe 신설 안 함). **STEP1은 [필수] 이용약관·[필수] 개인정보 처리방침 2개 체크**(각 boolean refine(true)). 서버 `terms_agreed`/`privacy_agreed`로 전송.
+- **Checkbox**(LOGIN-FE-003): auth 로컬 토큰 기반 체크박스(전역 recipe 신설 안 함). **STEP1은 [필수] 만 15세 이상 확인 1개 체크**(boolean refine(true)). 서버 `age_confirmed`로 전송(LOGIN-FE-008).
 - **CountdownTimer**(LOGIN-FE-004): 유효시간 MM:SS 표시만. 만료 판별 SSOT는 서버 verify(410). `seconds`(상수 TTL `EMAIL_CODE_TTL_SECONDS`) + `restartKey` + `onExpire`. ⚠️ 백엔드 send-code에 expires_in이 없어 초기값은 FE 상수(`src/config/auth.ts`)다.
 - **useResendCooldown**(LOGIN-FE-004): 재전송 쿨다운(클라 제어 — 동일 send-code 재호출).
 - **EmailVerificationForm**(LOGIN-FE-006 재구성): STEP2 "인증 + 프로필" 폼. 6자리 코드는 `verifyCodeSchema`, 닉네임은 닉네임 스키마로 형식 검증. "가입 완료"는 ① `verifyEmail`(email, code — 검증만), ② `signup`(email/password/password_confirm/nickname/gender/birth_date/약관 2개 전체 전송) 순차. verify 미통과 시 signup 403. 코드 오류(invalid-code/expired)는 OTP 영역, 닉네임 중복은 닉네임 필드에 표시(닉네임 실시간 중복확인 엔드포인트는 백엔드에 없어 제거됨).

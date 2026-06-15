@@ -14,8 +14,7 @@ import { PasswordRules } from './PasswordRules';
 
 // 회원가입 STEP1 (계정정보) — LOGIN-FE-015.
 // 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 15세 이상 확인.
-//   15세 확인은 GEMBTI_API SignupRequest의 terms_agreed/privacy_agreed로 STEP2 signup 시 전송된다
-//   (백엔드에 연령 필드가 없어, 페이지가 두 필드를 ageConfirmed 값으로 채운다).
+//   15세 확인은 GEMBTI_API SignupRequest의 age_confirmed로 STEP2 signup 시 그대로 전송된다.
 // 이메일 실시간 중복확인은 제거했다(백엔드 check-email 엔드포인트 없음). 중복은 send-code 응답(409)으로
 //   이메일 입력칸 아래 인라인 표시(emailError)한다.
 // 제출 성공 시 send-code 호출은 페이지(SignupPage)가 담당한다. 이 폼은 검증된 계정정보 + 15세 확인을
@@ -155,7 +154,7 @@ export function SignupForm({
         />
       </Field>
 
-      {/* [필수] 만 15세 이상 확인 — signup 시 terms_agreed/privacy_agreed로 전송된다 */}
+      {/* [필수] 만 15세 이상 확인 — signup 시 age_confirmed로 전송된다 */}
       <div className={vstack({ gap: '2', alignItems: 'stretch' })}>
         <Controller
           control={control}

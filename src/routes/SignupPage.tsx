@@ -33,7 +33,7 @@ export function SignupPage() {
   // send-code 409(이미 가입된 이메일) — 이메일 입력칸 아래 인라인 표시. mutate 시 리셋, 이메일 변경 시 클리어.
   const [emailDuplicated, setEmailDuplicated] = useState<string | null>(null);
   // STEP2로 넘길 가입 컨텍스트(이메일 + 비밀번호 + 15세 확인). 최종 signup까지 페이지가 보관한다.
-  //   ageConfirmed는 signup 시 terms_agreed/privacy_agreed 두 필드에 채워 전송된다(EmailVerificationForm 매핑).
+  //   ageConfirmed는 signup 시 백엔드 age_confirmed로 그대로 전송된다(EmailVerificationForm).
   const [signupContext, setSignupContext] = useState<{
     email: string;
     password: string;
@@ -133,8 +133,7 @@ export function SignupPage() {
             email={signupContext.email}
             password={signupContext.password}
             passwordConfirm={signupContext.password}
-            termsAgreed={signupContext.ageConfirmed}
-            privacyAgreed={signupContext.ageConfirmed}
+            ageConfirmed={signupContext.ageConfirmed}
             onSignedUp={handleSignedUp}
             onEmailDuplicated={handleEmailDuplicated}
           />

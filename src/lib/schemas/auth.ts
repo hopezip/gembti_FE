@@ -49,8 +49,8 @@ export const nicknameSchema = z
 
 // ── STEP1 (계정정보) ─────────────────────────────────────────────────────────
 // 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 15세 이상 확인.
-//   백엔드 SignupRequest는 terms_agreed/privacy_agreed가 필수 boolean이고 연령 필드가 없다 →
-//   UI는 "15세 확인" 1개로 받고, signup 시 두 필드를 ageConfirmed 값으로 채워 보낸다(SignupPage 매핑).
+//   백엔드 SignupRequest.age_confirmed(필수 boolean)에 대응한다 →
+//   UI는 "15세 확인" 1개로 받고, signup 시 ageConfirmed를 age_confirmed로 그대로 보낸다.
 export const signupStep1Schema = z
   .object({
     email: z

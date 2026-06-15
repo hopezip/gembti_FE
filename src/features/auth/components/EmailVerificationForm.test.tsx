@@ -30,8 +30,7 @@ function renderForm(onSignedUp = vi.fn(), onEmailDuplicated = vi.fn()) {
         email="new_user@example.com"
         password="abcde1234!"
         passwordConfirm="abcde1234!"
-        termsAgreed
-        privacyAgreed
+        ageConfirmed
         onSignedUp={onSignedUp}
         onEmailDuplicated={onEmailDuplicated}
       />
@@ -109,8 +108,7 @@ describe('EmailVerificationForm (STEP2)', () => {
       nickname: '테스트유저',
       gender: 'other',
       birthDate: '2000-01-01',
-      termsAgreed: true,
-      privacyAgreed: true,
+      ageConfirmed: true,
     });
   });
 

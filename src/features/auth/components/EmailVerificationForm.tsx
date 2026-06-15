@@ -52,9 +52,8 @@ interface EmailVerificationFormProps {
   password: string;
   /** STEP1 비밀번호 확인(서버 password_confirm으로 전송). */
   passwordConfirm: string;
-  /** STEP1 약관 동의(서버 terms_agreed/privacy_agreed로 전송). */
-  termsAgreed: boolean;
-  privacyAgreed: boolean;
+  /** STEP1 만 15세 확인(서버 age_confirmed로 전송). */
+  ageConfirmed: boolean;
   /** 카운트다운 초기값(초). 미지정 시 상수 TTL. (백엔드 send-code에 expires_in이 없다.) */
   initialExpiresInSeconds?: number;
   /** 가입 완료 시 호출(자동 로그인 세션 정보 전달, 이동은 페이지가 담당). */
@@ -67,8 +66,7 @@ export function EmailVerificationForm({
   email,
   password,
   passwordConfirm,
-  termsAgreed,
-  privacyAgreed,
+  ageConfirmed,
   initialExpiresInSeconds = EMAIL_CODE_TTL_SECONDS,
   onSignedUp,
   onEmailDuplicated,
@@ -131,8 +129,7 @@ export function EmailVerificationForm({
         nickname: values.nickname,
         gender: values.gender,
         birthDate: values.birth,
-        termsAgreed,
-        privacyAgreed,
+        ageConfirmed,
       });
     },
     onSuccess: (result) => onSignedUp(result),
