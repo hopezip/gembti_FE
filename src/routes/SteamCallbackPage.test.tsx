@@ -29,6 +29,7 @@ function renderAt(search: string) {
         <Route path="/steam/callback" element={<SteamCallbackPage />} />
         <Route path="/signup" element={<div>SIGNUP</div>} />
         <Route path="/" element={<div>HOME</div>} />
+        <Route path="/survey/intro" element={<div>SURVEY INTRO</div>} />
         <Route path="/login" element={<div>LOGIN</div>} />
       </Routes>
     </MemoryRouter>,
@@ -48,16 +49,26 @@ beforeEach(() => {
 });
 
 describe('SteamCallbackPage', () => {
-  it('result=success → 쿠키 refresh + me로 세션을 복원하고 홈으로 이동한다', async () => {
+  it('result=success(설문 미완료) → 세션을 복원하고 설문 인트로로 이동한다', async () => {
     refreshAccessToken.mockResolvedValue('mock-access-token');
     getMe.mockResolvedValue(MOCK_USER);
 
     renderAt('?result=success&is_new_user=false&steam_linked=true');
 
-    expect(await screen.findByText('HOME')).toBeInTheDocument();
+    expect(await screen.findByText('SURVEY INTRO')).toBeInTheDocument();
     expect(getMe).toHaveBeenCalledWith('mock-access-token');
     expect(useAuthStore.getState().status).toBe('authenticated');
     expect(useAuthStore.getState().user?.nickname).toBe('SteamUser');
+  });
+
+  it('result=success(설문 완료) → 세션을 복원하고 홈으로 이동한다', async () => {
+    refreshAccessToken.mockResolvedValue('mock-access-token');
+    getMe.mockResolvedValue({ ...MOCK_USER, hasCompletedSurvey: true });
+
+    renderAt('?result=success&is_new_user=false&steam_linked=true');
+
+    expect(await screen.findByText('HOME')).toBeInTheDocument();
+    expect(useAuthStore.getState().status).toBe('authenticated');
   });
 
   it('result=signup_required → Steam 가입 불가 안내 토스트 후 /signup으로 이동한다', async () => {

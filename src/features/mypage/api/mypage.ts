@@ -104,11 +104,6 @@ export function updateMyProfile(
 
 // 스팀 수동 재동기화는 실 API(POST /api/v1/steam/sync, lib/api/steam.syncSteamLibrary)로 이전됨 (MYPAGE-FE-008).
 
-// POST /api/v1/mypage/steam/disconnect — Steam 연동 해제(백엔드 미구현, mock 유지).
-export function disconnectSteam(): Promise<MockUserProfile> {
-  return api.post('api/v1/mypage/steam/disconnect').json<MockUserProfile>();
-}
-
 // GET /api/v1/mypage/library — 내 라이브러리(장르/정렬/검색/페이지).
 export function getLibrary(query: LibraryQuery): Promise<LibraryResponse> {
   return api

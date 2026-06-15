@@ -4,7 +4,6 @@ import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
-import { disconnectSteam } from '@/features/mypage/api/mypage';
 import { syncSteamLibrary } from '@/lib/api/steam';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
@@ -33,13 +32,6 @@ export function SteamConnectCard({ profile }: Props) {
     // 최종 동기화 시각 등을 재조회로 갱신한다.
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
-    },
-  });
-
-  const disconnectMutation = useMutation({
-    mutationFn: disconnectSteam,
-    onSuccess: (updated) => {
-      queryClient.setQueryData(['mypage', 'profile'], updated);
     },
   });
 
@@ -143,14 +135,6 @@ export function SteamConnectCard({ profile }: Props) {
               ) : (
                 <>↻ 수동 재갱신</>
               )}
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => disconnectMutation.mutate()}
-              disabled={disconnectMutation.isPending}
-            >
-              연동 해제
             </Button>
           </div>
         </>

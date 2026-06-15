@@ -146,13 +146,7 @@ export const mypageHandlers = [
   }),
 
   // /mypage/steam/sync 핸들러 제거됨(MYPAGE-FE-008): 재동기화는 실서버 POST /steam/sync로 이전.
-  http.post('*/api/v1/mypage/steam/disconnect', () => {
-    MOCK_PROFILE.steamConnected = false;
-    MOCK_PROFILE.steamId = null;
-    MOCK_PROFILE.steamNickname = null;
-    MOCK_PROFILE.steamSyncedAt = null;
-    return HttpResponse.json(MOCK_PROFILE);
-  }),
+  // /mypage/steam/disconnect 핸들러 제거됨(SURVEY-FE-006): 연동 해제 기능 삭제.
 
   http.get('*/api/v1/mypage/library', ({ request }) => {
     const url = new URL(request.url);
