@@ -57,6 +57,9 @@ const styles = {
   headline: css({
     textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
+    // 밝은 배경 캐러셀 위에서도 또렷하도록 글자를 어둡게 감싸는 드롭섀도우(가독성).
+    textShadow:
+      '0 2px 8px token(colors.bg.canvas), 0 0 24px token(colors.bg.canvas)',
     // 모바일(≤768px): 54px는 너무 커서 30px(6xl)로 축소(RESPONSIVE-FE-001).
     '@media (max-width: 768px)': { fontSize: '6xl', lineHeight: 'tight' },
   }),
@@ -65,6 +68,7 @@ const styles = {
     textStyle: 'body.lg',
     color: 'fg.muted',
     mt: '4',
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
   }),
   ctaRow: css({
     display: 'flex',

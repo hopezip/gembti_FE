@@ -63,6 +63,7 @@ const styles = {
     color: 'accent.default',
     lineHeight: 'none',
     flexShrink: 0,
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
   }),
   content: css({
     maxW: '620px',
@@ -76,6 +77,7 @@ const styles = {
     fontSize: 'xs', // 11px(Figma 11.5px 근접)
     color: 'accent.default',
     letterSpacing: '0.8px',
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
   }),
   // 작은 헤드라인 줄 — 24px Black.
   headlineSmall: css({
@@ -84,6 +86,8 @@ const styles = {
     color: 'fg.default',
     letterSpacing: '-0.3px',
     mb: '2',
+    textShadow:
+      '0 2px 8px token(colors.bg.canvas), 0 0 24px token(colors.bg.canvas)',
     // 모바일(≤768px): 20px로 축소(RESPONSIVE-FE-001).
     '@media (max-width: 768px)': { fontSize: '3xl' },
   }),
@@ -91,6 +95,8 @@ const styles = {
   headline: css({
     textStyle: 'heading.h1', // 30px extrabold(Figma 32px에 가장 근접한 토큰)
     color: 'fg.default',
+    textShadow:
+      '0 2px 8px token(colors.bg.canvas), 0 0 24px token(colors.bg.canvas)',
     // 모바일(≤768px): 24px로 축소(RESPONSIVE-FE-001).
     '@media (max-width: 768px)': { fontSize: '5xl' },
   }),
@@ -99,6 +105,7 @@ const styles = {
     textStyle: 'body.md',
     color: 'fg.muted',
     mt: '4',
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
   }),
   ctaRow: css({
     display: 'flex',
