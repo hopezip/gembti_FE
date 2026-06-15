@@ -263,12 +263,6 @@ const MOCK_GAMES: MockGame[] = [
 
 export const MOCK_PLAYER_MODES = ['싱글플레이어', '협동', '온라인 멀티'];
 
-// price_info.discount_rate 파생값 — salePrice가 있으면 할인율(%), 없으면 0.
-function discountRate(price: number, salePrice: number | null): number {
-  if (salePrice == null || price <= 0) return 0;
-  return Math.round((1 - salePrice / price) * 100);
-}
-
 export const gameHandlers = [
   // SEARCH-FE-005 게임 검색 — 실서버(GET /api/v1/games/search)를 그대로 쓴다(passthrough).
   //   실 계약은 q·page·sort·genre[]·category[] 쿼리로 서버사이드 필터링하고 categories/genres를 응답한다.
@@ -358,117 +352,8 @@ export const gameHandlers = [
     });
   }),
 
-  // REC-DET-FE-001 / REC-DET-FE-002 게임 상세 — 실 백엔드 계약(GET /api/v1/games/{game_id}, 인증 불필요, snake_case).
-  // 응답은 status/data 래핑 + price_info 객체. 한시적 수동 핸들러 — Swagger 확정 후 /api-sync로 교체.
-  // snake_case 필드는 gameDetail.ts(GameDetailRaw)의 camel 도메인 타입과 1:1 대응한다(categories·developer_games 등 실 계약 기준).
-  http.get('*/api/v1/games/:id', ({ params }) => {
-    const id = String(params.id);
-    const numId = Number(id);
-    // 실제 MOCK_GAMES id 우선. 없으면 합성 id(인기 i+1·신규 200+·추천 300+·개인화 400+·검색 i+1)도
-    // MOCK_GAMES로 순환 매핑해 상세를 제공한다 — 메인/검색 카드의 상세 진입점이 mock에서 404로 깨지는 것을 방지.
-    const base =
-      MOCK_GAMES.find((g) => g.id === id) ??
-      (Number.isFinite(numId) && numId > 0
-        ? MOCK_GAMES[(numId - 1) % MOCK_GAMES.length]
-        : undefined);
-
-    // 매핑조차 불가한 id(NaN·0·음수) → NOT_FOUND + 404(상세 에러 분기 시연).
-    if (!base) {
-      return HttpResponse.json({ status: 'NOT_FOUND' }, { status: 404 });
-    }
-
-    // 카드 섹션(developer_games — 개발사의 다른 게임) 합성 — MOCK_GAMES를 순환해 8건 이상.
-    // 4개+더보기 누적 시연용(상세 그리드 pageSize=4). 자기 자신은 제외하고 채운다.
-    const pool = MOCK_GAMES.filter((g) => g.id !== id);
-    const buildSummaries = (offset: number) =>
-      Array.from({ length: 8 }, (_, i) => {
-        const g = pool[(i + offset) % pool.length];
-        return {
-          game_id: Number(g.id),
-          title: g.title,
-          thumbnail_url:
-            g.coverImageUrl ??
-            `https://picsum.photos/seed/game-${g.id}/320/200`,
-          genres: g.genres,
-          rating: g.rating,
-        };
-      });
-
-    // theme_image_url/banner_url은 일부 게임(id 1·3)만 채워 fallback 시연 — 나머지는 빈 문자열.
-    // 백엔드 자산 확정 전까지 한시적으로 picsum placeholder 사용(실서버는 실제 CDN URL).
-    const themeImageUrl =
-      id === '1' || id === '3'
-        ? `https://picsum.photos/seed/theme-${id}/1280/480`
-        : '';
-    const bannerUrl =
-      id === '1' || id === '2'
-        ? `https://picsum.photos/seed/banner-${id}/1280/480`
-        : '';
-
-    // 스크린샷 placeholder 2~4개(id 기준 가변) + 트레일러 썸네일 placeholder.
-    const shotCount = 2 + (Number(id) % 3); // 2~4
-    const screenshotUrls = Array.from(
-      { length: shotCount },
-      (_, i) => `https://picsum.photos/seed/shot-${id}-${i + 1}/640/360`,
-    );
-
-    return HttpResponse.json({
-      status: 'SUCCESS',
-      data: {
-        game_id: Number(base.id),
-        title: base.title,
-        description: `${base.title}의 한 줄 요약 소개입니다. ${base.genres.join(' · ')} 장르의 대표작.`,
-        full_description: `${base.title}은(는) ${base.genres.join(', ')} 장르를 아우르는 작품으로, ${base.tags.join(', ')} 같은 특징을 담았습니다. 깊이 있는 스토리와 탄탄한 게임플레이로 호평을 받았으며, 전체 소개에서는 세계관·주요 시스템·플레이 방식을 자세히 다룹니다. 더 보기를 펼치면 추가 설명이 표시됩니다.`,
-        genres: base.genres,
-        // categories — 실 백엔드 신규 필드. MOCK_GAMES에 별도 categories가 없어 한시적으로 base.tags 재사용(실서버는 별도 값).
-        categories: base.tags,
-        rating: base.rating,
-        review_count: 1284,
-        price_info: {
-          original_price: base.price,
-          sale_price: base.salePrice,
-          discount_rate: discountRate(base.price, base.salePrice),
-        },
-        developer: `${base.title} 스튜디오`,
-        publisher: 'GamBTI 퍼블리싱',
-        release_date: '2024-03-15',
-        thumbnail_url:
-          base.coverImageUrl ??
-          `https://picsum.photos/seed/game-${base.id}/640/400`,
-        theme_image_url: themeImageUrl,
-        banner_url: bannerUrl,
-        screenshot_urls: screenshotUrls,
-        trailer_url: `https://picsum.photos/seed/trailer-${id}/640/360`,
-        system_requirements: {
-          minimum: {
-            os: 'Windows 10 64-bit',
-            processor: 'Intel Core i5-4460 / AMD FX-6300',
-            memory: '8 GB RAM',
-            graphics: 'NVIDIA GTX 760 / AMD R7 260x',
-            storage: '50 GB 사용 가능 공간',
-          },
-          recommended: {
-            os: 'Windows 11 64-bit',
-            processor: 'Intel Core i7-8700 / AMD Ryzen 5 3600',
-            memory: '16 GB RAM',
-            graphics: 'NVIDIA RTX 2060 / AMD RX 5700',
-            storage: '50 GB SSD',
-          },
-        },
-        audio_languages: base.koreanSub
-          ? ['한국어', '영어', '일본어']
-          : ['영어', '일본어'],
-        interface_languages: ['한국어', '영어', '일본어', '중국어(간체)'],
-        // 플레이 모드는 코드(value) 배열로 내려준다(SINGLE/CO_OP/MULTI). 라벨 변환은 화면단.
-        play_modes:
-          base.playerModes.length > 1
-            ? ['SINGLE', 'CO_OP', 'MULTI']
-            : ['SINGLE'],
-        korean_sub: base.koreanSub,
-        age_rating: '15세 이용가',
-        on_sale: base.onSale,
-        developer_games: buildSummaries(3),
-      },
-    });
-  }),
+  // 게임 상세는 실서버(GET /api/v1/games/{game_id})를 그대로 쓴다(passthrough, REC-DET-FE-003).
+  // 실 계약(categories·developer_games, similar/ai/review 없음)은 gameDetail.ts 매핑과 정합됨(REC-DET-FE-002).
+  // ⚠️ search/trending/new-releases passthrough보다 뒤에 둔다 — 그 경로들이 ':id'에 먼저 매칭되지 않도록.
+  http.get('*/api/v1/games/:id', () => passthrough()),
 ];
