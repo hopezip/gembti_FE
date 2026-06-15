@@ -1,19 +1,20 @@
 import { PersonalizedGameCard } from '@/features/game/components/PersonalizedGameCard';
-import { usePersonalizedHome } from '@/features/main/api/personalizedHome';
+import { useRecommendations } from '@/features/main/api/recommendations';
+import type { RecommendedGame } from '@/features/main/api/recommendations';
 import { GameGridSection } from '@/features/main/components/GameGridSection';
-import type { PersonalizedGameSummary } from '@/features/main/api/personalizedHome';
 
-// MAIN-FE-006 개인화 "당신을 위한 추천" 섹션.
-// 데이터 출처는 personalized-home의 recommendedGames(매칭률·추천이유 포함). 메인 1페이지=1쿼리이므로
-// usePersonalizedHome를 재사용한다(새 쿼리 0). 그리드/스켈레톤/4상태/더보기는 공유 GameGridSection이 소유한다.
-// 성향 태그(user_interest_tags)는 디자인 결정으로 메인에서 노출하지 않는다(데이터는 받되 미사용 — Hero 바로 아래로 추천 그리드가 붙는다).
+// MAIN-FE-006 / MAIN-FE-012 개인화 "당신을 위한 추천" 섹션.
+// 데이터 출처: 실 API POST /api/v1/recommendations/generate (성향 코사인 유사도 추천).
+//   이전 mock(home/personalized)의 recommendedGames 의존에서 실서버 추천으로 전환(MAIN-FE-012).
+// 실 응답엔 추천이유 태그라인이 없어 카드 하단 reason은 생략하고, 유사도(similarityScore)를
+//   취향 매칭률(%)로 환산해 커버 배지로 노출한다. 그리드/스켈레톤/4상태/더보기는 GameGridSection이 소유.
 export function PersonalizedRecommendedGames() {
-  const { data, isLoading, isError } = usePersonalizedHome();
+  const { data, isLoading, isError } = useRecommendations();
 
   return (
-    <GameGridSection<PersonalizedGameSummary>
+    <GameGridSection<RecommendedGame>
       title="당신을 위한 추천"
-      items={data?.recommendedGames ?? []}
+      items={data ?? []}
       isLoading={isLoading}
       isError={isError}
       errorText="추천 게임을 불러오지 못했어요."
@@ -23,8 +24,8 @@ export function PersonalizedRecommendedGames() {
           key={game.gameId}
           title={game.title}
           thumbnailUrl={game.thumbnailUrl}
-          imageBadge={`취향률 ${game.matchRate}%`}
-          reasonTagline={game.reasonTagline}
+          genres={game.genres}
+          imageBadge={`취향 매칭 ${Math.round(game.similarityScore * 100)}%`}
         />
       )}
     />
