@@ -40,7 +40,7 @@ const styles = {
     position: 'absolute',
     inset: '0',
     backgroundImage:
-      'linear-gradient(to right, token(colors.bg.canvas) 0%, token(colors.bg.canvas) 28%, color-mix(in srgb, token(colors.bg.canvas) 55%, transparent) 62%, color-mix(in srgb, token(colors.bg.canvas) 15%, transparent) 100%)',
+      'linear-gradient(to right, token(colors.bg.canvas) 0%, token(colors.bg.canvas) 42%, color-mix(in srgb, token(colors.bg.canvas) 72%, transparent) 70%, color-mix(in srgb, token(colors.bg.canvas) 28%, transparent) 100%)',
   }),
   // ③ 콘텐츠 거터 래퍼 — 절대배치 레이어 위로 올린다.
   gutter: css({
