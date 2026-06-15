@@ -125,7 +125,7 @@ describe('라우트 골격', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('건너뛴 문항이 있어도 메인 배너에 설문 이어하기를 노출하지 않는다', () => {
+  it('설문 미완료 사용자의 메인 화면에 설문 이어하기를 노출하지 않는다', () => {
     useAuthStore.getState().setSession({
       user: {
         id: 1,
@@ -135,7 +135,7 @@ describe('라우트 골격', () => {
       },
       accessToken: 'mock-access',
     });
-    useSurveyProgressStore.getState().saveProgress({ 1: 4, 2: 3 }, [3, 5]);
+    useSurveyProgressStore.getState().saveProgress({ 1: 4, 2: 3 });
 
     renderAt('/');
 
@@ -147,7 +147,7 @@ describe('라우트 골격', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('설문 완료 후 재진단에서 건너뛴 문항이 있어도 개인화 배너에 설문 이어하기를 노출하지 않는다', () => {
+  it('설문 완료 후 재진단에서는 개인화 배너에 설문 이어하기를 노출하지 않는다', () => {
     useAuthStore.getState().setSession({
       user: {
         id: 2,
@@ -157,7 +157,7 @@ describe('라우트 골격', () => {
       },
       accessToken: 'mock-access',
     });
-    useSurveyProgressStore.getState().saveProgress({ 1: 5, 2: 4 }, [3]);
+    useSurveyProgressStore.getState().saveProgress({ 1: 5, 2: 4 });
 
     renderAt('/');
 

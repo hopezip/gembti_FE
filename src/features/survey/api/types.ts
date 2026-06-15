@@ -85,8 +85,3 @@ export interface SurveyRecommendationGame {
 export interface SurveyRecommendationsResponse {
   games: SurveyRecommendationGame[];
 }
-
-// MSW와 서비스에서 공통으로 쓰는 에러 응답 형태.
-export interface SurveyErrorResponse {
-  error: string;
-}

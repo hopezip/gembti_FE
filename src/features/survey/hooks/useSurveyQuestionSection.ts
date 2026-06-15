@@ -37,7 +37,6 @@ export function useSurveyQuestionSection({
           answer === null ? [] : [[questions[index].id, answer]],
         ),
       ),
-      [],
     );
   };
 
