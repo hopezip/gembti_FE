@@ -65,8 +65,11 @@ export function SteamCallbackPage() {
         const user = await getMe(accessToken);
         if (cancelled) return;
         setSession({ user, accessToken });
-        // 홈으로 — 개인화/게스트 분기는 MainPage가 hasCompletedSurvey로 처리한다(로그인과 동일 랜딩).
-        navigate('/', { replace: true });
+        // 설문 미완료 유저는 설문 인트로로 유도하고, 완료 유저만 홈으로 보낸다(SURVEY-FE-006).
+        //   홈의 개인화/게스트 분기는 MainPage가 hasCompletedSurvey로 처리한다.
+        navigate(user.hasCompletedSurvey ? '/' : '/survey/intro', {
+          replace: true,
+        });
       } catch {
         if (cancelled) return;
         toaster.create({

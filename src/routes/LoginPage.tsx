@@ -29,7 +29,15 @@ export function LoginPage() {
     // querystring redirect 우선, 없으면 가드가 넘긴 state.redirect.
     const stateRedirect =
       (location.state as { redirect?: string } | null)?.redirect ?? null;
-    const target = safeRedirect(searchParams.get('redirect') ?? stateRedirect);
+    const explicitRedirect = searchParams.get('redirect') ?? stateRedirect;
+
+    // 명시적 redirect가 있으면 그곳으로(보호 페이지 복귀). 없으면 설문 미완료 유저를
+    //   설문 인트로로 유도하고, 완료 유저만 홈으로 보낸다(SURVEY-FE-006).
+    const target = explicitRedirect
+      ? safeRedirect(explicitRedirect)
+      : user.hasCompletedSurvey
+        ? '/'
+        : '/survey/intro';
 
     navigate(target, { replace: true });
   };
