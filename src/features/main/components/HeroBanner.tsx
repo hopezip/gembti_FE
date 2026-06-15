@@ -1,3 +1,4 @@
+import { Flame, Gamepad2, Gift, Search, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { button } from 'styled-system/recipes';
@@ -8,10 +9,17 @@ import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroun
 // MAIN-FE-001 비로그인 메인 Hero 배너 (Figma Hero 387:4742).
 // 구조(3층): ① 배경(추천 첫 1건 커버 이미지 또는 그라데이션 placeholder)
 //            ② 좌→우 어두운 그라데이션 오버레이(텍스트 가독성)
-//            ③ pageContainer 안쪽 좌측 텍스트 오버레이(라벨/헤드라인/서브/CTA)
+//            ③ pageContainer 안쪽 좌측 텍스트 오버레이(라벨/헤드라인/피처/CTA)
 // 배경은 풀블리드라 PageContainer 컴포넌트 대신 pageGutter/pageContainer 조각을 합성한다
 //   (Header/Footer 동일 패턴 — bg가 화면 끝까지 닿아야 하므로).
 // 색은 semantic token만, 신규 토큰/recipe 없음. 다크·데스크탑 전용.
+
+// Hero 좌측 피처 3행(취향 분석/인기/혜택). 아이콘 + 2줄 카피.
+const heroFeatures = [
+  { Icon: Gamepad2, title: '취향 분석 기반', desc: '정확한 추천' },
+  { Icon: Flame, title: '지금 핫한', desc: '인기 게임' },
+  { Icon: Gift, title: '추천만 해도', desc: '특별한 혜택' },
+] as const;
 
 const styles = {
   section: css({
@@ -58,21 +66,63 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
   }),
+  // 상단 라벨 — 아이콘 + 작은 안내 카피(헤드라인 위).
+  label: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2',
+    mb: '4',
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'fg.muted',
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
+  }),
+  labelIcon: css({ color: 'accent.default', flexShrink: 0 }),
   headline: css({
     textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
+    lineHeight: 'tight',
     // 밝은 배경 캐러셀 위에서도 또렷하도록 글자를 어둡게 감싸는 드롭섀도우(가독성).
     textShadow:
       '0 2px 8px token(colors.bg.canvas), 0 0 24px token(colors.bg.canvas)',
     // 모바일(≤768px): 54px는 너무 커서 30px(6xl)로 축소(RESPONSIVE-FE-001).
-    '@media (max-width: 768px)': { fontSize: '6xl', lineHeight: 'tight' },
+    '@media (max-width: 768px)': { fontSize: '6xl' },
   }),
   accentWord: css({ color: 'accent.default' }),
-  subcopy: css({
-    textStyle: 'body.lg',
-    color: 'fg.muted',
-    mt: '4',
+  // 피처 3행 — 아이콘 박스 + 2줄 카피.
+  features: css({
+    display: 'flex',
+    gap: '6',
+    mt: '7',
+    flexWrap: 'wrap',
+  }),
+  featureItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2.5',
+  }),
+  featureIcon: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    w: '9',
+    h: '9',
+    borderRadius: 'lg',
+    bg: 'bg.surfaceRaised',
+    color: 'accent.default',
+    flexShrink: 0,
+  }),
+  featureTitle: css({
+    fontSize: 'sm',
+    fontWeight: 'semibold',
+    color: 'fg.default',
+    lineHeight: 'tight',
     textShadow: '0 1px 6px token(colors.bg.canvas)',
+  }),
+  featureDesc: css({
+    fontSize: 'xs',
+    color: 'fg.muted',
+    lineHeight: 'tight',
   }),
   ctaRow: css({
     display: 'flex',
@@ -107,13 +157,33 @@ export function HeroBanner() {
       <div className={cx(css(pageGutter), styles.gutter)}>
         <div className={css(pageContainer)}>
           <div className={styles.content}>
+            <p className={styles.label}>
+              <Sparkles className={styles.labelIcon} size={16} />
+              취향에 딱 맞는 게임을 추천해드려요
+            </p>
+
             <h1 className={styles.headline}>
               당신의 <span className={styles.accentWord}>다음</span>
               <br />
-              인생 게임을 찾아보세요
+              인생 게임을
+              <br />
+              찾아보세요
             </h1>
 
-            <p className={styles.subcopy}>취향에 딱 맞는 게임을 추천해드려요</p>
+            <ul className={styles.features} aria-label="추천 서비스 특징">
+              {heroFeatures.map(({ Icon, title, desc }) => (
+                <li className={styles.featureItem} key={title}>
+                  <span className={styles.featureIcon} aria-hidden="true">
+                    <Icon size={18} />
+                  </span>
+                  <span>
+                    <span className={styles.featureTitle}>{title}</span>
+                    <br />
+                    <span className={styles.featureDesc}>{desc}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
 
             <div className={styles.ctaRow}>
               <Link
@@ -132,6 +202,7 @@ export function HeroBanner() {
                   styles.ctaLift,
                 )}
               >
+                <Search size={18} />
                 탐색 시작하기
               </Link>
             </div>
