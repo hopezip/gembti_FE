@@ -7,14 +7,12 @@ import type { SurveyQuestionResponse, SurveyQuestionsResponse } from './types';
 export interface SurveyQuestion {
   id: number;
   question: string;
-  options: string[];
 }
 
 function mapSurveyQuestion(raw: SurveyQuestionResponse): SurveyQuestion {
   return {
     id: raw.question_id,
-    question: raw.question,
-    options: raw.options,
+    question: raw.question_text,
   };
 }
 

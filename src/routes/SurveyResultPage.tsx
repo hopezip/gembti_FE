@@ -22,6 +22,15 @@ function mapSurveyScores(stats: SurveyStats): TraitScore[] {
   ];
 }
 
+const archetypeLabels: Record<SurveyTraitKey, string> = {
+  combat: '액션가형',
+  strategy: '전략가형',
+  cooperation: '협동가형',
+  exploration: '탐험가형',
+  growth: '성장가형',
+  healing: '힐링가형',
+};
+
 const traitPresentation: Record<
   SurveyTraitKey,
   { description: string; tags: string[] }
@@ -65,6 +74,7 @@ function getSurveyPresentation(stats: SurveyStats) {
   const primaryTrait = activeTraits[0] ?? 'exploration';
 
   return {
+    archetype: archetypeLabels[primaryTrait],
     description: traitPresentation[primaryTrait].description,
     tags: activeTraits
       .slice(0, 2)
@@ -110,7 +120,7 @@ export function SurveyResultPage() {
       <PageContainer className={css({ py: { base: '10', md: '16' } })}>
         {/* 설문 분석 결과 상단: 레이더 + 대표 유형 설명. */}
         <ResultSummary
-          archetype={data.type}
+          archetype={presentation.archetype}
           description={presentation.description}
           scores={mapSurveyScores(data.stats)}
           tags={presentation.tags}
@@ -131,12 +141,13 @@ export function SurveyResultPage() {
         )}
         {recommendations.data && (
           <GameRecommendations
-            games={recommendations.data.games.map((game) => ({
+            games={recommendations.data.games.slice(0, 4).map((game) => ({
               id: game.game_id,
-              title: game.name,
+              title: game.title,
               genres: game.genres,
-              thumbnailUrl: game.image_url,
-              reason: game.reason,
+              rating: game.rating ?? null,
+              thumbnailUrl: game.image_url ?? null,
+              reason: `성향 유사도 ${Math.round(game.similarity_score * 100)}%`,
             }))}
           />
         )}

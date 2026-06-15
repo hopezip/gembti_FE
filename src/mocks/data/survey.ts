@@ -14,38 +14,47 @@ import type {
 export const MOCK_SURVEY_QUESTIONS: SurveyQuestionsResponse = [
   {
     question_id: 1,
-    question: '새로운 게임을 고를 때 검증된 인기작보다 낯선 경험을 먼저 찾는다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text:
+      '새로운 게임을 고를 때 검증된 인기작보다 낯선 경험을 먼저 찾는다',
+    stat_axis: 'exploration',
+    display_order: 1,
   },
   {
     question_id: 2,
-    question: '플레이 중에는 빠른 판단과 손맛이 있는 순간에 가장 몰입한다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text: '플레이 중에는 빠른 판단과 손맛이 있는 순간에 가장 몰입한다',
+    stat_axis: 'combat',
+    display_order: 2,
   },
   {
     question_id: 3,
-    question: '스트레스 없이 즐기는데도 적을 휘어잡는 성장을 선호한다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text: '스트레스 없이 즐기는데도 적을 휘어잡는 성장을 선호한다',
+    stat_axis: 'growth',
+    display_order: 3,
   },
   {
     question_id: 4,
-    question: '게임의 규칙을 파악하고 최적의 전략을 찾는 과정이 즐겁다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text: '게임의 규칙을 파악하고 최적의 전략을 찾는 과정이 즐겁다',
+    stat_axis: 'strategy',
+    display_order: 4,
   },
   {
     question_id: 5,
-    question: '캐릭터와 세계관의 이야기가 오래 기억나는 게임을 좋아한다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text: '캐릭터와 세계관의 이야기가 오래 기억나는 게임을 좋아한다',
+    stat_axis: 'healing',
+    display_order: 5,
   },
   {
     question_id: 6,
-    question: '친구와 협력하거나 경쟁하며 생기는 변수를 즐기는 편이다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text: '친구와 협력하거나 경쟁하며 생기는 변수를 즐기는 편이다',
+    stat_axis: 'cooperation',
+    display_order: 6,
   },
   {
     question_id: 7,
-    question: '수집, 업적, 장비 강화처럼 완성도를 채워가는 플레이에 끌린다',
-    options: ['매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다'],
+    question_text:
+      '수집, 업적, 장비 강화처럼 완성도를 채워가는 플레이에 끌린다',
+    stat_axis: 'growth',
+    display_order: 7,
   },
 ];
 
@@ -62,16 +71,18 @@ export const MOCK_SURVEY_STATS: SurveyStats = {
 
 // POST /api/v1/surveys/submit 성공 mock.
 export const MOCK_SURVEY_SUBMIT_RESULT: SurveySubmitResponse = {
-  survey_id: 1,
+  user_stats_id: 1,
   stats: MOCK_SURVEY_STATS,
-  source: 'ONLY_SURVEY',
+  source_type: 'ONLY_SURVEY',
+  survey_mode: 'standard',
 };
 
 // GET /api/v1/surveys/result 성공 mock.
 export const MOCK_SURVEY_LATEST_RESULT: SurveyLatestResultResponse = {
-  survey_id: 1,
-  type: '전략가형',
+  user_stats_id: 1,
   stats: MOCK_SURVEY_STATS,
+  source_type: 'ONLY_SURVEY',
+  survey_mode: 'standard',
   created_at: '2026-06-08T12:00:00+09:00',
 };
 
@@ -85,76 +96,70 @@ const questionTraits: Record<number, SurveyTraitKey[]> = {
   7: ['growth', 'strategy'],
 };
 
-const traitNames: Record<SurveyTraitKey, string> = {
-  combat: '액션가형',
-  strategy: '전략가형',
-  cooperation: '협동가형',
-  exploration: '탐험가형',
-  growth: '성장가형',
-  healing: '힐링가형',
-};
-
 const recommendationGames: Record<
   SurveyTraitKey,
   SurveyRecommendationsResponse['games'][number]
 > = {
   exploration: {
+    recommendation_item_id: 1,
     game_id: 301,
-    name: 'ELDEN RING',
+    title: 'ELDEN RING',
     image_url: 'https://picsum.photos/seed/survey-exploration/640/400',
     genres: ['RPG', '오픈월드'],
-    score: 0,
-    reason: '',
+    rating: 4.8,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
   combat: {
+    recommendation_item_id: 2,
     game_id: 302,
-    name: 'SEKIRO: SHADOWS DIE TWICE',
+    title: 'SEKIRO: SHADOWS DIE TWICE',
     image_url: 'https://picsum.photos/seed/survey-combat/640/400',
     genres: ['액션', '어드벤처'],
-    score: 0,
-    reason: '',
+    rating: 4.7,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
   growth: {
+    recommendation_item_id: 3,
     game_id: 303,
-    name: 'HADES',
+    title: 'HADES',
     image_url: 'https://picsum.photos/seed/survey-growth/640/400',
     genres: ['로그라이크', '액션'],
-    score: 0,
-    reason: '',
+    rating: 4.9,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
   healing: {
+    recommendation_item_id: 4,
     game_id: 304,
-    name: 'STARDEW VALLEY',
+    title: 'STARDEW VALLEY',
     image_url: 'https://picsum.photos/seed/survey-healing/640/400',
     genres: ['시뮬레이션', '힐링'],
-    score: 0,
-    reason: '',
+    rating: 4.9,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
   cooperation: {
+    recommendation_item_id: 5,
     game_id: 305,
-    name: 'IT TAKES TWO',
+    title: 'IT TAKES TWO',
     image_url: 'https://picsum.photos/seed/survey-cooperation/640/400',
     genres: ['협동', '어드벤처'],
-    score: 0,
-    reason: '',
+    rating: 4.8,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
   strategy: {
+    recommendation_item_id: 6,
     game_id: 306,
-    name: 'CIVILIZATION VI',
+    title: 'CIVILIZATION VI',
     image_url: 'https://picsum.photos/seed/survey-strategy/640/400',
     genres: ['전략', '턴제'],
-    score: 0,
-    reason: '',
+    rating: 4.6,
+    similarity_score: 0,
+    similarity_rank: 0,
   },
-};
-
-const traitLabels: Record<SurveyTraitKey, string> = {
-  combat: '액션',
-  strategy: '전략',
-  cooperation: '협동',
-  exploration: '탐험',
-  growth: '성장',
-  healing: '힐링',
 };
 
 export function createMockSurveyRecommendations(
@@ -164,13 +169,13 @@ export function createMockSurveyRecommendations(
     .filter((trait) => stats[trait] > 0)
     .sort((left, right) => stats[right] - stats[left])
     .slice(0, 4)
-    .map((trait) => ({
+    .map((trait, index) => ({
       ...recommendationGames[trait],
-      score: stats[trait] / 100,
-      reason: `${traitLabels[trait]} ${stats[trait]} 일치 · 설문 성향 기반 추천`,
+      similarity_score: stats[trait] / 100,
+      similarity_rank: index + 1,
     }));
 
-  return { recommendation_items_id: 1, games };
+  return { games };
 }
 
 export function createMockSurveyResult(answers: SurveySubmitAnswer[]) {
@@ -192,22 +197,19 @@ export function createMockSurveyResult(answers: SurveySubmitAnswer[]) {
       return [key, counts[key] ? Math.round(totals[key] / counts[key]) : 0];
     }),
   ) as SurveyStats;
-  const primaryTrait = (Object.keys(stats) as SurveyTraitKey[]).reduce(
-    (highest, trait) => (stats[trait] > stats[highest] ? trait : highest),
-    'exploration',
-  );
-
   return {
     latest: {
-      survey_id: 1,
-      type: traitNames[primaryTrait],
+      user_stats_id: 1,
       stats,
+      source_type: 'ONLY_SURVEY',
+      survey_mode: 'standard',
       created_at: new Date().toISOString(),
     } satisfies SurveyLatestResultResponse,
     submit: {
-      survey_id: 1,
+      user_stats_id: 1,
       stats,
-      source: 'ONLY_SURVEY',
+      source_type: 'ONLY_SURVEY',
+      survey_mode: 'standard',
     } satisfies SurveySubmitResponse,
   };
 }

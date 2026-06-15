@@ -20,7 +20,7 @@ describe('createMockSurveyResult', () => {
       growth: 0,
       healing: 0,
     });
-    expect(result.latest.type).toBe('탐험가형');
+    expect(result.submit.source_type).toBe('ONLY_SURVEY');
   });
 
   it('0점 성향을 제외하고 점수가 높은 순서로 최대 4개를 추천한다', () => {
@@ -50,6 +50,6 @@ describe('createMockSurveyResult', () => {
     });
 
     expect(result.games.map((game) => game.game_id)).toEqual([301, 302]);
-    expect(result.games.every((game) => game.score > 0)).toBe(true);
+    expect(result.games.every((game) => game.similarity_score > 0)).toBe(true);
   });
 });

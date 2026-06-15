@@ -58,7 +58,10 @@ export function useSurveyRecommendations(enabled: boolean) {
     queryKey: surveyRecommendationsQueryKey,
     queryFn: ({ signal }) =>
       api
-        .post('api/v1/recommendations/generate', { signal })
+        .post('api/v1/recommendations/generate', {
+          signal,
+          searchParams: { limit: 4 },
+        })
         .json<SurveyRecommendationsResponse>(),
     enabled,
   });

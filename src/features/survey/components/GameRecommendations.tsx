@@ -9,7 +9,8 @@ export interface RecommendedGame {
   id: number;
   title: string;
   genres: string[];
-  thumbnailUrl: string;
+  rating: number | null;
+  thumbnailUrl: string | null;
   reason: string;
 }
 
@@ -96,7 +97,7 @@ export function GameRecommendations({ games }: GameRecommendationsProps) {
               <GameSummaryCard
                 title={game.title}
                 genres={game.genres}
-                rating={null}
+                rating={game.rating}
                 thumbnailUrl={game.thumbnailUrl}
               />
               <p

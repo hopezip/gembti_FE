@@ -33,7 +33,7 @@ survey 도메인 컴포넌트 자리. 설문 인트로(`/survey/intro`), 설문 
 - 건너뛴 문항이 있으면 결과를 제출하지 않고 메인으로 이동한다. 진행 응답과 건너뛴 문항 ID는 설문 Zustand에 유지하며, 최초 설문과 재진단 모두 메인 배너 및 마이페이지의 `설문 이어하기`로 첫 건너뛴 문항부터 재개한다. 재진단 도중에는 기존 완료 결과를 유지한다.
 - 전체 문항 제출 성공 시 현재 인증 세션의 `hasCompletedSurvey`를 즉시 갱신하고 진행 상태를 초기화한다. 완료 후 메인 배너에는 설문 CTA를 노출하지 않으며, 다시하기 진입점은 마이페이지에서 제공한다.
 - `src/routes/SurveyResultPage.tsx` — 최신 설문 결과 API를 조회해 유형명과 6대 성향 점수를 표시한다.
-- `src/features/survey/hooks/useSurveyQuestionSection.ts` — 설문 진행 상태 훅. `answers`, `currentIndex`, `progressPercent`, `selectAnswer`, `skipQuestion`, `goToQuestion`을 제공한다.
+- `src/features/survey/hooks/useSurveyQuestionSection.ts` — 설문 진행 상태 훅. `answers`, `currentIndex`, `progressPercent`, `selectAnswer`, `nextQuestion`, `goToQuestion`을 제공한다.
 
 ## 후속 정리
 
