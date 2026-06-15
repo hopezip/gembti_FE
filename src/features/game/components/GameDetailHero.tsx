@@ -27,6 +27,7 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
     playModes,
     priceInfo,
     onSale,
+    steamUrl,
     themeImageUrl,
     bannerUrl,
     thumbnailUrl,
@@ -208,13 +209,17 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
               )}
             </div>
 
-            {/* 구매 버튼 — 공통 Button variant=primary. 링크/onClick 없음(단순 배치). */}
-            <Button variant="primary" size="lg">
-              구매하러 가기
-              <span aria-hidden className={css({ lineHeight: 'none' })}>
-                →
-              </span>
-            </Button>
+            {/* 구매 버튼 — 스팀 스토어로 가는 외부 링크(새 탭). steamUrl이 null이면 구매 경로가 없어 숨긴다. */}
+            {steamUrl && (
+              <Button variant="primary" size="lg" asChild>
+                <a href={steamUrl} target="_blank" rel="noopener noreferrer">
+                  구매하러 가기
+                  <span aria-hidden className={css({ lineHeight: 'none' })}>
+                    →
+                  </span>
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </div>

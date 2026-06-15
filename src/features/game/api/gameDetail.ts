@@ -79,6 +79,8 @@ interface GameDetailRaw {
   korean_sub: boolean;
   age_rating: string;
   on_sale: boolean;
+  // 스팀 스토어 URL(string|null). "구매하러 가기" 버튼의 외부 링크 대상. null이면 구매 경로 없음.
+  steam_url: string | null;
   developer_games: GameSummaryRaw[];
 }
 
@@ -144,6 +146,8 @@ export interface GameDetail {
   koreanSub: boolean;
   ageRating: string;
   onSale: boolean;
+  // 스팀 스토어 URL. null이면 구매 경로가 없어 "구매하러 가기" 버튼을 숨긴다.
+  steamUrl: string | null;
   developerGames: GameSummaryItem[];
 }
 
@@ -202,6 +206,7 @@ export function mapGameDetail(raw: GameDetailRaw): GameDetail {
     koreanSub: raw.korean_sub,
     ageRating: raw.age_rating,
     onSale: raw.on_sale,
+    steamUrl: raw.steam_url ?? null,
     developerGames: raw.developer_games.map(mapGameSummaryItem),
   };
 }

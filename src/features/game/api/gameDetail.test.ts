@@ -55,6 +55,7 @@ function makeRaw(overrides: Partial<GameDetailRaw> = {}): GameDetailRaw {
     korean_sub: true,
     age_rating: '청소년 이용불가',
     on_sale: true,
+    steam_url: 'https://store.steampowered.com/app/1245620',
     developer_games: [
       {
         game_id: 8,
@@ -95,6 +96,21 @@ describe('mapGameDetail', () => {
     expect(result.koreanSub).toBe(true);
     expect(result.ageRating).toBe('청소년 이용불가');
     expect(result.onSale).toBe(true);
+    expect(result.steamUrl).toBe('https://store.steampowered.com/app/1245620');
+  });
+
+  describe('steamUrl 매핑 (구매 링크)', () => {
+    it('steam_url이 있으면 그대로 매핑한다', () => {
+      const result = mapGameDetail(
+        makeRaw({ steam_url: 'https://store.steampowered.com/app/1' }),
+      );
+      expect(result.steamUrl).toBe('https://store.steampowered.com/app/1');
+    });
+
+    it('steam_url이 null이면 null로 유지한다(버튼 숨김 신호)', () => {
+      const result = mapGameDetail(makeRaw({ steam_url: null }));
+      expect(result.steamUrl).toBeNull();
+    });
   });
 
   it('play_modes 코드 배열을 변환 없이 그대로(코드 원문) 매핑한다', () => {
