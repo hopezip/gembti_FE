@@ -1,6 +1,5 @@
 import { HeroBanner } from '@/features/main/components/HeroBanner';
 import { NewReleases } from '@/features/main/components/NewReleases';
-import { PersonalizedHeroBanner } from '@/features/main/components/PersonalizedHeroBanner';
 import { PersonalizedNewReleases } from '@/features/main/components/PersonalizedNewReleases';
 import { PersonalizedRecommendedGames } from '@/features/main/components/PersonalizedRecommendedGames';
 import { RecommendedGames } from '@/features/main/components/RecommendedGames';
@@ -23,11 +22,11 @@ function GuestHome() {
   );
 }
 
-// 개인화 홈(로그인+설문완료) — 개인화 Hero + 당신을 위한 추천 + 신규(비회원과 동일 카드).
+// 개인화 홈(로그인+설문완료) — Hero 배너는 게스트와 통일하고, 추천/신규 카드만 개인화한다.
 function PersonalizedHome() {
   return (
     <>
-      <PersonalizedHeroBanner />
+      <HeroBanner />
       <PersonalizedRecommendedGames />
       <PersonalizedNewReleases />
     </>
