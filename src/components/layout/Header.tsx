@@ -84,7 +84,12 @@ export function Header() {
           </div>
 
           {/* 데스크탑: 프로필 드롭다운 */}
-          <div className={css({ display: { base: 'none', sm: 'block' }, flexShrink: 0 })}>
+          <div
+            className={css({
+              display: { base: 'none', sm: 'block' },
+              flexShrink: 0,
+            })}
+          >
             <HeaderProfileMenu />
           </div>
 
@@ -136,7 +141,10 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenuDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <MobileMenuDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
     </>
   );
 }
