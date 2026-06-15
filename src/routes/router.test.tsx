@@ -117,16 +117,15 @@ describe('라우트 골격', () => {
     expect(
       screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '설문 진행하기' })).toHaveAttribute(
-      'href',
-      '/survey/intro',
-    );
+    expect(
+      screen.queryByRole('link', { name: '설문 진행하기' }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: '당신을 위한 추천' }),
     ).not.toBeInTheDocument();
   });
 
-  it('건너뛴 문항이 있으면 메인 배너에 설문 이어하기를 노출한다', () => {
+  it('건너뛴 문항이 있어도 메인 배너에 설문 이어하기를 노출하지 않는다', () => {
     useAuthStore.getState().setSession({
       user: {
         id: 1,
@@ -140,16 +139,15 @@ describe('라우트 골격', () => {
 
     renderAt('/');
 
-    expect(screen.getByRole('link', { name: '설문 이어하기' })).toHaveAttribute(
-      'href',
-      '/survey',
-    );
+    expect(
+      screen.queryByRole('link', { name: '설문 이어하기' }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '설문 진행하기' }),
     ).not.toBeInTheDocument();
   });
 
-  it('설문 완료 후 재진단에서 건너뛴 문항이 있으면 개인화 배너에 설문 이어하기를 노출한다', () => {
+  it('설문 완료 후 재진단에서 건너뛴 문항이 있어도 개인화 배너에 설문 이어하기를 노출하지 않는다', () => {
     useAuthStore.getState().setSession({
       user: {
         id: 2,
@@ -163,10 +161,9 @@ describe('라우트 골격', () => {
 
     renderAt('/');
 
-    expect(screen.getByRole('link', { name: '설문 이어하기' })).toHaveAttribute(
-      'href',
-      '/survey',
-    );
+    expect(
+      screen.queryByRole('link', { name: '설문 이어하기' }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
     ).toBeInTheDocument();

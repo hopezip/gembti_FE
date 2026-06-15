@@ -4,8 +4,6 @@ import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
 import { useBannerImages } from '@/features/main/api/bannerImages';
 import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroundCarousel';
-import { useSurveyProgressStore } from '@/features/survey/store/useSurveyProgressStore';
-import { useAuthStore } from '@/lib/store/useAuthStore';
 
 // MAIN-FE-001 비로그인 메인 Hero 배너 (Figma Hero 387:4742).
 // 구조(3층): ① 배경(추천 첫 1건 커버 이미지 또는 그라데이션 placeholder)
@@ -86,20 +84,6 @@ export function HeroBanner() {
   // 배경은 캐러셀(인기 상위 5개 커버, 10초 자동 전환)이 담당한다 (MAIN-FE-009).
   const bannerImages = useBannerImages();
 
-  // 설문 진행 중 건너뛴 문항이 존재하는지 여부
-  // 건너뛴 문항이 있다면 메인 배너에서 '설문 이어하기'를 노출한다.
-  const hasSkippedQuestions = useSurveyProgressStore(
-    (state) => state.skippedQuestionIds.length > 0,
-  );
-  // 로그인한 사용자 중
-  // 설문 미완료 상태이거나 건너뛴 문항이 있는 경우에만
-  // 메인 배너의 설문 CTA를 노출한다.
-  const showSurveyCta = useAuthStore(
-    (state) =>
-      state.status === 'authenticated' &&
-      (!state.user?.hasCompletedSurvey || hasSkippedQuestions),
-  );
-
   return (
     <section className={styles.section} aria-label="오늘의 추천">
       {/* ① 배경: 단색 fallback + 그 위 이미지 캐러셀(이미지 없으면 단색만 노출) */}
@@ -140,20 +124,6 @@ export function HeroBanner() {
               >
                 탐색 시작하기
               </Link>
-
-              {showSurveyCta && (
-                // 설문 진행 상태에 따라 CTA 목적지와 문구를 변경한다.
-                // -건너뛴문항 존재: 설문 이어하기 - 설문 미시작: 설문 진행하기
-                <Link
-                  to={hasSkippedQuestions ? '/survey' : '/survey/intro'}
-                  className={cx(
-                    button({ variant: 'secondary', size: 'lg' }),
-                    styles.ctaLift,
-                  )}
-                >
-                  {hasSkippedQuestions ? '설문 이어하기' : '설문 진행하기'}
-                </Link>
-              )}
             </div>
           </div>
         </div>

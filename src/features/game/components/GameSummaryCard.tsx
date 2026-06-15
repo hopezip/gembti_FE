@@ -13,6 +13,10 @@ export interface GameSummaryCardProps {
   title?: string;
   /** 좌상단 NEW 뱃지 표시(신규 게임 섹션). title과 독립적으로 동작. */
   isNew?: boolean;
+  /** 좌상단 커스텀 뱃지. 인기 게임의 TOP 순위 등에 사용한다. */
+  imageBadge?: string;
+  /** 장르·평점 아래 한 줄 메타. 동접자 등의 부가 정보에 사용한다. */
+  secondaryMeta?: string;
 }
 
 // 공통 게임 카드(게임 도메인) — Figma 비회원 카드(4003:1404/4003:996) 기준. 메인 추천·인기·신규 그리드에서 공유.
@@ -26,6 +30,8 @@ export function GameSummaryCard({
   thumbnailUrl,
   title,
   isNew,
+  imageBadge,
+  secondaryMeta,
 }: GameSummaryCardProps) {
   const hasCover = Boolean(thumbnailUrl);
   const hasTitle = Boolean(title);
@@ -50,7 +56,7 @@ export function GameSummaryCard({
         }
       >
         {/* 좌상단 NEW 뱃지 — top/left 12px. accent 배경 + onAccent(흰색) 텍스트. */}
-        {isNew && (
+        {(isNew || imageBadge) && (
           <span
             className={css({
               position: 'absolute',
@@ -67,7 +73,7 @@ export function GameSummaryCard({
               lineHeight: 'none',
             })}
           >
-            NEW
+            {imageBadge ?? 'NEW'}
           </span>
         )}
       </div>
@@ -126,6 +132,17 @@ export function GameSummaryCard({
           </span>
         )}
       </div>
+      {secondaryMeta && (
+        <div
+          className={css({
+            mt: '3',
+            fontSize: 'sm',
+            color: 'fg.muted',
+          })}
+        >
+          {secondaryMeta}
+        </div>
+      )}
     </div>
   );
 }

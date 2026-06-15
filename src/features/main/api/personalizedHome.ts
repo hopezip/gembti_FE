@@ -43,7 +43,6 @@ interface RecommendationProfileRaw {
   challenge_tags: string[];
   liked_meta: string;
   challenge_meta: string;
-  last_updated_text: string;
 }
 
 interface PersonalizedHomeResponseRaw {
@@ -80,7 +79,6 @@ export interface RecommendationProfile {
   likedMeta: string; // "좋아하는 것" 그룹 캡션 (예: "★4+ 게임 23개에서 추출")
   challengeTags: string[]; // "새로운 도전" 그룹 칩
   challengeMeta: string; // "새로운 도전" 그룹 캡션
-  lastUpdatedText: string; // "마지막 업데이트 …"의 값 (예: "2일 전")
 }
 
 export interface PersonalizedHome {
@@ -145,7 +143,6 @@ function mapPersonalizedHome(
       likedMeta: recommendation_profile?.liked_meta ?? '',
       challengeTags: recommendation_profile?.challenge_tags ?? [],
       challengeMeta: recommendation_profile?.challenge_meta ?? '',
-      lastUpdatedText: recommendation_profile?.last_updated_text ?? '',
     },
   };
 }
