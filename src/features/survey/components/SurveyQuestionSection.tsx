@@ -10,16 +10,6 @@ import { SurveyAnswerScale } from './SurveyAnswerScale';
 import { SurveyQuestionControls } from './SurveyQuestionControls';
 import { SurveyStepIndicator } from './SurveyStepIndicator';
 
-const questionAccentMap: Record<number, string> = {
-  1: '낯선 경험',
-  2: '빠른 판단',
-  3: '성장',
-  4: '전략',
-  5: '이야기',
-  6: '협력하거나 경쟁',
-  7: '완성도',
-};
-
 function splitQuestionLines(question: string) {
   // 기존 시안처럼 두 줄 리듬을 유지하기 위해 첫 번째 자연스러운 공백 지점에서 나눈다.
   // API가 줄바꿈 없는 문장을 내려주므로, 화면 전용 줄바꿈은 컴포넌트에서만 계산한다.
@@ -28,26 +18,6 @@ function splitQuestionLines(question: string) {
   if (splitIndex === -1) return [question];
 
   return [question.slice(0, splitIndex), question.slice(splitIndex + 1)];
-}
-
-function renderQuestion(text: string, accent: string) {
-  const accentIndex = text.indexOf(accent);
-  if (accentIndex === -1) return text;
-
-  return (
-    <>
-      {text.slice(0, accentIndex)}
-      <span
-        className={css({
-          color: 'accent.default',
-          textShadow: '0 0 22px token(colors.accent.default)',
-        })}
-      >
-        {accent}
-      </span>
-      {text.slice(accentIndex + accent.length)}
-    </>
-  );
 }
 
 interface SurveyQuestionSectionProps {
@@ -73,15 +43,13 @@ function SurveyQuestionContent({
     progressPercent,
     selectedValue,
     selectAnswer,
-    skipQuestion,
+    nextQuestion,
   } = useSurveyQuestionSection({
     questions,
     onComplete,
   });
   const currentQuestion = questions[currentIndex];
   const questionLines = splitQuestionLines(currentQuestion.question);
-  const accent =
-    questionAccentMap[currentQuestion.id] ?? questionLines[0] ?? '';
 
   return (
     <>
@@ -123,7 +91,7 @@ function SurveyQuestionContent({
               })}
               key={line}
             >
-              {renderQuestion(line, accent)}
+              {line}
             </span>
           ))}
         </h1>
@@ -134,11 +102,13 @@ function SurveyQuestionContent({
         />
 
         <SurveyQuestionControls
+          isLastQuestion={currentIndex === totalSteps - 1}
+          isNextDisabled={selectedValue === null}
           isPreviousDisabled={currentIndex === 0}
           progressLabel={`${progressPercent}% 완료 · ${completedCount}/${totalSteps}`}
           progressValue={progressPercent}
+          onNext={nextQuestion}
           onPrevious={() => goToQuestion(currentIndex - 1)}
-          onSkip={skipQuestion}
         />
       </div>
     </>

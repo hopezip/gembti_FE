@@ -58,10 +58,6 @@ export function PersonalityRadar({ personality }: Props) {
   const resetSurveyProgress = useSurveyProgressStore(
     (state) => state.resetProgress,
   );
-  // 미응답 문항이 남아있는 경우 설문 이어하기 상태로 판단한다.
-  const hasSkippedQuestions = useSurveyProgressStore(
-    (state) => state.skippedQuestionIds.length > 0,
-  );
   const valuePts = personality
     .map((p, i) => pt(i, p.value / 10))
     .map((p) => `${p.x},${p.y}`)
@@ -88,22 +84,15 @@ export function PersonalityRadar({ personality }: Props) {
           6대 성향 레이더
         </span>
         {hasCompletedSurvey && (
-          // 미응답 문항이 남아있는 경우
-          // 기존 응답값을 유지한 채 설문을 이어서 진행한다.
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (hasSkippedQuestions) {
-                navigate('/survey');
-                return;
-              }
-
               resetSurveyProgress();
               navigate('/survey/intro');
             }}
           >
-            {hasSkippedQuestions ? '설문 이어하기' : '취향 다시 진단'}
+            취향 다시 진단
           </Button>
         )}
       </div>

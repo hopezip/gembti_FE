@@ -7,11 +7,11 @@
 export type SurveyAnswerValue = 1 | 2 | 3 | 4 | 5;
 
 // GET /api/v1/surveys/questions 응답의 단일 문항.
-// question_id/question/options는 백엔드 명세의 snake_case 응답을 그대로 따른다.
 export interface SurveyQuestionResponse {
   question_id: number;
-  question: string;
-  options: string[];
+  question_text: string;
+  stat_axis: string;
+  display_order: number;
 }
 
 // GET /api/v1/surveys/questions 응답.
@@ -19,7 +19,7 @@ export interface SurveyQuestionResponse {
 export type SurveyQuestionsResponse = SurveyQuestionResponse[];
 
 // POST /api/v1/surveys/submit 요청의 단일 답변.
-// answer는 선택된 척도 값이며, 누락 문항은 서버가 400으로 판단한다.
+// Swagger 계약상 answer는 UI 선택값과 동일한 1~5 척도다.
 export interface SurveySubmitAnswer {
   question_id: number;
   answer: SurveyAnswerValue;
@@ -47,19 +47,20 @@ export type SurveyResultSource = 'ONLY_SURVEY' | 'HYBRID_STEAM';
 // POST /api/v1/surveys/submit 응답의 stats 객체.
 export type SurveyStats = Record<SurveyTraitKey, number>;
 
-// POST /api/v1/surveys/submit 성공 응답.
+// POST /api/v1/surveys/submit 성공 응답 (201).
 export interface SurveySubmitResponse {
-  survey_id: number;
+  user_stats_id: number;
   stats: SurveyStats;
-  source: SurveyResultSource;
+  source_type: SurveyResultSource;
+  survey_mode: string;
 }
 
 // GET /api/v1/surveys/result 성공 응답.
-// type은 "전략가형" 같은 사용자 표시용 유형명이다.
 export interface SurveyLatestResultResponse {
-  survey_id: number;
-  type: string;
+  user_stats_id: number;
   stats: SurveyStats;
+  source_type: SurveyResultSource;
+  survey_mode: string;
   created_at: string;
 }
 
@@ -71,20 +72,16 @@ export interface SurveyAnalysisNavigationState {
 }
 
 export interface SurveyRecommendationGame {
+  recommendation_item_id: number;
   game_id: number;
-  name: string;
-  image_url: string;
+  title: string;
+  image_url?: string | null;
   genres: string[];
-  score: number;
-  reason: string;
+  rating?: number | null;
+  similarity_score: number;
+  similarity_rank: number;
 }
 
 export interface SurveyRecommendationsResponse {
-  recommendation_items_id: number;
   games: SurveyRecommendationGame[];
-}
-
-// MSW와 서비스에서 공통으로 쓰는 에러 응답 형태.
-export interface SurveyErrorResponse {
-  error: string;
 }

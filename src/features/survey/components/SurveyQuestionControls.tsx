@@ -3,7 +3,7 @@ import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
-// 설문 하단 조작 영역: 이전 이동, 완료율, 현재 문항 건너뛰기를 한 줄에 배치한다.
+// 설문 하단 조작 영역: 이전 이동, 완료율, 다음 문항 이동을 한 줄에 배치한다.
 const questionControlsStyle = css({
   display: 'grid',
   gridTemplateColumns: {
@@ -20,19 +20,23 @@ const questionControlsStyle = css({
 });
 
 interface SurveyQuestionControlsProps {
+  isLastQuestion: boolean;
+  isNextDisabled: boolean;
   isPreviousDisabled: boolean;
   progressLabel: string;
   progressValue: number;
+  onNext: () => void;
   onPrevious: () => void;
-  onSkip: () => void;
 }
 
 export function SurveyQuestionControls({
+  isLastQuestion,
+  isNextDisabled,
   isPreviousDisabled,
   progressLabel,
   progressValue,
+  onNext,
   onPrevious,
-  onSkip,
 }: SurveyQuestionControlsProps) {
   return (
     <div className={questionControlsStyle}>
@@ -75,10 +79,15 @@ export function SurveyQuestionControls({
           px: { base: '3', md: '6' },
           borderRadius: 'full',
           gridColumn: { base: '2', md: '3' },
+          _disabled: {
+            cursor: 'not-allowed',
+            opacity: '0.45',
+          },
         })}
-        onClick={onSkip}
+        disabled={isNextDisabled}
+        onClick={onNext}
       >
-        건너뛰기
+        {isLastQuestion ? '결과 보기' : '다음 문항'}
         <ChevronRight size={17} aria-hidden="true" />
       </Button>
     </div>

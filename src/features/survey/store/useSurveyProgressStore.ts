@@ -3,18 +3,12 @@ import type { SurveyAnswerValue } from '@/features/survey/api/types';
 
 interface SurveyProgressState {
   answers: Record<number, SurveyAnswerValue>;
-  skippedQuestionIds: number[];
-  saveProgress: (
-    answers: Record<number, SurveyAnswerValue>,
-    skippedQuestionIds: number[],
-  ) => void;
+  saveProgress: (answers: Record<number, SurveyAnswerValue>) => void;
   resetProgress: () => void;
 }
 
 export const useSurveyProgressStore = create<SurveyProgressState>((set) => ({
   answers: {},
-  skippedQuestionIds: [],
-  saveProgress: (answers, skippedQuestionIds) =>
-    set({ answers, skippedQuestionIds }),
-  resetProgress: () => set({ answers: {}, skippedQuestionIds: [] }),
+  saveProgress: (answers) => set({ answers }),
+  resetProgress: () => set({ answers: {} }),
 }));
