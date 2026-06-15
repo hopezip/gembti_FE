@@ -13,13 +13,13 @@ export interface GameDetailHeroProps {
 
 // 게임 상세 Hero (REC-DET-FE-001, Figma 4014:3959).
 // 풀블리드 커버 배경 + 좌→우 어두운 그라데이션 오버레이 위에, 좌측 정렬 콘텐츠를 PageContainer 폭(1232px)으로 둔다.
-// 구성: 태그 칩(외곽선 pill) → 제목 → 별점 → 메타 3컬럼(개발/퍼블리셔·발행일·플레이모드) → 가격블록 → 구매 버튼.
+// 구성: 카테고리 칩(외곽선 pill) → 제목 → 별점 → 메타 3컬럼(개발/퍼블리셔·발행일·플레이모드) → 가격블록 → 구매 버튼.
 // semantic token만 사용, 다른 도메인 import 없음. 런타임 이미지 URL만 style 인라인(Panda 정적 추출 불가).
 // 배경 fallback: themeImageUrl→bannerUrl→thumbnailUrl→bg.surfaceRaised(이미지 모두 없을 때).
 export function GameDetailHero({ detail }: GameDetailHeroProps) {
   const {
     title,
-    tags,
+    categories,
     rating,
     developer,
     publisher,
@@ -84,8 +84,8 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
               py: '16',
             })}
           >
-            {/* 태그 칩 — 외곽선 pill(neutral tone), 가로 나열. filled는 글자 안 보여 미사용. */}
-            {tags.length > 0 && (
+            {/* 카테고리 칩 — 외곽선 pill(neutral tone), 가로 나열. filled는 글자 안 보여 미사용. */}
+            {categories.length > 0 && (
               <div
                 className={css({
                   display: 'flex',
@@ -93,8 +93,8 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
                   gap: '2',
                 })}
               >
-                {tags.map((t) => (
-                  <Tag key={t}>{t}</Tag>
+                {categories.map((c) => (
+                  <Tag key={c}>{c}</Tag>
                 ))}
               </div>
             )}

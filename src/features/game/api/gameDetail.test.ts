@@ -14,7 +14,7 @@ function makeRaw(overrides: Partial<GameDetailRaw> = {}): GameDetailRaw {
     description: '짧은 설명',
     full_description: '긴 설명 본문',
     genres: ['액션', 'RPG'],
-    tags: ['오픈월드', '소울라이크'],
+    categories: ['오픈월드', '소울라이크'],
     rating: 9.5,
     review_count: 12345,
     price_info: {
@@ -55,15 +55,6 @@ function makeRaw(overrides: Partial<GameDetailRaw> = {}): GameDetailRaw {
     korean_sub: true,
     age_rating: '청소년 이용불가',
     on_sale: true,
-    similar_games: [
-      {
-        game_id: 7,
-        title: '다크 소울 3',
-        thumbnail_url: 'https://cdn.example/ds3.jpg',
-        genres: ['액션'],
-        rating: 9.0,
-      },
-    ],
     developer_games: [
       {
         game_id: 8,
@@ -73,14 +64,6 @@ function makeRaw(overrides: Partial<GameDetailRaw> = {}): GameDetailRaw {
         rating: 8.8,
       },
     ],
-    ai_match: {
-      match_rate: 87,
-      reason_summary: '선호 장르와 난이도가 잘 맞습니다',
-    },
-    review_stats: {
-      positive_rate: 92,
-      total_count: 10000,
-    },
   };
   return { ...base, ...overrides };
 }
@@ -94,6 +77,7 @@ describe('mapGameDetail', () => {
     expect(result.description).toBe('짧은 설명');
     expect(result.fullDescription).toBe('긴 설명 본문');
     expect(result.genres).toEqual(['액션', 'RPG']);
+    expect(result.categories).toEqual(['오픈월드', '소울라이크']);
     expect(result.reviewCount).toBe(12345);
     expect(result.developer).toBe('FromSoftware');
     expect(result.publisher).toBe('Bandai Namco');
@@ -119,20 +103,22 @@ describe('mapGameDetail', () => {
     expect(result.playModes).toEqual(['SINGLE', 'CO_OP']);
   });
 
-  describe('tags 정규화 (?? [])', () => {
-    it('tags가 제공되면 그대로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw({ tags: ['인디', '로그라이크'] }));
-      expect(result.tags).toEqual(['인디', '로그라이크']);
+  describe('categories 정규화 (?? [])', () => {
+    it('categories가 제공되면 그대로 매핑한다', () => {
+      const result = mapGameDetail(
+        makeRaw({ categories: ['인디', '로그라이크'] }),
+      );
+      expect(result.categories).toEqual(['인디', '로그라이크']);
     });
 
-    it('tags가 null이면 빈 배열로 정규화한다', () => {
-      const result = mapGameDetail(makeRaw({ tags: null }));
-      expect(result.tags).toEqual([]);
+    it('categories가 null이면 빈 배열로 정규화한다', () => {
+      const result = mapGameDetail(makeRaw({ categories: null }));
+      expect(result.categories).toEqual([]);
     });
 
-    it('tags가 undefined(미제공)면 빈 배열로 정규화한다', () => {
-      const result = mapGameDetail(makeRaw({ tags: undefined }));
-      expect(result.tags).toEqual([]);
+    it('categories가 undefined(미제공)면 빈 배열로 정규화한다', () => {
+      const result = mapGameDetail(makeRaw({ categories: undefined }));
+      expect(result.categories).toEqual([]);
     });
   });
 
@@ -189,18 +175,9 @@ describe('mapGameDetail', () => {
     });
   });
 
-  describe('similarGames / developerGames 매핑', () => {
+  describe('developerGames 매핑', () => {
     it('카드 섹션 항목의 game_id/thumbnail_url을 camelCase로 매핑한다', () => {
       const result = mapGameDetail(makeRaw());
-      expect(result.similarGames).toEqual([
-        {
-          gameId: 7,
-          title: '다크 소울 3',
-          thumbnailUrl: 'https://cdn.example/ds3.jpg',
-          genres: ['액션'],
-          rating: 9.0,
-        },
-      ]);
       expect(result.developerGames[0].gameId).toBe(8);
       expect(result.developerGames[0].thumbnailUrl).toBe(
         'https://cdn.example/sekiro.jpg',
@@ -210,7 +187,7 @@ describe('mapGameDetail', () => {
     it('카드 섹션 항목의 rating null도 유지한다', () => {
       const result = mapGameDetail(
         makeRaw({
-          similar_games: [
+          developer_games: [
             {
               game_id: 9,
               title: '평점 없는 게임',
@@ -221,53 +198,12 @@ describe('mapGameDetail', () => {
           ],
         }),
       );
-      expect(result.similarGames[0].rating).toBeNull();
+      expect(result.developerGames[0].rating).toBeNull();
     });
 
     it('카드 섹션이 빈 배열이면 빈 배열로 매핑한다', () => {
-      const result = mapGameDetail(
-        makeRaw({ similar_games: [], developer_games: [] }),
-      );
-      expect(result.similarGames).toEqual([]);
+      const result = mapGameDetail(makeRaw({ developer_games: [] }));
       expect(result.developerGames).toEqual([]);
-    });
-  });
-
-  describe('ai_match / review_stats 매핑 (갭 C·D, UI 미표시지만 매핑은 수행)', () => {
-    it('ai_match를 camelCase 도메인 타입으로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw());
-      expect(result.aiMatch).toEqual({
-        matchRate: 87,
-        reasonSummary: '선호 장르와 난이도가 잘 맞습니다',
-      });
-    });
-
-    it('review_stats를 camelCase 도메인 타입으로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw());
-      expect(result.reviewStats).toEqual({
-        positiveRate: 92,
-        totalCount: 10000,
-      });
-    });
-
-    it('ai_match가 null이면 null로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw({ ai_match: null }));
-      expect(result.aiMatch).toBeNull();
-    });
-
-    it('review_stats가 null이면 null로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw({ review_stats: null }));
-      expect(result.reviewStats).toBeNull();
-    });
-
-    it('ai_match가 undefined(미제공)면 null로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw({ ai_match: undefined }));
-      expect(result.aiMatch).toBeNull();
-    });
-
-    it('review_stats가 undefined(미제공)면 null로 매핑한다', () => {
-      const result = mapGameDetail(makeRaw({ review_stats: undefined }));
-      expect(result.reviewStats).toBeNull();
     });
   });
 });
