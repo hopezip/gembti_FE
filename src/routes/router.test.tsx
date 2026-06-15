@@ -82,9 +82,9 @@ describe('라우트 골격', () => {
       accessToken: 'mock-access',
     });
     renderAt('/');
-    // 개인화 Hero 헤드라인 + 개인화 추천 섹션 제목이 보인다.
+    // 배너는 게스트와 통일된 HeroBanner(MAIN-FE-011). 개인화 여부는 추천 섹션 제목으로 구분한다.
     expect(
-      screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
+      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '설문 다시하기' }),
@@ -95,10 +95,6 @@ describe('라우트 골격', () => {
     expect(
       screen.getByRole('heading', { name: '당신을 위한 추천' }),
     ).toBeInTheDocument();
-    // 게스트 홈 Hero(비로그인 카피)는 렌더되지 않는다(분기가 개인화로 갔음).
-    expect(
-      screen.queryByRole('heading', { name: /인생 게임을 찾아보세요/ }),
-    ).not.toBeInTheDocument();
   });
 
   it('로그인했어도 설문 미완이면 메인(/)이 게스트 홈으로 떨어진다(MAIN-FE-006)', () => {
@@ -164,8 +160,9 @@ describe('라우트 골격', () => {
     expect(
       screen.queryByRole('link', { name: '설문 이어하기' }),
     ).not.toBeInTheDocument();
+    // 통일 배너 + 개인화 추천 섹션으로 개인화 홈임을 확인한다(MAIN-FE-011).
     expect(
-      screen.getByRole('heading', { name: /인생 게임은 이거예요/ }),
+      screen.getByRole('heading', { name: '당신을 위한 추천' }),
     ).toBeInTheDocument();
   });
 
