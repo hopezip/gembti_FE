@@ -47,6 +47,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     koreanSub: true,
     ageRating: '15세 이용가',
     onSale: false,
+    steamUrl: 'https://store.steampowered.com/app/1',
     developerGames: [],
     ...overrides,
   };

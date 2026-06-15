@@ -51,6 +51,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     koreanSub: true,
     ageRating: '15세 이용가',
     onSale: true,
+    steamUrl: 'https://store.steampowered.com/app/1',
     developerGames: [],
     ...overrides,
   };
@@ -103,11 +104,29 @@ describe('GameDetailHero', () => {
     expect(screen.getByText('30,000원')).toBeInTheDocument();
   });
 
-  it('구매 버튼을 렌더한다', () => {
-    render(<GameDetailHero detail={makeDetail()} />);
+  it('steamUrl이 있으면 구매 버튼을 스팀 스토어 외부 링크(새 탭·noopener)로 렌더한다', () => {
+    render(
+      <GameDetailHero
+        detail={makeDetail({
+          steamUrl: 'https://store.steampowered.com/app/1245620',
+        })}
+      />,
+    );
+    // asChild로 anchor 렌더 → role은 link.
+    const link = screen.getByRole('link', { name: /구매하러 가기/ });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://store.steampowered.com/app/1245620',
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('steamUrl이 null이면 구매 버튼을 렌더하지 않는다', () => {
+    render(<GameDetailHero detail={makeDetail({ steamUrl: null })} />);
     expect(
-      screen.getByRole('button', { name: /구매하러 가기/ }),
-    ).toBeInTheDocument();
+      screen.queryByRole('link', { name: /구매하러 가기/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('categories를 외곽선 칩으로 노출한다', () => {
