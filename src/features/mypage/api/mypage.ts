@@ -6,11 +6,14 @@
 //   응답 타입은 한시적 mock 핸들러 타입을 재사용한다(백엔드 계약 확정 시 자동 생성물로 교체 예정).
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
+import { getSteamStatus } from '@/lib/api/steam';
 import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
 
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
-//   통계·성향·관심장르·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
+//   성향·관심장르·총 플레이시간·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
 //   화면 회귀 방지용 그럴듯한 값을 둔다. 백엔드 API 확정 시 이 합성을 제거하고 실값 매핑으로 교체한다.
+//   ⭐ 예외: 게임 보유수(stats.following)는 GET /api/v1/steam/status의 library_games_count 실값으로
+//      덮어쓴다(MYPAGE-FE-009). 총 플레이시간(totalPlayHours)은 전체 누적 API가 없어 mock 유지.
 //   ⚠️ mock 핸들러(값) import는 번들 오염이라 금지 → 여기 자체 정의한다(타입만 mock에서 가져온다).
 const PROFILE_FALLBACK: Pick<
   MockUserProfile,
@@ -61,11 +64,17 @@ export interface LibraryResponse {
   allGenres: string[];
 }
 
-// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse)를 MockUserProfile로 합성한다 (MYPAGE-FE-005).
-//   실값: nickname·email·bio·스팀 연동 필드(연동여부·SteamID·아바타·동기화시각). steamNickname은 별도 필드가
-//   없어 SteamID(steam_id_64)로 대체한다. 나머지(통계·성향·프로필 상세)는 PROFILE_FALLBACK(임시 mock)이다.
+// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + GET /api/v1/steam/status를 MockUserProfile로 합성한다.
+//   실값: nickname·email·bio·스팀 연동 필드(연동여부·SteamID·아바타·동기화시각) + 게임 보유수(library_games_count).
+//   steamNickname은 별도 필드가 없어 SteamID(steam_id_64)로 대체한다.
+//   나머지(총 플레이시간·성향·프로필 상세)는 PROFILE_FALLBACK(임시 mock)이다.
+//   steam/status는 미연동 유저도 200(library_games_count=0)을 주지만, 호출 실패 시 보유수 때문에
+//   프로필 전체가 깨지지 않도록 catch로 격리한다(실패 시 보유수 0).
 export async function getMyProfile(): Promise<MockUserProfile> {
-  const me = await getMeRaw();
+  const [me, steam] = await Promise.all([
+    getMeRaw(),
+    getSteamStatus().catch(() => null),
+  ]);
   return {
     id: String(me.id),
     nickname: me.nickname,
@@ -77,6 +86,10 @@ export async function getMyProfile(): Promise<MockUserProfile> {
     steamNickname: me.steam_id_64 ?? null,
     steamSyncedAt: me.last_synced_at ?? null,
     ...PROFILE_FALLBACK,
+    stats: {
+      ...PROFILE_FALLBACK.stats,
+      following: steam?.library_games_count ?? 0,
+    },
   };
 }
 
