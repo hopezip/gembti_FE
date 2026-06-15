@@ -69,12 +69,12 @@ export function SignupForm({
   const email = watch('email') ?? '';
 
   // 이메일 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다. (LOGIN-FE-012, 닉네임 대칭)
-  const [emailCheck, setEmailCheck] = useState<
+  const [_emailCheck, setEmailCheck] = useState<
     'idle' | 'checking' | 'available' | 'taken'
   >('idle');
 
   // 이메일 중복 확인 — MSW 핸들러(GET /api/v1/users/check-email) 호출(실서버 엔드포인트 없음).
-  async function checkEmail() {
+  async function _checkEmail() {
     const value = email.trim();
     if (!value) return;
     setEmailCheck('checking');

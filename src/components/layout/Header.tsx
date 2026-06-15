@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Menu, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { HeaderProfileMenu } from './HeaderProfileMenu';
 import { Logo } from './Logo';
-import { MobileBottomNav } from './MobileBottomNav';
+import { MobileMenuDrawer } from './MobileMenuDrawer';
 import { Nav } from './Nav';
 import { pageContainer, pageGutter } from './PageContainer';
 
@@ -13,6 +14,7 @@ import { pageContainer, pageGutter } from './PageContainer';
 export function Header() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const submitSearch = () => {
     const query = searchQuery.trim();
@@ -81,13 +83,68 @@ export function Header() {
             />
           </div>
 
-          <div className={css({ flexShrink: 0 })}>
+          {/* 데스크탑: 프로필 드롭다운 */}
+          <div
+            className={css({
+              display: { base: 'none', sm: 'block' },
+              flexShrink: 0,
+            })}
+          >
             <HeaderProfileMenu />
+          </div>
+
+          {/* 모바일: 검색 + 햄버거 (아이콘만, 테두리·배경 없음) */}
+          <div
+            className={css({
+              display: { base: 'flex', sm: 'none' },
+              alignItems: 'center',
+              gap: '3',
+              flexShrink: 0,
+            })}
+          >
+            <button
+              type="button"
+              onClick={() => navigate('/search')}
+              aria-label="검색"
+              className={css({
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bg: 'transparent',
+                border: 'none',
+                p: '0',
+                cursor: 'pointer',
+                color: 'fg.default',
+              })}
+            >
+              <Search size={22} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="메뉴 열기"
+              aria-expanded={drawerOpen}
+              className={css({
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bg: 'transparent',
+                border: 'none',
+                p: '0',
+                cursor: 'pointer',
+                color: 'fg.default',
+              })}
+            >
+              <Menu size={24} aria-hidden="true" />
+            </button>
           </div>
         </div>
       </header>
 
-      <MobileBottomNav />
+      <MobileMenuDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
     </>
   );
 }

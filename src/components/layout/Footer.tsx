@@ -15,10 +15,7 @@ export function Footer() {
         bg: 'bg.canvas',
         // 콘텐츠 컨테이너와 동일한 가로 정렬(거터는 pageGutter, 폭은 pageContainer).
         pt: '6',
-        pb: {
-          base: 'calc(64px + env(safe-area-inset-bottom) + 24px)',
-          sm: '6',
-        },
+        pb: '6',
       })}
     >
       <div
