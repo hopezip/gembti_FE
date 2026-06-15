@@ -29,10 +29,10 @@
 
 - 비밀번호: **10자 이상 + 특수문자 1개 이상** 필수 (특수문자는 OpenAPI 스키마 외 프로빙 발견 규칙 — 백엔드 변경 시 어긋날 수 있음). 영문/숫자는 권장(강도 표시).
 - 회원가입: send-code → **verify(검증만, 토큰 없음)** → **signup(전체 필드 직접 전송)** 강제 순서. verify 미통과 시 signup 403. signup_token 흐름 폐기.
-  - signup 필드: email / password / password_confirm / nickname / gender / birth_date / terms_agreed / privacy_agreed.
+  - signup 필드: email / password / password_confirm / nickname / gender / birth_date / age_confirmed.
 - 닉네임: **2~8자**, 특수기호 불가. (실시간 중복확인 엔드포인트 없음 → 제거. 중복은 signup 응답으로만 판별)
 - 성별: `male | female | other` (UI에서 other="선택 안 함"). 백엔드 optional.
-- 약관: **이용약관(terms_agreed) + 개인정보(privacy_agreed) 필수 boolean 2개**.
+- 연령 확인: **만 15세 이상 확인(age_confirmed) 필수 boolean 1개** (LOGIN-FE-008, 기존 약관 2필드 대체).
 - 이메일 인증 코드 유효시간: 응답에 `expires_in` 없음 → FE 상수 TTL(`src/config/auth.ts`).
 - Steam OpenID/OAuth 소셜 로그인 (`LOGIN-FE-002`) — 후속.
 

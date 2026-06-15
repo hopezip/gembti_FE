@@ -193,7 +193,7 @@ export async function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
 }
 
 // ── 회원가입(전체 필드 직접 전송) ────────────────────────────────────────────
-// signup_token 흐름 폐기 — email/password/password_confirm/nickname/gender/birth_date/약관 2개를 직접 보낸다.
+// signup_token 흐름 폐기 — email/password/password_confirm/nickname/gender/birth_date/age_confirmed를 직접 보낸다.
 //   verify 미통과 시 403. 응답은 AuthResponse(access + user → 자동 로그인).
 export interface SignupPayload {
   email: string;
@@ -204,8 +204,8 @@ export interface SignupPayload {
   gender: Gender;
   // 생년월일(YYYY-MM-DD).
   birthDate: string;
-  termsAgreed: boolean;
-  privacyAgreed: boolean;
+  // 만 15세 이상 확인(백엔드 SignupRequest.age_confirmed). UI는 단일 체크박스로 받는다.
+  ageConfirmed: boolean;
 }
 
 // 회원가입 실패 유형.
@@ -238,8 +238,7 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
     nickname: payload.nickname,
     gender: payload.gender,
     birth_date: payload.birthDate,
-    terms_agreed: payload.termsAgreed,
-    privacy_agreed: payload.privacyAgreed,
+    age_confirmed: payload.ageConfirmed,
   };
   try {
     const res = await api
