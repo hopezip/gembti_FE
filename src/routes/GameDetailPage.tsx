@@ -14,8 +14,8 @@ import { GameGridSection } from '@/features/main/components/GameGridSection';
 
 // 게임 상세 페이지 (REC-DET-FE-001, 라우트 '/games/:gameId'·Public).
 // 앞 단계 산출물(gameDetail.ts·Hero·IntroSection·InfoTable·MediaGallery·GameGridSection)을 조립한다.
-// 조립 순서(위→아래): Hero → 게임 소개 → 정보 테이블 → 미디어 → 유사 게임 → 개발사의 다른 게임.
-// 카드 섹션 2개는 공유 GameGridSection을 pageSize 4로 재사용하고, 각 카드를 /games/:id Link로 감싼다.
+// 조립 순서(위→아래): Hero → 게임 소개 → 정보 테이블 → 미디어 → 개발사의 다른 게임.
+// 카드 섹션(개발사의 다른 게임) 1개는 공유 GameGridSection을 pageSize 4로 재사용하고, 각 카드를 /games/:id Link로 감싼다.
 // GlobalShell은 라우트 레벨에서 자동 적용되므로 여기서 렌더하지 않는다(<main> landmark만 페이지가 소유).
 // 새 쿼리는 신설하지 않는다 — useGameDetail 훅 하나로 상세 1건을 구독한다.
 
@@ -68,7 +68,7 @@ const styles = {
   }),
 };
 
-// 유사 게임·개발사 게임 카드 1장 — /games/:id Link로 감싼 GameSummaryCard.
+// 개발사 게임 카드 1장 — /games/:id Link로 감싼 GameSummaryCard.
 // GameGridSection의 renderCard에 그대로 넘긴다(key는 호출부에서 이 컴포넌트에 부여).
 function SummaryCardLink({ item }: { item: GameSummaryItem }) {
   return (
@@ -153,18 +153,7 @@ export default function GameDetailPage() {
         />
       </PageContainer>
 
-      {/* 카드 섹션 2개 — GameGridSection이 내부에서 PageContainer를 감싸므로 또 감싸지 않는다. */}
-      <GameGridSection<GameSummaryItem>
-        title="이 게임을 좋아하는 사람이 본 다른 게임"
-        items={data.similarGames}
-        isLoading={false}
-        isError={false}
-        pageSize={4}
-        errorText="유사 게임을 불러오지 못했어요."
-        emptyText="표시할 유사 게임이 없어요."
-        renderCard={(item) => <SummaryCardLink key={item.gameId} item={item} />}
-      />
-
+      {/* 카드 섹션(개발사의 다른 게임) 1개 — GameGridSection이 내부에서 PageContainer를 감싸므로 또 감싸지 않는다. */}
       <GameGridSection<GameSummaryItem>
         title="같은 개발사의 게임"
         items={data.developerGames}

@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/ky';
 
-// 게임 상세 데이터 계층 (REC-DET-FE-001).
-// 백엔드 계약: GET /api/v1/games/{gameId} (인증 불필요) — status/data 래핑 + snake_case + price_info.
+// 게임 상세 데이터 계층 (REC-DET-FE-001 / REC-DET-FE-002 실 백엔드 정합).
+// 백엔드 계약: GET /api/v1/games/{game_id} (인증 불필요) — status/data 래핑 + snake_case + price_info.
 // 응답은 snake_case로 오므로, 이 파일의 매핑 함수가 camelCase 도메인 타입으로 변환한다.
 // 컴포넌트는 camelCase 도메인 타입만 사용한다(백엔드 연결 시 매핑 계층만 유지하면 됨).
 // fetch/ky 직접 호출 금지 — 컴포넌트는 useGameDetail 훅만 사용한다.
@@ -41,25 +41,14 @@ interface SystemRequirementsRaw {
   recommended: SystemSpecRaw;
 }
 
-// 카드 섹션(유사 게임·개발사의 다른 게임) 항목 — GameSummaryCard가 받는 최소 형태.
+// 카드 섹션(개발사의 다른 게임) 항목 — GameSummaryCard가 받는 최소 형태.
 interface GameSummaryRaw {
   game_id: number;
   title: string;
-  thumbnail_url: string;
+  // swagger상 GameSummaryResponse.thumbnail_url은 nullable(string|null). 매핑에서 falsy fallback.
+  thumbnail_url: string | null;
   genres: string[];
   rating: number | null;
-}
-
-// 갭 C — ai_match(매칭률 정보). 타입·매핑에만 두고 UI 미표시(차기 티켓 표시 예정).
-interface AiMatchRaw {
-  match_rate: number;
-  reason_summary: string;
-}
-
-// 갭 D — review_stats(리뷰 통계). 타입·매핑에만 두고 UI 미표시(차기 티켓 표시 예정).
-interface ReviewStatsRaw {
-  positive_rate: number;
-  total_count: number;
 }
 
 interface GameDetailRaw {
@@ -68,15 +57,16 @@ interface GameDetailRaw {
   description: string;
   full_description: string;
   genres: string[];
-  // 계약상 태그는 없을 수 있어 미제공/null 모두 매핑에서 빈 배열로 정규화한다.
-  tags?: string[] | null;
+  // 계약상 categories는 required non-null이나, mock/매핑 안전을 위해 옵셔널+nullable로 두고 매핑에서 빈 배열로 정규화한다.
+  categories?: string[] | null;
   rating: number | null;
   review_count: number;
   price_info: PriceInfoRaw;
   developer: string;
   publisher: string;
-  release_date: string;
-  thumbnail_url: string;
+  // 실 스키마상 nullable(string|null). 소비처에서 falsy fallback(`-`).
+  release_date: string | null;
+  thumbnail_url: string | null;
   theme_image_url: string;
   banner_url: string;
   screenshot_urls: string[];
@@ -89,11 +79,7 @@ interface GameDetailRaw {
   korean_sub: boolean;
   age_rating: string;
   on_sale: boolean;
-  similar_games: GameSummaryRaw[];
   developer_games: GameSummaryRaw[];
-  // 갭 C·D — 매핑만, UI 미표시(차기 티켓 표시 예정).
-  ai_match?: AiMatchRaw | null;
-  review_stats?: ReviewStatsRaw | null;
 }
 
 interface GameDetailResponseRaw {
@@ -123,7 +109,7 @@ export interface SystemRequirements {
 }
 
 // 카드 섹션 항목 도메인 타입 — GameSummaryCard가 받는 최소 형태에 맞춤.
-// 유사 게임·개발사의 다른 게임이 공유한다.
+// 개발사의 다른 게임이 사용한다.
 export interface GameSummaryItem {
   gameId: number;
   title: string;
@@ -132,32 +118,20 @@ export interface GameSummaryItem {
   rating: number | null;
 }
 
-// 갭 C — ai_match 도메인 타입(매핑만, UI 미표시).
-export interface AiMatch {
-  matchRate: number;
-  reasonSummary: string;
-}
-
-// 갭 D — review_stats 도메인 타입(매핑만, UI 미표시).
-export interface ReviewStats {
-  positiveRate: number;
-  totalCount: number;
-}
-
 export interface GameDetail {
   gameId: number;
   title: string;
   description: string;
   fullDescription: string;
   genres: string[];
-  tags: string[];
+  categories: string[];
   rating: number | null;
   reviewCount: number;
   priceInfo: GamePriceInfo;
   developer: string;
   publisher: string;
-  releaseDate: string;
-  thumbnailUrl: string;
+  releaseDate: string | null;
+  thumbnailUrl: string | null;
   themeImageUrl: string;
   bannerUrl: string;
   screenshotUrls: string[];
@@ -170,11 +144,7 @@ export interface GameDetail {
   koreanSub: boolean;
   ageRating: string;
   onSale: boolean;
-  similarGames: GameSummaryItem[];
   developerGames: GameSummaryItem[];
-  // 갭 C·D — 매핑만, UI 미표시(차기 티켓 표시 예정).
-  aiMatch?: AiMatch | null;
-  reviewStats?: ReviewStats | null;
 }
 
 function mapSystemSpec(raw: SystemSpecRaw): SystemSpec {
@@ -191,7 +161,8 @@ function mapGameSummaryItem(raw: GameSummaryRaw): GameSummaryItem {
   return {
     gameId: raw.game_id,
     title: raw.title,
-    thumbnailUrl: raw.thumbnail_url,
+    // thumbnail_url nullable → searchGames 패턴대로 빈 문자열로 정규화(소비처 falsy 처리).
+    thumbnailUrl: raw.thumbnail_url ?? '',
     genres: raw.genres,
     rating: raw.rating,
   };
@@ -205,7 +176,7 @@ export function mapGameDetail(raw: GameDetailRaw): GameDetail {
     description: raw.description,
     fullDescription: raw.full_description,
     genres: raw.genres,
-    tags: raw.tags ?? [],
+    categories: raw.categories ?? [],
     rating: raw.rating,
     reviewCount: raw.review_count,
     priceInfo: {
@@ -231,21 +202,7 @@ export function mapGameDetail(raw: GameDetailRaw): GameDetail {
     koreanSub: raw.korean_sub,
     ageRating: raw.age_rating,
     onSale: raw.on_sale,
-    similarGames: raw.similar_games.map(mapGameSummaryItem),
     developerGames: raw.developer_games.map(mapGameSummaryItem),
-    // 갭 C·D — 매핑만 수행하고 화면엔 표시하지 않는다(차기 티켓 표시 예정).
-    aiMatch: raw.ai_match
-      ? {
-          matchRate: raw.ai_match.match_rate,
-          reasonSummary: raw.ai_match.reason_summary,
-        }
-      : null,
-    reviewStats: raw.review_stats
-      ? {
-          positiveRate: raw.review_stats.positive_rate,
-          totalCount: raw.review_stats.total_count,
-        }
-      : null,
   };
 }
 

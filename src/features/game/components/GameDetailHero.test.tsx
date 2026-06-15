@@ -13,7 +13,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     description: '',
     fullDescription: '',
     genres: ['액션'],
-    tags: ['싱글플레이', 'RPG'],
+    categories: ['싱글플레이', 'RPG'],
     rating: 4.5,
     reviewCount: 100,
     priceInfo: {
@@ -51,10 +51,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     koreanSub: true,
     ageRating: '15세 이용가',
     onSale: true,
-    similarGames: [],
     developerGames: [],
-    aiMatch: null,
-    reviewStats: null,
     ...overrides,
   };
 }
@@ -111,5 +108,16 @@ describe('GameDetailHero', () => {
     expect(
       screen.getByRole('button', { name: /구매하러 가기/ }),
     ).toBeInTheDocument();
+  });
+
+  it('categories를 외곽선 칩으로 노출한다', () => {
+    // 플레이모드 라벨(싱글플레이 등)과 겹치지 않는 값으로 칩 노출만 검증한다.
+    render(
+      <GameDetailHero
+        detail={makeDetail({ categories: ['오픈월드', '소울라이크'] })}
+      />,
+    );
+    expect(screen.getByText('오픈월드')).toBeInTheDocument();
+    expect(screen.getByText('소울라이크')).toBeInTheDocument();
   });
 });

@@ -13,7 +13,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     description: '',
     fullDescription: '',
     genres: ['액션', 'RPG'],
-    tags: [],
+    categories: [],
     rating: 4.5,
     reviewCount: 100,
     priceInfo: { originalPrice: 30000, salePrice: null, discountRate: 0 },
@@ -47,10 +47,7 @@ function makeDetail(overrides: Partial<GameDetail> = {}): GameDetail {
     koreanSub: true,
     ageRating: '15세 이용가',
     onSale: false,
-    similarGames: [],
     developerGames: [],
-    aiMatch: null,
-    reviewStats: null,
     ...overrides,
   };
 }

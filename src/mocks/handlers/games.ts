@@ -358,9 +358,9 @@ export const gameHandlers = [
     });
   }),
 
-  // REC-DET-FE-001 게임 상세 — 백엔드 계약(GET /api/v1/games/{gameId}, 인증 불필요, snake_case).
+  // REC-DET-FE-001 / REC-DET-FE-002 게임 상세 — 실 백엔드 계약(GET /api/v1/games/{game_id}, 인증 불필요, snake_case).
   // 응답은 status/data 래핑 + price_info 객체. 한시적 수동 핸들러 — Swagger 확정 후 /api-sync로 교체.
-  // snake_case 필드는 gameDetail.ts(GameDetailRaw)의 camel 도메인 타입과 1:1 대응한다.
+  // snake_case 필드는 gameDetail.ts(GameDetailRaw)의 camel 도메인 타입과 1:1 대응한다(categories·developer_games 등 실 계약 기준).
   http.get('*/api/v1/games/:id', ({ params }) => {
     const id = String(params.id);
     const numId = Number(id);
@@ -377,7 +377,7 @@ export const gameHandlers = [
       return HttpResponse.json({ status: 'NOT_FOUND' }, { status: 404 });
     }
 
-    // 카드 섹션(유사 게임·개발사의 다른 게임) 합성 — MOCK_GAMES를 순환해 각 8건 이상.
+    // 카드 섹션(developer_games — 개발사의 다른 게임) 합성 — MOCK_GAMES를 순환해 8건 이상.
     // 4개+더보기 누적 시연용(상세 그리드 pageSize=4). 자기 자신은 제외하고 채운다.
     const pool = MOCK_GAMES.filter((g) => g.id !== id);
     const buildSummaries = (offset: number) =>
@@ -420,7 +420,8 @@ export const gameHandlers = [
         description: `${base.title}의 한 줄 요약 소개입니다. ${base.genres.join(' · ')} 장르의 대표작.`,
         full_description: `${base.title}은(는) ${base.genres.join(', ')} 장르를 아우르는 작품으로, ${base.tags.join(', ')} 같은 특징을 담았습니다. 깊이 있는 스토리와 탄탄한 게임플레이로 호평을 받았으며, 전체 소개에서는 세계관·주요 시스템·플레이 방식을 자세히 다룹니다. 더 보기를 펼치면 추가 설명이 표시됩니다.`,
         genres: base.genres,
-        tags: base.tags,
+        // categories — 실 백엔드 신규 필드. MOCK_GAMES에 별도 categories가 없어 한시적으로 base.tags 재사용(실서버는 별도 값).
+        categories: base.tags,
         rating: base.rating,
         review_count: 1284,
         price_info: {
@@ -466,24 +467,7 @@ export const gameHandlers = [
         korean_sub: base.koreanSub,
         age_rating: '15세 이용가',
         on_sale: base.onSale,
-        similar_games: buildSummaries(0),
         developer_games: buildSummaries(3),
-        // 갭 C — ai_match(매칭률). gameDetail.ts는 match_rate/reason_summary만 매핑(나머지는 보강 필드).
-        ai_match: {
-          match_rate: 92,
-          score: 92,
-          reason_summary:
-            '오픈월드 RPG 선호도와 다크 판타지 톤이 취향과 일치해요.',
-          reason: '오픈월드 RPG 선호도와 다크 판타지 톤이 취향과 일치해요.',
-          match_tags: base.tags.length ? base.tags : ['오픈월드', 'RPG'],
-        },
-        // 갭 D — review_stats(리뷰 통계). gameDetail.ts는 positive_rate/total_count만 매핑(나머지는 보강 필드).
-        review_stats: {
-          average: base.rating ?? 0,
-          total_count: 1284,
-          positive_rate: 94,
-          distribution: { 5: 720, 4: 360, 3: 140, 2: 40, 1: 24 },
-        },
       },
     });
   }),
