@@ -4,7 +4,6 @@ import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
-import { Tag } from '@/components/ui/Tag';
 import { updateMyProfile } from '@/features/mypage/api/mypage';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { checkNickname as checkNicknameApi } from '@/services/users';
@@ -15,15 +14,13 @@ interface Props {
   profile: MockUserProfile;
 }
 
-type EditableField = 'nickname' | 'birthdate' | 'gender';
-
 export function BasicInfoCard({ profile }: Props) {
   const queryClient = useQueryClient();
-  // 편집 모드 여부 (변경 버튼 노출)
+  // 편집 모드 진입 시 전체 필드를 한 번에 수정한다(항목별 인라인 편집에서 전환).
   const [isEditMode, setIsEditMode] = useState(false);
-  // 현재 인라인 편집 중인 필드
-  const [editingField, setEditingField] = useState<EditableField | null>(null);
-  const [fieldValue, setFieldValue] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+  const [gender, setGender] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
 
@@ -31,47 +28,49 @@ export function BasicInfoCard({ profile }: Props) {
     mutationFn: (patch: Partial<MockUserProfile>) => updateMyProfile(patch),
     onSuccess: (updated) => {
       queryClient.setQueryData(['mypage', 'profile'], updated);
-      setEditingField(null);
+      setIsEditMode(false);
     },
   });
 
-  function startEdit(field: EditableField) {
-    setEditingField(field);
-    setFieldValue(
-      field === 'gender' ? (profile.gender ?? '') : (profile[field] ?? ''),
-    );
+  function enterEdit() {
+    setNickname(profile.nickname ?? '');
+    setBirthdate(profile.birthdate ?? '');
+    setGender(profile.gender ?? '');
     setNicknameCheck('idle');
+    setIsEditMode(true);
   }
 
   async function checkNickname() {
-    if (!fieldValue.trim()) return;
+    if (!nickname.trim()) return;
     setNicknameCheck('checking');
     try {
-      const res = await checkNicknameApi(fieldValue.trim());
+      const res = await checkNicknameApi(nickname.trim());
       setNicknameCheck(res.available ? 'available' : 'taken');
     } catch {
       setNicknameCheck('idle');
     }
   }
 
+  // 닉네임을 실제로 변경한 경우에만 중복 확인을 통과해야 저장할 수 있다.
+  const nicknameChanged = nickname.trim() !== (profile.nickname ?? '');
+
   function handleSave() {
-    if (!editingField) return;
-    // gender는 빈 값 그대로(null), 나머지(nickname/birthdate)는 trim. birthdate는 ISO YYYY-MM-DD.
-    const value =
-      editingField === 'gender'
-        ? fieldValue || null
-        : fieldValue.trim() || null;
-    mutation.mutate({ [editingField]: value });
+    mutation.mutate({
+      nickname: nickname.trim(),
+      birthdate: birthdate.trim(),
+      gender: (gender || null) as MockUserProfile['gender'],
+    });
   }
 
-  function handleClose() {
-    setEditingField(null);
-    setIsEditMode(false);
-  }
+  const canSave =
+    !mutation.isPending &&
+    nickname.trim().length > 0 &&
+    (!nicknameChanged || nicknameCheck === 'available');
 
   const rowCss = css({
     display: 'flex',
     alignItems: 'center',
+    minH: '11', // 편집·비편집 모드 행 높이를 input 기준으로 통일
     py: '2.5',
     borderBottom: '1px solid',
     borderColor: 'border.default',
@@ -83,6 +82,7 @@ export function BasicInfoCard({ profile }: Props) {
     color: 'fg.subtle',
     minW: '14',
     flexShrink: 0,
+    alignSelf: 'center',
   });
   const valueCss = css({
     fontSize: 'sm',
@@ -93,174 +93,128 @@ export function BasicInfoCard({ profile }: Props) {
 
   return (
     <Card padding="md" className={css({ h: 'full' })}>
-      {/* 헤더 */}
+      {/* 콘텐츠를 세로 flex로 채워 하단 버튼을 바닥에 고정(편집 진입 시 카드 높이 안정) */}
       <div
-        className={css({
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: '4',
-        })}
+        className={css({ display: 'flex', flexDirection: 'column', h: 'full' })}
       >
-        <span
+        {/* 헤더 */}
+        <div
           className={css({
-            fontSize: 'sm',
-            fontWeight: 'semibold',
-            color: 'fg.default',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            minH: '8', // 편집 버튼 유무와 무관하게 헤더 높이 고정
+            mb: '4',
           })}
         >
-          기본 정보
-        </span>
-        {!isEditMode ? (
-          <Button variant="ghost" size="sm" onClick={() => setIsEditMode(true)}>
-            편집 &rsaquo;
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={handleClose}>
-            닫기
-          </Button>
-        )}
-      </div>
-
-      <div className={css({ display: 'flex', flexDirection: 'column' })}>
-        {/* 이메일 */}
-        <div className={rowCss}>
-          <span className={labelCss}>이메일</span>
-          <span className={valueCss}>{profile.email}</span>
-          <Tag tone="neutral">잠금</Tag>
+          <span
+            className={css({
+              fontSize: 'sm',
+              fontWeight: 'semibold',
+              color: 'fg.default',
+            })}
+          >
+            기본 정보
+          </span>
+          {!isEditMode && (
+            <Button variant="ghost" size="sm" onClick={enterEdit}>
+              편집 &rsaquo;
+            </Button>
+          )}
         </div>
 
-        {/* 닉네임 */}
-        <div className={rowCss}>
-          <span className={labelCss}>닉네임</span>
-          {editingField === 'nickname' ? (
-            <>
+        <div className={css({ display: 'flex', flexDirection: 'column' })}>
+          {/* 이메일 — 항상 읽기 전용(편집 불가) */}
+          <div className={rowCss}>
+            <span className={labelCss}>이메일</span>
+            <span className={valueCss}>{profile.email}</span>
+          </div>
+
+          {/* 닉네임 */}
+          <div className={rowCss}>
+            <span className={labelCss}>닉네임</span>
+            {isEditMode ? (
               <div
                 className={css({
                   display: 'flex',
                   flexDirection: 'column',
                   flex: 1,
                   minW: 0,
-                  gap: '1',
                 })}
               >
-                <Input
-                  size="sm"
-                  value={fieldValue}
-                  onChange={(e) => {
-                    setFieldValue(e.target.value);
-                    setNicknameCheck('idle');
-                  }}
-                  className={css({ flex: 1, minW: 0 })}
-                  // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
-                  autoFocus
-                />
-                {nicknameCheck === 'available' && (
-                  <span className={css({ fontSize: 'xs', color: 'green.500' })}>
-                    사용 가능한 닉네임입니다
-                  </span>
-                )}
-                {nicknameCheck === 'taken' && (
-                  <span className={css({ fontSize: 'xs', color: 'danger.fg' })}>
-                    이미 사용 중인 닉네임입니다
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={checkNickname}
-                disabled={nicknameCheck === 'checking' || !fieldValue.trim()}
-              >
-                {nicknameCheck === 'checking' ? '확인 중...' : '중복 확인'}
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSave}
-                disabled={mutation.isPending || nicknameCheck !== 'available'}
-              >
-                저장
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingField(null)}
-              >
-                취소
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className={valueCss}>{profile.nickname}</span>
-              {isEditMode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => startEdit('nickname')}
+                <div
+                  className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2',
+                  })}
                 >
-                  변경
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+                  <Input
+                    size="sm"
+                    value={nickname}
+                    onChange={(e) => {
+                      setNickname(e.target.value);
+                      setNicknameCheck('idle');
+                    }}
+                    className={css({ flex: 1, minW: 0 })}
+                    autoFocus
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={checkNickname}
+                    disabled={
+                      nicknameCheck === 'checking' ||
+                      !nickname.trim() ||
+                      !nicknameChanged
+                    }
+                  >
+                    {nicknameCheck === 'checking' ? '확인 중...' : '중복 확인'}
+                  </Button>
+                </div>
+                {/* 안내문구 고정 슬롯 — 메시지 유무로 레이아웃이 밀리지 않도록 항상 높이 확보 */}
+                <span
+                  className={css({
+                    minH: '4',
+                    mt: '1',
+                    fontSize: 'xs',
+                    color:
+                      nicknameCheck === 'taken' ? 'danger.fg' : 'green.500',
+                  })}
+                >
+                  {nicknameCheck === 'available' && '사용 가능한 닉네임입니다'}
+                  {nicknameCheck === 'taken' && '이미 사용 중인 닉네임입니다'}
+                </span>
+              </div>
+            ) : (
+              <span className={valueCss}>{profile.nickname}</span>
+            )}
+          </div>
 
-        {/* 생년월일 */}
-        <div className={rowCss}>
-          <span className={labelCss}>생년월일</span>
-          {editingField === 'birthdate' ? (
-            <>
-              {/* 회원가입(STEP2)과 동일하게 type=date 달력으로 통일 (MYPAGE-FE-004). 값은 ISO YYYY-MM-DD. */}
+          {/* 생년월일 */}
+          <div className={rowCss}>
+            <span className={labelCss}>생년월일</span>
+            {isEditMode ? (
+              // 회원가입(STEP2)과 동일하게 type=date 달력으로 통일. 값은 ISO YYYY-MM-DD.
               <Input
                 size="sm"
                 type="date"
-                value={fieldValue}
-                onChange={(e) => setFieldValue(e.target.value)}
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
                 className={css({ flex: 1, minW: 0, colorScheme: 'dark' })}
-                // biome-ignore lint/a11y/noAutofocus: 인라인 편집 UX
-                autoFocus
               />
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSave}
-                disabled={mutation.isPending || !fieldValue}
-              >
-                저장
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingField(null)}
-              >
-                취소
-              </Button>
-            </>
-          ) : (
-            <>
+            ) : (
               <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
-              {isEditMode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => startEdit('birthdate')}
-                >
-                  변경
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* 성별 */}
-        <div className={rowCss}>
-          <span className={labelCss}>성별</span>
-          {editingField === 'gender' ? (
-            <>
+          {/* 성별 */}
+          <div className={rowCss}>
+            <span className={labelCss}>성별</span>
+            {isEditMode ? (
               <select
-                value={fieldValue}
-                onChange={(e) => setFieldValue(e.target.value)}
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
                 className={css({
                   flex: 1,
                   minW: 0,
@@ -281,37 +235,41 @@ export function BasicInfoCard({ profile }: Props) {
                 <option value="여성">여성</option>
                 <option value="기타">기타</option>
               </select>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSave}
-                disabled={mutation.isPending}
-              >
-                저장
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingField(null)}
-              >
-                취소
-              </Button>
-            </>
-          ) : (
-            <>
+            ) : (
               <span className={valueCss}>{profile.gender ?? '미설정'}</span>
-              {isEditMode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => startEdit('gender')}
-                >
-                  변경
-                </Button>
-              )}
-            </>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* 하단 취소/저장 — mt:auto로 카드 바닥에 고정 */}
+        {isEditMode && (
+          <div
+            className={css({
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '2',
+              mt: 'auto',
+              pt: '4',
+            })}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditMode(false)}
+              disabled={mutation.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSave}
+              disabled={!canSave}
+            >
+              {mutation.isPending ? '저장 중...' : '저장'}
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

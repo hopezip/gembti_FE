@@ -38,7 +38,7 @@ const styles = {
     position: 'absolute',
     inset: '0',
     backgroundImage:
-      'linear-gradient(to right, token(colors.bg.canvas) 0%, token(colors.bg.canvas) 28%, color-mix(in srgb, token(colors.bg.canvas) 55%, transparent) 62%, color-mix(in srgb, token(colors.bg.canvas) 15%, transparent) 100%)',
+      'linear-gradient(to right, token(colors.bg.canvas) 0%, token(colors.bg.canvas) 42%, color-mix(in srgb, token(colors.bg.canvas) 72%, transparent) 70%, color-mix(in srgb, token(colors.bg.canvas) 28%, transparent) 100%)',
   }),
   // ③ 콘텐츠 거터 래퍼 — 절대배치 레이어 위로 올린다.
   gutter: css({
@@ -55,6 +55,9 @@ const styles = {
   headline: css({
     textStyle: 'display.lg', // Figma 히어로 헤드라인 54px(자간 -1.2px). heading.h1(30px) 아님.
     color: 'fg.default',
+    // 밝은 배경 캐러셀 위에서도 또렷하도록 글자를 어둡게 감싸는 드롭섀도우(가독성).
+    textShadow:
+      '0 2px 8px token(colors.bg.canvas), 0 0 24px token(colors.bg.canvas)',
     // 모바일(≤768px): 54px는 너무 커서 30px(6xl)로 축소(RESPONSIVE-FE-001).
     '@media (max-width: 768px)': { fontSize: '6xl', lineHeight: 'tight' },
   }),
@@ -63,6 +66,7 @@ const styles = {
     textStyle: 'body.lg',
     color: 'fg.muted',
     mt: '4',
+    textShadow: '0 1px 6px token(colors.bg.canvas)',
   }),
   ctaRow: css({
     display: 'flex',
