@@ -43,11 +43,15 @@ const styles = {
     display: 'grid',
     // minmax(0, 1fr): 1fr의 기본 최소값(min-content)이 nowrap 긴 제목에 밀려 트랙을 넓히는 것을 막아
     // 모든 칸을 정확히 균등하게 만든다(긴 제목은 의도대로 ellipsis 처리).
-    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    // 반응형 칼럼: Mobile 1 → SmallTablet(sm) 2 → Tablet(md) 3 → Desktop(lg) 4 (메인/추천 GameGridSection과 동일).
+    gridTemplateColumns: {
+      base: 'minmax(0, 1fr)',
+      sm: 'repeat(2, minmax(0, 1fr))',
+      md: 'repeat(3, minmax(0, 1fr))',
+      lg: 'repeat(4, minmax(0, 1fr))',
+    },
     columnGap: '6', // Figma 카드 가로 간격 24px
     rowGap: '6',
-    // 데스크탑 전용 — 1100px 미만 1열 fallback(찌부러짐 방지).
-    '@media (max-width: 1100px)': { gridTemplateColumns: 'minmax(0, 1fr)' },
   }),
   skeletonCard: css({
     bg: 'bg.surfaceRaised',
