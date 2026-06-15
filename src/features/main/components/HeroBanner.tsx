@@ -22,8 +22,14 @@ const styles = {
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    // 모바일(≤768px): 높이를 줄여 과한 빈 공간 방지(데스크탑 전용 예외 — RESPONSIVE-FE-001).
-    '@media (max-width: 768px)': { minH: '380px' },
+    // 모바일(≤768px): 고정 높이(380px)를 풀고 폭 기준 비율 + 상하 패딩으로 콘텐츠에 타이트하게 맞춘다.
+    // 배경을 contain으로 전체 노출하는 RESPONSIVE-FE-002 이후, 고정 높이가 남겨두던 위아래 레터박스
+    // 여백을 비율 기반으로 축소한다(RESPONSIVE-FE-003). 텍스트가 비율 높이보다 크면 자연히 늘어난다.
+    '@media (max-width: 768px)': {
+      minH: 'auto',
+      aspectRatio: '3 / 2',
+      py: '8',
+    },
   }),
   // ① 배경 레이어 — 단색 fallback. 실제 배경은 위에 겹치는 HeroBackgroundCarousel이 담당(MAIN-FE-009).
   bgLayer: css({
