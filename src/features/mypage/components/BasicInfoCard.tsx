@@ -19,10 +19,11 @@ export function BasicInfoCard({ profile }: Props) {
   // 편집 모드 진입 시 전체 필드를 한 번에 수정한다(항목별 인라인 편집에서 전환).
   const [isEditMode, setIsEditMode] = useState(false);
   const [nickname, setNickname] = useState('');
-  const [birthdate, setBirthdate] = useState('');
   const [gender, setGender] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
+  // 저장 실패를 사용자에게 표면화하기 위한 에러 메시지(닉네임 저장 먹통 방지).
+  const [saveError, setSaveError] = useState('');
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<MockUserProfile>) => updateMyProfile(patch),
@@ -31,13 +32,17 @@ export function BasicInfoCard({ profile }: Props) {
       queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
       setIsEditMode(false);
     },
+    // 저장 실패 시 조용히 끝나지 않도록 에러를 화면에 노출한다.
+    onError: () => {
+      setSaveError('저장에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    },
   });
 
   function enterEdit() {
     setNickname(profile.nickname ?? '');
-    setBirthdate(profile.birthdate ?? '');
     setGender(profile.gender ?? '');
     setNicknameCheck('idle');
+    setSaveError('');
     setIsEditMode(true);
   }
 
@@ -56,9 +61,10 @@ export function BasicInfoCard({ profile }: Props) {
   const nicknameChanged = nickname.trim() !== (profile.nickname ?? '');
 
   function handleSave() {
+    // 생년월일은 가입 시 고정값이라 전송하지 않는다(nickname·gender만 patch).
+    setSaveError('');
     mutation.mutate({
       nickname: nickname.trim(),
-      birthdate: birthdate.trim(),
       gender: (gender || null) as MockUserProfile['gender'],
     });
   }
@@ -192,20 +198,20 @@ export function BasicInfoCard({ profile }: Props) {
             )}
           </div>
 
-          {/* 생년월일 */}
+          {/* 생년월일 — 가입 시 입력값으로 고정. 편집 모드에서도 읽기 전용. */}
           <div className={rowCss}>
             <span className={labelCss}>생년월일</span>
-            {isEditMode ? (
-              // 회원가입(STEP2)과 동일하게 type=date 달력으로 통일. 값은 ISO YYYY-MM-DD.
-              <Input
-                size="sm"
-                type="date"
-                value={birthdate}
-                onChange={(e) => setBirthdate(e.target.value)}
-                className={css({ flex: 1, minW: 0, colorScheme: 'dark' })}
-              />
-            ) : (
-              <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
+            <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
+            {isEditMode && (
+              <span
+                className={css({
+                  fontSize: 'xs',
+                  color: 'fg.subtle',
+                  flexShrink: 0,
+                })}
+              >
+                가입 시 입력값 · 변경 불가
+              </span>
             )}
           </div>
 
@@ -248,11 +254,23 @@ export function BasicInfoCard({ profile }: Props) {
             className={css({
               display: 'flex',
               justifyContent: 'flex-end',
+              alignItems: 'center',
               gap: '2',
               mt: 'auto',
               pt: '4',
             })}
           >
+            {saveError && (
+              <span
+                className={css({
+                  flex: 1,
+                  fontSize: 'xs',
+                  color: 'danger.fg',
+                })}
+              >
+                {saveError}
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"
