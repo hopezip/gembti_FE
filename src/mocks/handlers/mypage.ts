@@ -137,13 +137,8 @@ export const mypageHandlers = [
     return HttpResponse.json({ available });
   }),
 
-  // GET /mypage/profile 핸들러 제거됨(MYPAGE-FE-005): 프로필 조회는 실서버 auth/me로 이전했다.
-  //   PATCH(프로필 수정 저장)는 백엔드 미구현이라 계속 mock으로 둔다.
-  http.patch('*/api/v1/mypage/profile', async ({ request }) => {
-    const patch = (await request.json()) as Partial<MockUserProfile>;
-    Object.assign(MOCK_PROFILE, patch);
-    return HttpResponse.json(MOCK_PROFILE);
-  }),
+  // GET/PATCH /mypage/profile 핸들러 제거됨: 조회는 auth/me(MYPAGE-FE-005), 수정 저장은
+  //   실서버 PATCH /auth/profile로 이전(MYPAGE-FE-011). mypage/profile은 더 이상 쓰지 않는다.
 
   // /mypage/steam/sync 핸들러 제거됨(MYPAGE-FE-008): 재동기화는 실서버 POST /steam/sync로 이전.
   // /mypage/steam/disconnect 핸들러 제거됨(SURVEY-FE-006): 연동 해제 기능 삭제.

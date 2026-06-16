@@ -6,16 +6,42 @@
 //   응답 타입은 한시적 mock 핸들러 타입을 재사용한다(백엔드 계약 확정 시 자동 생성물로 교체 예정).
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
-import { getSteamStatus } from '@/lib/api/steam';
+import type { components } from '@/types/api';
 import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
+
+type ProfileUpdateRequest = components['schemas']['ProfileUpdateRequest'];
+type WithdrawRequest = components['schemas']['WithdrawRequest'];
+type UserActivityResponse = components['schemas']['UserActivityResponse'];
+type Gender = components['schemas']['Gender'];
+
+// 백엔드 Gender enum(male/female/other) ↔ 화면 한글 라벨 매핑.
+function genderToKo(g: Gender | null | undefined): MockUserProfile['gender'] {
+  return g === 'male'
+    ? '남성'
+    : g === 'female'
+      ? '여성'
+      : g === 'other'
+        ? '기타'
+        : null;
+}
+function koToGender(g: MockUserProfile['gender']): Gender | null {
+  return g === '남성'
+    ? 'male'
+    : g === '여성'
+      ? 'female'
+      : g === '기타'
+        ? 'other'
+        : null;
+}
 
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
 //   관심장르·총 플레이시간·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
 //   화면 회귀 방지용 그럴듯한 값을 둔다. 백엔드 API 확정 시 이 합성을 제거하고 실값 매핑으로 교체한다.
-//   ⭐ 예외1: 게임 보유수(stats.following)는 GET /api/v1/steam/status의 library_games_count 실값으로
-//      덮어쓴다(MYPAGE-FE-009). 총 플레이시간(totalPlayHours)은 전체 누적 API가 없어 mock 유지.
+//   ⭐ 예외1: 게임 보유수(stats.following)·총 플레이시간(stats.totalPlayHours)은 GET /api/v1/auth/me/activity의
+//      library_game_count·total_playtime_hours 실값으로 덮어쓴다(MYPAGE-FE-011, 이전 steam/status는 404 제거).
 //   ⭐ 예외2: 6대 성향(personality)은 GET /api/v1/stats/me 실값으로 덮어쓴다(MYPAGE-FE-010).
 //      여기 personality는 stats/me 실패 시의 폴백으로만 남는다.
+//   ⭐ 예외3: 생년월일·성별은 auth/me의 birth_date·gender 실값으로 덮어쓴다(MYPAGE-FE-011, 프로필 수정 실연결).
 //   ⚠️ mock 핸들러(값) import는 번들 오염이라 금지 → 여기 자체 정의한다(타입만 mock에서 가져온다).
 const PROFILE_FALLBACK: Pick<
   MockUserProfile,
@@ -80,6 +106,12 @@ function getMyStats(): Promise<MyStatsResponse> {
   return api.get('api/v1/stats/me').json<MyStatsResponse>();
 }
 
+// GET /api/v1/auth/me/activity — 보유 게임수·총 플레이시간·최근 게임 (MYPAGE-FE-011).
+//   onUnhandledRequest:'bypass'라 mock 없이 실서버로 직결된다(auth/me와 동일).
+function getMyActivity(): Promise<UserActivityResponse> {
+  return api.get('api/v1/auth/me/activity').json<UserActivityResponse>();
+}
+
 // 6축 키 → 한글 라벨·표시 순서. SurveyResultPage의 정식 컨벤션을 그대로 따른다.
 const PERSONALITY_AXES: { key: string; label: string }[] = [
   { key: 'exploration', label: '탐험' },
@@ -98,16 +130,16 @@ function mapPersonality(res: MyStatsResponse): MockUserProfile['personality'] {
   }));
 }
 
-// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + steam/status + stats/me를 MockUserProfile로 합성한다.
-//   실값: nickname·email·bio·스팀 연동 필드 + 게임 보유수(library_games_count) + 6대 성향(stats/me).
+// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + auth/me/activity + stats/me를 MockUserProfile로 합성한다.
+//   실값: nickname·email·bio·생일·성별·스팀 연동 필드 + 보유수·총 플레이시간(activity) + 6대 성향(stats/me).
 //   steamNickname은 별도 필드가 없어 SteamID(steam_id_64)로 대체한다.
-//   나머지(총 플레이시간·프로필 상세)는 PROFILE_FALLBACK(임시 mock)이다.
-//   steam/status·stats/me는 호출 실패가 프로필 전체를 깨지 않도록 각각 catch로 격리한다
-//   (실패 시 보유수 0 / 성향은 PROFILE_FALLBACK mock 폴백).
+//   나머지(handle·가입월·관심장르 등)는 PROFILE_FALLBACK(임시 mock)이다.
+//   activity·stats/me는 호출 실패가 프로필 전체를 깨지 않도록 각각 catch로 격리한다
+//   (실패 시 보유수/플레이시간·성향은 PROFILE_FALLBACK mock 폴백).
 export async function getMyProfile(): Promise<MockUserProfile> {
-  const [me, steam, stats] = await Promise.all([
+  const [me, activity, stats] = await Promise.all([
     getMeRaw(),
-    getSteamStatus().catch(() => null),
+    getMyActivity().catch(() => null),
     getMyStats().catch(() => null),
   ]);
   return {
@@ -121,24 +153,41 @@ export async function getMyProfile(): Promise<MockUserProfile> {
     steamNickname: me.steam_id_64 ?? null,
     steamSyncedAt: me.last_synced_at ?? null,
     ...PROFILE_FALLBACK,
+    // auth/me 실값으로 생일·성별을 덮어쓴다(PROFILE_FALLBACK 뒤에 두어 우선).
+    birthdate: me.birth_date ?? '',
+    gender: genderToKo(me.gender),
     stats: {
       ...PROFILE_FALLBACK.stats,
-      following: steam?.library_games_count ?? 0,
+      following: activity?.library_game_count ?? 0,
+      totalPlayHours:
+        activity?.total_playtime_hours != null
+          ? Math.round(activity.total_playtime_hours)
+          : PROFILE_FALLBACK.stats.totalPlayHours,
     },
     personality: stats ? mapPersonality(stats) : PROFILE_FALLBACK.personality,
   };
 }
 
-// PATCH /api/v1/mypage/profile — 내 프로필 부분 수정.
-export function updateMyProfile(
+// PATCH /api/v1/auth/profile — 내 프로필 부분 수정(MYPAGE-FE-011, mock /mypage/profile → 실 API).
+//   화면 도메인(MockUserProfile) 패치를 백엔드 ProfileUpdateRequest(snake·gender enum)로 변환한다.
+//   응답(UserResponse)은 도메인과 형태가 달라 여기서 매핑하지 않고, 호출부가 프로필을 재조회해 갱신한다.
+export async function updateMyProfile(
   patch: Partial<MockUserProfile>,
-): Promise<MockUserProfile> {
-  return api
-    .patch('api/v1/mypage/profile', { json: patch })
-    .json<MockUserProfile>();
+): Promise<void> {
+  const body: ProfileUpdateRequest = {};
+  if (patch.nickname !== undefined) body.nickname = patch.nickname;
+  if (patch.bio !== undefined) body.bio = patch.bio;
+  if (patch.birthdate !== undefined) body.birth_date = patch.birthdate || null;
+  if (patch.gender !== undefined) body.gender = koToGender(patch.gender);
+  await api.patch('api/v1/auth/profile', { json: body });
 }
 
-// 스팀 수동 재동기화는 실 API(POST /api/v1/steam/sync, lib/api/steam.syncSteamLibrary)로 이전됨 (MYPAGE-FE-008).
+// DELETE /api/v1/auth/withdrawal — 회원탈퇴(MYPAGE-FE-011). password는 이메일 가입자만 필요(없으면 null).
+export async function withdrawMe(body: WithdrawRequest): Promise<void> {
+  await api.delete('api/v1/auth/withdrawal', { json: body });
+}
+
+// 스팀 수동 재동기화 제거됨 (MYPAGE-FE-011): 라이브에서 POST /steam/sync 삭제(404), 자동 동기화로 대체.
 
 // GET /api/v1/mypage/library — 내 라이브러리(장르/정렬/검색/페이지).
 export function getLibrary(query: LibraryQuery): Promise<LibraryResponse> {

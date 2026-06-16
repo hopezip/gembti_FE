@@ -1,10 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
-import { syncSteamLibrary } from '@/lib/api/steam';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -23,19 +21,7 @@ function relativeTime(isoStr: string): string {
 }
 
 export function SteamConnectCard({ profile }: Props) {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  const syncMutation = useMutation({
-    mutationFn: syncSteamLibrary,
-    // 실 sync 응답은 프로필 전체가 아니므로(요약만), 프로필(auth/me 기반)을 무효화해
-    // 최종 동기화 시각 등을 재조회로 갱신한다.
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
-    },
-  });
-
-  const isSyncing = syncMutation.isPending;
 
   return (
     <Card padding="md" className={css({ h: 'full' })}>
@@ -109,33 +95,6 @@ export function SteamConnectCard({ profile }: Props) {
                   : '없음'}
               </p>
             </div>
-          </div>
-
-          {/* 버튼 */}
-          <div className={css({ display: 'flex', gap: '2', mb: '3' })}>
-            <Button
-              variant="dangerSolid"
-              size="sm"
-              onClick={() => syncMutation.mutate()}
-              disabled={isSyncing}
-            >
-              {isSyncing ? (
-                <>
-                  <style>{`@keyframes gambti-spin { to { transform: rotate(360deg); } }`}</style>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      animation: 'gambti-spin 0.8s linear infinite',
-                    }}
-                  >
-                    ↻
-                  </span>
-                  재갱신 중...
-                </>
-              ) : (
-                <>↻ 수동 재갱신</>
-              )}
-            </Button>
           </div>
         </>
       ) : (
