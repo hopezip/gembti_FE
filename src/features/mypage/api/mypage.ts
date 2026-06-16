@@ -7,7 +7,7 @@
 import { api } from '@/lib/ky';
 import { getMeRaw } from '@/services/auth';
 import type { components } from '@/types/api';
-import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
+import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 type ProfileUpdateRequest = components['schemas']['ProfileUpdateRequest'];
 type WithdrawRequest = components['schemas']['WithdrawRequest'];
@@ -78,18 +78,16 @@ const PROFILE_FALLBACK: Pick<
   ],
 };
 
-export interface LibraryQuery {
-  genre: string;
-  sort: string;
-  search: string;
-  page: number;
-}
-
-export interface LibraryResponse {
-  total: number;
-  items: MockLibraryItem[];
-  hasMore: boolean;
-  allGenres: string[];
+// 내 라이브러리 게임 도메인(camelCase). 백엔드 SteamLibraryGameResponse에서 화면이 쓰는 필드만 추린다.
+//   status(미플레이/플레이중/클리어/중단)·개인 평점은 백엔드 원천이 없어 제외(MYPAGE-FE-012).
+export interface LibraryGame {
+  id: number;
+  title: string;
+  genres: string[];
+  thumbnailUrl: string | null;
+  playHours: number;
+  rating: number | null;
+  lastPlayedAt: string | null;
 }
 
 // GET /api/v1/stats/me — 현재 사용자 6대 성향 스탯(설문/Steam 합산, 0~100) (MYPAGE-FE-010).
@@ -189,18 +187,20 @@ export async function withdrawMe(body: WithdrawRequest): Promise<void> {
 
 // 스팀 수동 재동기화 제거됨 (MYPAGE-FE-011): 라이브에서 POST /steam/sync 삭제(404), 자동 동기화로 대체.
 
-// GET /api/v1/mypage/library — 내 라이브러리(장르/정렬/검색/페이지).
-export function getLibrary(query: LibraryQuery): Promise<LibraryResponse> {
-  return api
-    .get('api/v1/mypage/library', {
-      searchParams: {
-        genre: query.genre,
-        sort: query.sort,
-        search: query.search,
-        page: query.page,
-      },
-    })
-    .json<LibraryResponse>();
+// 내 라이브러리 — 전용 엔드포인트가 없어 GET /auth/me의 steam_library.games(보유 게임 전체)를 쓴다(MYPAGE-FE-012).
+//   장르 필터/검색/정렬/페이지네이션은 서버가 안 해주므로 호출부(LibrarySection)가 클라이언트에서 처리한다.
+export async function getMyLibrary(): Promise<LibraryGame[]> {
+  const me = await getMeRaw();
+  const games = me.steam_library?.games ?? [];
+  return games.map((g) => ({
+    id: g.game_id ?? g.steam_app_id,
+    title: g.title,
+    genres: g.genres ?? [],
+    thumbnailUrl: g.image_url ?? null,
+    playHours: g.playtime_hours,
+    rating: g.rating ?? null,
+    lastPlayedAt: g.last_played_at ?? null,
+  }));
 }
 
 // 팔로잉/팔로워/팔로우/언팔로우 API 제거됨 (MYPAGE-FE-006): 팔로우 기능 미사용으로 폐기.

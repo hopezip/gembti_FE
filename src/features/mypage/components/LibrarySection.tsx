@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
 import { SearchInput } from '@/components/ui/SearchInput';
-import { getLibrary } from '@/features/mypage/api/mypage';
-import type { MockLibraryItem } from '@/mocks/handlers/mypage';
+import { getMyLibrary } from '@/features/mypage/api/mypage';
+import type { LibraryGame } from '@/features/mypage/api/mypage';
 
 type LibrarySort = 'recent' | 'oldest';
 
@@ -16,13 +16,17 @@ const SORT_OPTIONS: { key: LibrarySort; label: string }[] = [
   { key: 'oldest', label: '오래된 순' },
 ];
 
-function LibraryGameCard({ item }: { item: MockLibraryItem }) {
+const PAGE_SIZE = 12;
+
+function LibraryGameCard({ item }: { item: LibraryGame }) {
   return (
     <GameCard padding="none" interactive>
       <div
         className={css({
           aspectRatio: '16/10',
           bg: 'bg.surfaceRaised',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -31,8 +35,13 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
           color: 'fg.subtle',
           fontSize: 'xs',
         })}
+        style={
+          item.thumbnailUrl
+            ? { backgroundImage: `url(${item.thumbnailUrl})` }
+            : undefined
+        }
       >
-        카버쥬얼
+        {!item.thumbnailUrl && '커버 없음'}
       </div>
       <div className={css({ px: '3', pt: '2.5', pb: '3' })}>
         <span
@@ -69,7 +78,7 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
           <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
             ▶ {item.playHours.toFixed(1)}시간
           </span>
-          {item.myRating !== null && (
+          {item.rating !== null && (
             <span
               className={css({
                 fontSize: 'xs',
@@ -77,7 +86,7 @@ function LibraryGameCard({ item }: { item: MockLibraryItem }) {
                 fontWeight: 'semibold',
               })}
             >
-              ★ {item.myRating.toFixed(1)}
+              ★ {item.rating.toFixed(1)}
             </span>
           )}
         </div>
@@ -97,26 +106,33 @@ export function LibrarySection() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [allItems, setAllItems] = useState<MockLibraryItem[]>([]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['mypage', 'library', genre, sort, search, page],
-    queryFn: () => getLibrary({ genre, sort, search, page }),
-    placeholderData: (prev) => prev,
+  // 전용 엔드포인트가 없어 보유 게임 전체(auth/me steam_library)를 한 번에 받고, 아래 필터/정렬/페이지는 클라에서 처리한다.
+  const { data: library, isLoading } = useQuery({
+    queryKey: ['mypage', 'library'],
+    queryFn: getMyLibrary,
   });
 
-  useEffect(() => {
-    if (!data) return;
-    if (page === 1) {
-      setAllItems(data.items);
-      return;
-    }
-    setAllItems((prev) => {
-      const ids = new Set(prev.map((i) => i.id));
-      const next = data.items.filter((i) => !ids.has(i.id));
-      return next.length === 0 ? prev : [...prev, ...next];
+  const allGames = library ?? [];
+  const genres = [...new Set(allGames.flatMap((g) => g.genres))].sort();
+
+  // 필터 → 검색 → 정렬(클라이언트).
+  const filtered = allGames
+    .filter((g) => (genre ? g.genres.includes(genre) : true))
+    .filter((g) =>
+      search ? g.title.toLowerCase().includes(search.toLowerCase()) : true,
+    )
+    .sort((a, b) => {
+      if (!a.lastPlayedAt && !b.lastPlayedAt) return 0;
+      if (!a.lastPlayedAt) return 1;
+      if (!b.lastPlayedAt) return -1;
+      const cmp = b.lastPlayedAt.localeCompare(a.lastPlayedAt);
+      return sort === 'oldest' ? -cmp : cmp;
     });
-  }, [data, page]);
+
+  const visibleItems = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = visibleItems.length < filtered.length;
+  const total = allGames.length;
 
   function handleGenreChange(g: string) {
     setGenre(g);
@@ -133,8 +149,6 @@ export function LibrarySection() {
     setSearch(searchInput.trim());
     setPage(1);
   }
-
-  const genres = data?.allGenres ?? [];
 
   return (
     <section>
@@ -159,9 +173,9 @@ export function LibrarySection() {
           >
             내 라이브러리
           </h2>
-          {data && (
+          {library && (
             <span className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
-              {data.total}개 · 자동 동기화
+              {total}개 · 자동 동기화
             </span>
           )}
         </div>
@@ -249,7 +263,7 @@ export function LibrarySection() {
       </div>
 
       {/* 콘텐츠 */}
-      {isLoading && allItems.length === 0 ? (
+      {isLoading ? (
         <div
           className={css({
             display: 'grid',
@@ -268,7 +282,7 @@ export function LibrarySection() {
             />
           ))}
         </div>
-      ) : allItems.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
           type={search ? 'search' : 'party'}
           target={search || undefined}
@@ -289,14 +303,14 @@ export function LibrarySection() {
               mb: '4',
             })}
           >
-            {allItems.map((item) => (
+            {visibleItems.map((item) => (
               <LibraryGameCard key={item.id} item={item} />
             ))}
           </div>
-          {data?.hasMore && (
+          {hasMore && (
             <div className={css({ textAlign: 'center' })}>
               <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                더 보기 · {data.total - allItems.length}개 남음 ↓
+                더 보기 · {filtered.length - visibleItems.length}개 남음 ↓
               </Button>
             </div>
           )}

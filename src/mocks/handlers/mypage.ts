@@ -32,16 +32,6 @@ export interface MockUserProfile {
   }[];
 }
 
-export interface MockLibraryItem {
-  id: string;
-  title: string;
-  genres: string[];
-  playHours: number;
-  myRating: number | null;
-  status: 'unplayed' | 'playing' | 'cleared' | 'dropped';
-  lastPlayedAt: string | null;
-}
-
 const MOCK_PROFILE: MockUserProfile = {
   id: 'user-1',
   nickname: '유저닉네임_나',
@@ -75,47 +65,6 @@ const MOCK_PROFILE: MockUserProfile = {
   ],
 };
 
-const MOCK_LIBRARY: MockLibraryItem[] = Array.from({ length: 12 }, (_, i) => ({
-  id: `lib-${i + 1}`,
-  title: `게임 타이틀 ${String(i + 1).padStart(2, '0')}`,
-  genres: [
-    [
-      'RPG',
-      '액션',
-      'FPS',
-      '전략',
-      '어드벤처',
-      '시뮬',
-      'RPG',
-      '액션',
-      'FPS',
-      '전략',
-      '어드벤처',
-      '시뮬',
-    ][i],
-  ],
-  playHours: [2.4, 134.7, 18.1, 0, 8.4, 39.5, 47.2, 0, 95.2, 312.4, 31.8, 0][i],
-  myRating: [4.5, 5.0, 4.0, null, 3.0, 4.3, 4.2, null, 6.2, 4.8, 4.5, null][i],
-  status: (
-    [
-      'playing',
-      'playing',
-      'cleared',
-      'unplayed',
-      'playing',
-      'playing',
-      'playing',
-      'unplayed',
-      'playing',
-      'playing',
-      'playing',
-      'dropped',
-    ] as const
-  )[i],
-  lastPlayedAt:
-    i === 3 || i === 7 || i === 11 ? null : `2026-0${(i % 5) + 1}-15`,
-}));
-
 export const mypageHandlers = [
   http.get('*/api/v1/users/check-nickname', ({ request }) => {
     const url = new URL(request.url);
@@ -142,48 +91,7 @@ export const mypageHandlers = [
 
   // /mypage/steam/sync 핸들러 제거됨(MYPAGE-FE-008): 재동기화는 실서버 POST /steam/sync로 이전.
   // /mypage/steam/disconnect 핸들러 제거됨(SURVEY-FE-006): 연동 해제 기능 삭제.
-
-  http.get('*/api/v1/mypage/library', ({ request }) => {
-    const url = new URL(request.url);
-    const genre = url.searchParams.get('genre') ?? '';
-    const sort = url.searchParams.get('sort') ?? 'recent';
-    const search = url.searchParams.get('search') ?? '';
-    const page = Number(url.searchParams.get('page') ?? 1);
-    const pageSize = 12;
-
-    const allGenres = [
-      ...new Set(MOCK_LIBRARY.flatMap((g) => g.genres)),
-    ].sort();
-
-    let filtered = [...MOCK_LIBRARY];
-
-    if (genre) {
-      filtered = filtered.filter((g) => g.genres.includes(genre));
-    }
-
-    if (search) {
-      filtered = filtered.filter((g) =>
-        g.title.toLowerCase().includes(search.toLowerCase()),
-      );
-    }
-
-    filtered.sort((a, b) => {
-      if (!a.lastPlayedAt && !b.lastPlayedAt) return 0;
-      if (!a.lastPlayedAt) return 1;
-      if (!b.lastPlayedAt) return -1;
-      const cmp = b.lastPlayedAt.localeCompare(a.lastPlayedAt);
-      return sort === 'oldest' ? -cmp : cmp;
-    });
-
-    const start = (page - 1) * pageSize;
-    const items = filtered.slice(start, start + pageSize);
-    return HttpResponse.json({
-      total: filtered.length,
-      items,
-      hasMore: start + pageSize < filtered.length,
-      allGenres,
-    });
-  }),
+  // /mypage/library 핸들러 제거됨(MYPAGE-FE-012): 라이브러리는 auth/me의 steam_library.games(실서버)로 이전.
 
   // 팔로잉/팔로워/팔로우/언팔로우 핸들러 제거됨 (MYPAGE-FE-006): 팔로우 기능 폐기.
 ];
