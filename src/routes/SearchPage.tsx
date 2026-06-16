@@ -129,10 +129,14 @@ export function SearchPage() {
   }, [inputValue, query, setSearchParams]);
 
   // 검색어 변경 시 선택 필터 리셋(새 검색어엔 이전 필터를 끌고 가지 않는다)
+  // ⚠️ 이미 비어 있으면 새 배열을 만들지 않는다(SEARCH-FE-006). 매번 새 [] 참조를 내면
+  //   아래 누적 리셋 이펙트(selectedGenres/Categories 의존)가 다음 커밋에서 한 번 더 돌아
+  //   이미 채워진 accumulated를 또 비우는데, 누적 이펙트는 캐시된 data라 재실행되지 않아
+  //   목록만 빈 채로 남는다(캐시된 검색어 재검색 시 결과가 안 보이는 버그).
   // biome-ignore lint/correctness/useExhaustiveDependencies: query 변경에만 반응하는 reset 이펙트
   useEffect(() => {
-    setSelectedGenres([]);
-    setSelectedCategories([]);
+    setSelectedGenres((prev) => (prev.length ? [] : prev));
+    setSelectedCategories((prev) => (prev.length ? [] : prev));
   }, [query]);
 
   // 검색어/필터 변경 시 페이지·누적 리셋 → 서버사이드로 1페이지부터 재요청
