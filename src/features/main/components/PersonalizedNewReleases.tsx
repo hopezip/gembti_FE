@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { GameSummaryCard } from '@/features/game/components/GameSummaryCard';
-import { usePersonalizedHome } from '@/features/main/api/personalizedHome';
+import { useGuestHome } from '@/features/main/api/guestHome';
 import { GameGridSection } from '@/features/main/components/GameGridSection';
 
-// MAIN-FE-006 개인화 홈의 "이번 주 신규 게임" 섹션.
+// MAIN-FE-006 / MAIN-FE-012 개인화 홈의 "이번 주 신규 게임" 섹션.
 // 신규 섹션은 비회원과 동일하다(사용자 확정): GameSummaryCard, 타이틀 없음, NEW 뱃지, 장르·평점.
-// 데이터만 personalized-home의 newReleases를 쓴다. 메인 1페이지=1쿼리이므로 usePersonalizedHome 재사용(새 쿼리 0).
+// 데이터도 비회원과 동일한 실 API(GET /api/v1/games/new-releases)를 쓴다 — useGuestHome 재사용(MAIN-FE-012).
+//   이전엔 mock 전용 /home/personalized의 newReleases에 의존해 배포 환경에서 신규가 비어 있었다(실서버 미구현 엔드포인트).
 // 각 카드는 /games/:id 상세로 가는 react-router Link로 감싼다(REC-DET-FE-001 진입점 보강).
 
 // 카드 링크 — SearchPage/상세와 동일 패턴(블록 링크 + hover lift + 포커스 링).
@@ -25,7 +26,7 @@ const cardLink = css({
 });
 
 export function PersonalizedNewReleases() {
-  const { data, isLoading, isError } = usePersonalizedHome();
+  const { data, isLoading, isError } = useGuestHome();
 
   return (
     <GameGridSection
