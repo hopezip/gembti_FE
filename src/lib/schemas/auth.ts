@@ -95,7 +95,14 @@ export const signupStep2Schema = z.object({
     .regex(/^\d{6}$/, '6자리 숫자 인증 코드를 입력해주세요'),
   nickname: nicknameSchema,
   // 생년월일(YYYY-MM-DD, <input type=date> 값). 미입력 차단(서버는 optional이나 UI는 필수).
-  birth: z.string().min(1, '생년월일을 선택해주세요'),
+  //   연도는 1900~2020만 허용한다(미래 날짜 등 비정상 값 차단, LOGIN-FE-016). 입력 UI의 min/max는 보조이고 검증 SSOT는 여기다.
+  birth: z
+    .string()
+    .min(1, '생년월일을 선택해주세요')
+    .refine((v) => {
+      const year = Number(v.slice(0, 4));
+      return year >= 1900 && year <= 2020;
+    }, '생년월일은 1900년부터 2020년 사이여야 합니다'),
   gender: z.enum(['male', 'female', 'other']),
 });
 

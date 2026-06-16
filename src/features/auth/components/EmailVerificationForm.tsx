@@ -408,6 +408,9 @@ export function EmailVerificationForm({
               <Input
                 id="signup-birth"
                 type="date"
+                // 연도 1900~2020만 선택 가능(검증 SSOT는 signupStep2Schema, min/max는 달력 UX 보조).
+                min="1900-01-01"
+                max="2020-12-31"
                 aria-invalid={Boolean(errors.birth) || undefined}
                 disabled={isSubmitting}
                 value={field.value}

@@ -220,6 +220,28 @@ describe('signupStep2Schema', () => {
     }
   });
 
+  it('생년월일 연도가 1900~2020 밖이면 실패한다', () => {
+    for (const birth of ['2027-01-01', '1899-12-31']) {
+      const result = signupStep2Schema.safeParse({ ...valid, birth });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (i) => i.message === '생년월일은 1900년부터 2020년 사이여야 합니다',
+          ),
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('생년월일 연도 경계값(1900, 2020)은 통과시킨다', () => {
+    for (const birth of ['1900-01-01', '2020-12-31']) {
+      expect(signupStep2Schema.safeParse({ ...valid, birth }).success).toBe(
+        true,
+      );
+    }
+  });
+
   it('성별 enum 외 값(unspecified)은 실패한다', () => {
     expect(
       signupStep2Schema.safeParse({ ...valid, gender: 'unspecified' }).success,
