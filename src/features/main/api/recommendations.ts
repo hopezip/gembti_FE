@@ -31,7 +31,7 @@ function mapRecommendedGame(raw: RecommendedGameRaw): RecommendedGame {
     title: raw.title,
     thumbnailUrl: raw.image_url ?? null,
     genres: raw.genres,
-    reviewScore: raw.review_score ?? null,
+    reviewScore: raw.rating ?? null,
     similarityScore: raw.similarity_score,
     similarityRank: raw.similarity_rank,
   };

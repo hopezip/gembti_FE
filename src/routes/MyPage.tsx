@@ -8,6 +8,7 @@ import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
 import { SteamConnectCard } from '@/features/mypage/components/SteamConnectCard';
 import { PersonalityRadar } from '@/features/mypage/components/PersonalityRadar';
 import { LibrarySection } from '@/features/mypage/components/LibrarySection';
+import { WithdrawalSection } from '@/features/mypage/components/WithdrawalSection';
 
 export function MyPage() {
   const {
@@ -123,6 +124,8 @@ export function MyPage() {
       </div>
 
       <LibrarySection />
+
+      <WithdrawalSection />
     </div>
   );
 }

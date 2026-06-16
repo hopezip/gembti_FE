@@ -8,31 +8,21 @@ import type { components } from '@/types/api';
 //
 // 엔드포인트:
 //   POST /api/v1/steam/link   → SteamLinkResponse   (Bearer 보호)
-//   GET  /api/v1/steam/status → SteamStatusResponse
+//
+// ⚠️ MYPAGE-FE-011: 라이브 Swagger에서 GET /steam/status·POST /steam/sync·GET /steam/recently-played가
+//   제거(404)됐다. 마이페이지 보유수/플레이시간은 GET /auth/me/activity로 이전했고, 수동 재동기화는
+//   백엔드 대체 엔드포인트가 없어 기능을 제거했다(자동 동기화). 그래서 여기 status/sync wrapper도 삭제한다.
 //
 // 참고: OpenID 진입/콜백(GET /api/v1/auth/steam, /api/v1/auth/steam/callback)은
 //   브라우저 302 redirect 흐름이라 fetch 함수로 호출하지 않는다(ky 대상 아님).
 
 export type SteamLinkRequest = components['schemas']['SteamLinkRequest'];
 export type SteamLinkResponse = components['schemas']['SteamLinkResponse'];
-export type SteamStatusResponse = components['schemas']['SteamStatusResponse'];
 export type SteamSyncStatus = components['schemas']['SteamSyncStatus'];
-export type SteamSyncResponse = components['schemas']['SteamSyncResponse'];
 
 // 스팀 계정 연동. steam_id는 17자리 숫자 문자열(SteamID64).
 export function linkSteam(body: SteamLinkRequest): Promise<SteamLinkResponse> {
   return api
     .post('api/v1/steam/link', { json: body })
     .json<SteamLinkResponse>();
-}
-
-// 현재 스팀 연동 상태 조회. 미연동이면 steam_linked=false + nullable 필드들이 null.
-export function getSteamStatus(): Promise<SteamStatusResponse> {
-  return api.get('api/v1/steam/status').json<SteamStatusResponse>();
-}
-
-// 스팀 라이브러리 수동 재동기화(마이페이지). 백엔드가 재동기화를 수행하고 결과 요약을 반환한다.
-//   (MSW 미등록이라 실서버로 직결된다.) 화면의 최종 동기화 시각 등은 호출부가 프로필을 갱신해 반영한다.
-export function syncSteamLibrary(): Promise<SteamSyncResponse> {
-  return api.post('api/v1/steam/sync').json<SteamSyncResponse>();
 }

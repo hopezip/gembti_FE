@@ -26,8 +26,9 @@ export function BasicInfoCard({ profile }: Props) {
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<MockUserProfile>) => updateMyProfile(patch),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(['mypage', 'profile'], updated);
+    // updateMyProfile은 void(PATCH만 수행)이므로 프로필을 무효화해 실값으로 재조회·갱신한다.
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
       setIsEditMode(false);
     },
   });

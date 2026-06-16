@@ -19,13 +19,9 @@ import type { components } from '@/types/api';
 //   status: linked(기본) | unlinked | private | failed | empty
 
 type SteamLinkResponse = components['schemas']['SteamLinkResponse'];
-type SteamStatusResponse = components['schemas']['SteamStatusResponse'];
 type SteamSyncStatus = components['schemas']['SteamSyncStatus'];
 
 const MOCK_STEAM_ID_64 = '76561197960287930';
-const MOCK_AVATAR_URL =
-  'https://avatars.steamstatic.com/0000000000000000000000000000000000000000_full.jpg';
-const MOCK_LAST_SYNCED_AT = '2026-06-08T09:30:00Z';
 
 const SYNC_STATUSES: SteamSyncStatus[] = [
   'success',
@@ -77,35 +73,8 @@ const steamApiHandlers = [
     return HttpResponse.json(res);
   }),
 
-  // 연동 상태 조회. 기본 linked(success), ?scenario=unlinked로 미연동, 그 외는 동기화 상태 분기.
-  http.get('*/api/v1/steam/status', ({ request }) => {
-    const url = new URL(request.url);
-    const scenario = url.searchParams.get('scenario');
-
-    // 미연동 상태 — nullable 필드 전부 null.
-    if (scenario === 'unlinked') {
-      const res: SteamStatusResponse = {
-        steam_linked: false,
-        steam_id_64: null,
-        steam_avatar_url: null,
-        steam_sync_status: null,
-        last_synced_at: null,
-        library_games_count: 0,
-      };
-      return HttpResponse.json(res);
-    }
-
-    const status = parseSyncStatus(scenario, 'success');
-    const res: SteamStatusResponse = {
-      steam_linked: true,
-      steam_id_64: MOCK_STEAM_ID_64,
-      steam_avatar_url: MOCK_AVATAR_URL,
-      steam_sync_status: status,
-      last_synced_at: MOCK_LAST_SYNCED_AT,
-      library_games_count: 42,
-    };
-    return HttpResponse.json(res);
-  }),
+  // GET /api/v1/steam/status 핸들러 제거됨(MYPAGE-FE-011): 라이브에서 엔드포인트 삭제(404).
+  //   마이페이지 보유수/플레이시간은 GET /auth/me/activity(실서버 passthrough)로 이전했다.
 ];
 
 // ── 레거시(온보딩 전환 대기) ────────────────────────────────────────────────
