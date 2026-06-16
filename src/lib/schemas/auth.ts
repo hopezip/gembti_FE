@@ -18,10 +18,10 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 // 회원가입 비밀번호 규칙 — 화면(PasswordRules)과 스키마가 같은 출처를 보도록 공유한다.
-// 필수: 10자 이상 + 특수문자 1개 이상 (GEMBTI_API SignupRequest: minLength 10).
-//   ⚠️ 특수문자 필수는 OpenAPI 스키마에 없는 프로빙 발견 규칙이다(project_auth_backend_contract).
+// 필수: 10자 이상 + 특수문자 + 영문 + 숫자 1개 이상씩 (LOGIN-FE-016: 특수문자만 입력 차단).
+//   ⚠️ 특수문자·영문·숫자 필수는 OpenAPI 스키마에 없다 — 백엔드는 minLength 10만 요구하므로
+//      FE가 더 엄격하다(백엔드가 받아줄 비밀번호를 FE가 막을 수 있음, project_auth_backend_contract).
 //      백엔드가 규칙을 바꾸면 이 검증과 어긋날 수 있다.
-// 권장(선택): 영문 포함 / 숫자 포함 — 강도 표시에만 쓰고 가입을 막지 않는다.
 export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 100;
 export const hasLetter = (v: string) => /[A-Za-z]/.test(v);
@@ -67,7 +67,9 @@ export const signupStep1Schema = z
         PASSWORD_MAX_LENGTH,
         `비밀번호는 ${PASSWORD_MAX_LENGTH}자 이하여야 합니다`,
       )
-      .refine(hasSpecial, '특수문자를 1개 이상 포함해야 합니다'),
+      .refine(hasSpecial, '특수문자를 1개 이상 포함해야 합니다')
+      .refine(hasLetter, '영문을 1개 이상 포함해야 합니다')
+      .refine(hasDigit, '숫자를 1개 이상 포함해야 합니다'),
     passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요'),
     // [필수] 만 15세 이상 확인 — boolean + refine(true).
     ageConfirmed: z
@@ -88,6 +90,13 @@ export const VERIFY_CODE_LENGTH = 6;
 // 성별 — GEMBTI_API Gender enum과 1:1 대응. 'other'는 UI에서 "선택 안 함"으로 표시한다.
 export type Gender = 'male' | 'female' | 'other';
 
+// 생년월일 허용 범위 (LOGIN-FE-016): 1900-01-01 ~ 오늘. 미래 생일 차단(= 2026년 이후 자동 차단).
+//   화면 <input type=date>의 min/max와 같은 출처를 공유한다(SSOT). 날짜는 YYYY-MM-DD 문자열 비교(사전식=시간순).
+export const BIRTH_MIN_DATE = '1900-01-01';
+export function getBirthMaxDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export const signupStep2Schema = z.object({
   code: z
     .string()
@@ -95,7 +104,14 @@ export const signupStep2Schema = z.object({
     .regex(/^\d{6}$/, '6자리 숫자 인증 코드를 입력해주세요'),
   nickname: nicknameSchema,
   // 생년월일(YYYY-MM-DD, <input type=date> 값). 미입력 차단(서버는 optional이나 UI는 필수).
-  birth: z.string().min(1, '생년월일을 선택해주세요'),
+  //   범위(1900~오늘)도 강제한다 — <input> min/max는 직접 입력으로 우회 가능하므로 스키마로 막는다(noValidate 폼).
+  birth: z
+    .string()
+    .min(1, '생년월일을 선택해주세요')
+    .refine(
+      (v) => v >= BIRTH_MIN_DATE && v <= getBirthMaxDate(),
+      '생년월일은 1900년 이후, 오늘까지만 선택할 수 있어요',
+    ),
   gender: z.enum(['male', 'female', 'other']),
 });
 

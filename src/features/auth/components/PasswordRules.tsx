@@ -9,7 +9,7 @@ import {
 
 // 비밀번호 강도바 + 규칙 체크리스트 (Figma auth-modal STEP1 pw-strength / pw-rules).
 // 순수 파생 표시 컴포넌트다 — 검증의 출처(SSOT)는 signupStep1Schema이며 여기선 같은 헬퍼로 표시만 한다.
-// 규칙(LOGIN-FE-006): 10자 이상 / 특수문자 포함 = 필수, 영문·숫자 포함 = 권장(선택, 미충족도 가입 가능).
+// 규칙(LOGIN-FE-016): 10자 이상 / 특수문자 / 영문 / 숫자 포함 = 전부 필수(특수문자만 입력 차단).
 // semantic token만 사용(충족=success, 미충족=fg.subtle, 강도 채움=accent).
 
 interface PasswordRulesProps {
@@ -20,8 +20,6 @@ interface PasswordRulesProps {
 interface Rule {
   label: string;
   met: boolean;
-  /** 권장(선택) 규칙 — 미충족이어도 ○로만 표시 */
-  optional?: boolean;
 }
 
 // 강도 라벨 — 충족 개수(특수문자 포함 4칸) 기준.
@@ -38,8 +36,8 @@ export function PasswordRules({ value }: PasswordRulesProps) {
       met: value.length >= PASSWORD_MIN_LENGTH,
     },
     { label: '특수문자 1개 이상', met: hasSpecial(value) },
-    { label: '영문 포함', met: hasLetter(value), optional: true },
-    { label: '숫자 포함', met: hasDigit(value), optional: true },
+    { label: '영문 포함', met: hasLetter(value) },
+    { label: '숫자 포함', met: hasDigit(value) },
   ];
 
   const metCount = rules.filter((r) => r.met).length;
@@ -90,9 +88,6 @@ export function PasswordRules({ value }: PasswordRulesProps) {
           >
             <span aria-hidden="true">{rule.met ? '✓' : '○'}</span>
             {rule.label}
-            {rule.optional && !rule.met && (
-              <span className={css({ color: 'fg.subtle' })}>(선택)</span>
-            )}
           </li>
         ))}
       </ul>

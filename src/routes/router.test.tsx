@@ -301,7 +301,7 @@ describe('라우트 골격', () => {
     // 필수표시 `*`/"비밀번호 확인" 중복으로 label 매칭이 취약해 placeholder로 입력을 한정한다.
     expect(screen.getByPlaceholderText('name@example.com')).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText('특수문자 포함 10자 이상'),
+      screen.getByPlaceholderText('영문·숫자·특수문자 포함 10자 이상'),
     ).toBeInTheDocument();
     expect(screen.getByPlaceholderText('비밀번호 재입력')).toBeInTheDocument();
     // 제출 버튼(STEP1)

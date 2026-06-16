@@ -97,7 +97,7 @@ describe('SignupPage 진입 배선 (가입 완료 → 스팀 온보딩)', () => 
       'new_user@example.com',
     );
     await user.type(
-      screen.getByPlaceholderText('특수문자 포함 10자 이상'),
+      screen.getByPlaceholderText('영문·숫자·특수문자 포함 10자 이상'),
       'abcde1234!',
     );
     await user.type(

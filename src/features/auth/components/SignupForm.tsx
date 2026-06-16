@@ -67,6 +67,18 @@ export function SignupForm({
   const password = watch('password') ?? '';
   const email = watch('email') ?? '';
 
+  // "인증 코드 받기"는 필수 조건을 모두 충족해야 활성화한다(LOGIN-FE-016).
+  //   기준: 이메일 형식 + 비밀번호(10자·특수문자·영문·숫자) + 비밀번호 확인 일치 + [필수] 만 15세 확인.
+  //   검증은 제출과 동일한 signupStep1Schema를 재사용한다(SSOT, 로직 중복 방지).
+  const passwordConfirm = watch('passwordConfirm') ?? '';
+  const ageConfirmed = watch('ageConfirmed') ?? false;
+  const isStep1Valid = signupStep1Schema.safeParse({
+    email,
+    password,
+    passwordConfirm,
+    ageConfirmed,
+  }).success;
+
   // 이메일 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다. (LOGIN-FE-012, 닉네임 대칭)
   const [_emailCheck, setEmailCheck] = useState<
     'idle' | 'checking' | 'available' | 'taken'
@@ -132,7 +144,7 @@ export function SignupForm({
       >
         <PasswordInput
           autoComplete="new-password"
-          placeholder="특수문자 포함 10자 이상"
+          placeholder="영문·숫자·특수문자 포함 10자 이상"
           disabled={isSubmitting}
           {...register('password')}
         />
@@ -205,7 +217,7 @@ export function SignupForm({
       <Button
         type="submit"
         variant="primary"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isStep1Valid}
         aria-busy={isSubmitting || undefined}
       >
         {isSubmitting ? '처리 중…' : '인증 코드 받기 →'}
