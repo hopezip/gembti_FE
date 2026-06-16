@@ -168,10 +168,12 @@ export async function getMyProfile(): Promise<MockUserProfile> {
 export async function updateMyProfile(
   patch: Partial<MockUserProfile>,
 ): Promise<void> {
-  // 생년월일은 회원가입 이후 변경 불가 정책(MYPAGE-FE-014/015) → birth_date는 전송하지 않는다.
+  // 생년월일은 회원가입 이후 변경 불가가 원칙이라 호출부(BasicInfoCard)가 보통 birthdate를 넣지 않는다.
+  //   단 값이 1900~2020 밖이라 1회 교정이 허용된 경우에만 birthdate를 넣어 보내므로, patch에 있을 때만 전송한다.
   const body: ProfileUpdateRequest = {};
   if (patch.nickname !== undefined) body.nickname = patch.nickname;
   if (patch.bio !== undefined) body.bio = patch.bio;
+  if (patch.birthdate !== undefined) body.birth_date = patch.birthdate || null;
   if (patch.gender !== undefined) body.gender = koToGender(patch.gender);
   await api.patch('api/v1/auth/profile', { json: body });
 }
