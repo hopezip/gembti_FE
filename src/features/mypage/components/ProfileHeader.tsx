@@ -9,13 +9,7 @@ interface Props {
 export function ProfileHeader({ profile }: Props) {
   const { nickname, stats } = profile;
 
-  const statItems = [
-    { label: '보유', value: stats.following },
-    {
-      label: '총 플레이 시간(시간)',
-      value: stats.totalPlayHours.toLocaleString(),
-    },
-  ];
+  const statItems = [{ label: '보유', value: stats.following }];
 
   return (
     <div

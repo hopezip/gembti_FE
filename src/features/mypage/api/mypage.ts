@@ -37,8 +37,8 @@ function koToGender(g: MockUserProfile['gender']): Gender | null {
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
 //   관심장르·총 플레이시간·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
 //   화면 회귀 방지용 그럴듯한 값을 둔다. 백엔드 API 확정 시 이 합성을 제거하고 실값 매핑으로 교체한다.
-//   ⭐ 예외1: 게임 보유수(stats.following)·총 플레이시간(stats.totalPlayHours)은 GET /api/v1/auth/me/activity의
-//      library_game_count·total_playtime_hours 실값으로 덮어쓴다(MYPAGE-FE-011, 이전 steam/status는 404 제거).
+//   ⭐ 예외1: 게임 보유수(stats.following)는 GET /api/v1/auth/me/activity의 library_game_count 실값으로 덮어쓴다
+//      (MYPAGE-FE-011). 총 플레이시간(stats.totalPlayHours) 합성은 화면 통계 제거로 폐기했다(MYPAGE-FE-014, 폴백값 유지).
 //   ⭐ 예외2: 6대 성향(personality)은 GET /api/v1/stats/me 실값으로 덮어쓴다(MYPAGE-FE-010).
 //      여기 personality는 stats/me 실패 시의 폴백으로만 남는다.
 //   ⭐ 예외3: 생년월일·성별은 auth/me의 birth_date·gender 실값으로 덮어쓴다(MYPAGE-FE-011, 프로필 수정 실연결).
@@ -129,7 +129,7 @@ function mapPersonality(res: MyStatsResponse): MockUserProfile['personality'] {
 }
 
 // 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + auth/me/activity + stats/me를 MockUserProfile로 합성한다.
-//   실값: nickname·email·bio·생일·성별·스팀 연동 필드 + 보유수·총 플레이시간(activity) + 6대 성향(stats/me).
+//   실값: nickname·email·bio·생일·성별·스팀 연동 필드 + 보유수(activity) + 6대 성향(stats/me).
 //   steamNickname은 별도 필드가 없어 SteamID(steam_id_64)로 대체한다.
 //   나머지(handle·가입월·관심장르 등)는 PROFILE_FALLBACK(임시 mock)이다.
 //   activity·stats/me는 호출 실패가 프로필 전체를 깨지 않도록 각각 catch로 격리한다
@@ -157,10 +157,6 @@ export async function getMyProfile(): Promise<MockUserProfile> {
     stats: {
       ...PROFILE_FALLBACK.stats,
       following: activity?.library_game_count ?? 0,
-      totalPlayHours:
-        activity?.total_playtime_hours != null
-          ? Math.round(activity.total_playtime_hours)
-          : PROFILE_FALLBACK.stats.totalPlayHours,
     },
     personality: stats ? mapPersonality(stats) : PROFILE_FALLBACK.personality,
   };
@@ -172,10 +168,10 @@ export async function getMyProfile(): Promise<MockUserProfile> {
 export async function updateMyProfile(
   patch: Partial<MockUserProfile>,
 ): Promise<void> {
+  // 생년월일은 회원가입 이후 변경 불가 정책(MYPAGE-FE-014/015) → birth_date는 전송하지 않는다.
   const body: ProfileUpdateRequest = {};
   if (patch.nickname !== undefined) body.nickname = patch.nickname;
   if (patch.bio !== undefined) body.bio = patch.bio;
-  if (patch.birthdate !== undefined) body.birth_date = patch.birthdate || null;
   if (patch.gender !== undefined) body.gender = koToGender(patch.gender);
   await api.patch('api/v1/auth/profile', { json: body });
 }
