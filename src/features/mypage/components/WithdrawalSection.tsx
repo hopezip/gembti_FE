@@ -9,8 +9,17 @@ import { withdrawMe } from '@/features/mypage/api/mypage';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { logout } from '@/services/auth';
 
+// 탈퇴 사유 선택지(선택). 마지막 '기타'는 자유 입력 없이 사유 값만 전송한다.
+const WITHDRAWAL_REASONS = [
+  '더 이상 사용하지 않아요',
+  '원하는 게임 추천을 받지 못했어요',
+  '사용법이 어려워요',
+  '개인정보가 걱정돼요',
+  '기타',
+] as const;
+
 // 회원탈퇴 섹션 (MYPAGE-FE-011). DELETE /api/v1/auth/withdrawal → 세션 정리 후 홈 이동.
-//   비밀번호는 이메일 가입자만 필요(소셜/스팀 가입자는 비워 둔다). 사유는 선택.
+//   비밀번호는 이메일 가입자만 필요(소셜/스팀 가입자는 비워 둔다). 사유는 선택(드롭다운).
 export function WithdrawalSection() {
   const navigate = useNavigate();
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -87,12 +96,31 @@ export function WithdrawalSection() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Input
-            size="sm"
-            placeholder="탈퇴 사유 (선택)"
+          {/* 탈퇴 사유 — 선택(드롭다운). BasicInfoCard의 select 스타일과 통일. */}
+          <select
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-          />
+            className={css({
+              w: 'full',
+              bg: 'bg.surfaceRaised',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'md',
+              px: '3',
+              py: '2',
+              fontSize: 'sm',
+              color: reason ? 'fg.default' : 'fg.subtle',
+              outline: 'none',
+              cursor: 'pointer',
+            })}
+          >
+            <option value="">탈퇴 사유 선택 (선택)</option>
+            {WITHDRAWAL_REASONS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
           {mutation.isError && (
             <span className={css({ fontSize: 'xs', color: 'danger.fg' })}>
               탈퇴 처리에 실패했어요. 비밀번호를 확인해 주세요.
