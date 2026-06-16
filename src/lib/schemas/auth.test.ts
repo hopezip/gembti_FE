@@ -113,6 +113,52 @@ describe('signupStep1Schema (LOGIN-FE-015: 10자+특수문자, 만 15세 확인)
     }
   });
 
+  it('특수문자만 10자(영문·숫자 없음)면 실패한다 (LOGIN-FE-016)', () => {
+    const result = signupStep1Schema.safeParse({
+      ...valid,
+      password: '!!!!!!!!!!', // 10자·특수문자뿐, 영문·숫자 없음
+      passwordConfirm: '!!!!!!!!!!',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message);
+      expect(messages).toContain('영문을 1개 이상 포함해야 합니다');
+      expect(messages).toContain('숫자를 1개 이상 포함해야 합니다');
+    }
+  });
+
+  it('영문이 없으면 실패한다 (LOGIN-FE-016)', () => {
+    const result = signupStep1Schema.safeParse({
+      ...valid,
+      password: '1234567890!', // 숫자·특수문자, 영문 없음
+      passwordConfirm: '1234567890!',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.message === '영문을 1개 이상 포함해야 합니다',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('숫자가 없으면 실패한다 (LOGIN-FE-016)', () => {
+    const result = signupStep1Schema.safeParse({
+      ...valid,
+      password: 'abcdefghi!', // 영문·특수문자, 숫자 없음
+      passwordConfirm: 'abcdefghi!',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.message === '숫자를 1개 이상 포함해야 합니다',
+        ),
+      ).toBe(true);
+    }
+  });
+
   it('비밀번호 확인이 다르면 실패한다', () => {
     const result = signupStep1Schema.safeParse({
       ...valid,
@@ -215,6 +261,38 @@ describe('signupStep2Schema', () => {
       expect(
         result.error.issues.some(
           (i) => i.message === '생년월일을 선택해주세요',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('생년월일이 1900년 이전이면 실패한다 (LOGIN-FE-016)', () => {
+    const result = signupStep2Schema.safeParse({
+      ...valid,
+      birth: '1899-12-31',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) =>
+            i.message === '생년월일은 1900년 이후, 오늘까지만 선택할 수 있어요',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('생년월일이 미래(오늘 이후)면 실패한다 (LOGIN-FE-016)', () => {
+    const result = signupStep2Schema.safeParse({
+      ...valid,
+      birth: '2999-12-31',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) =>
+            i.message === '생년월일은 1900년 이후, 오늘까지만 선택할 수 있어요',
         ),
       ).toBe(true);
     }

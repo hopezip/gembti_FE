@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/Input';
 import { EMAIL_CODE_TTL_SECONDS } from '@/config/auth';
 import { useResendCooldown } from '@/features/auth/hooks/useResendCooldown';
 import {
+  BIRTH_MIN_DATE,
+  getBirthMaxDate,
   NICKNAME_MAX_LENGTH,
   type SignupStep2Input,
   signupStep2Schema,
@@ -408,6 +410,9 @@ export function EmailVerificationForm({
               <Input
                 id="signup-birth"
                 type="date"
+                // 1900-01-01 ~ 오늘만 선택 가능(미래 생일·1900년 이전 차단, LOGIN-FE-016).
+                min={BIRTH_MIN_DATE}
+                max={getBirthMaxDate()}
                 aria-invalid={Boolean(errors.birth) || undefined}
                 disabled={isSubmitting}
                 value={field.value}
