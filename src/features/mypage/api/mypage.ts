@@ -10,10 +10,12 @@ import { getSteamStatus } from '@/lib/api/steam';
 import type { MockLibraryItem, MockUserProfile } from '@/mocks/handlers/mypage';
 
 // 백엔드 auth/me가 제공하지 않는 마이페이지 필드의 임시 기본값 (MYPAGE-FE-005).
-//   성향·관심장르·총 플레이시간·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
+//   관심장르·총 플레이시간·프로필 상세(handle·가입월·생일·성별 등)는 백엔드 원천이 없어
 //   화면 회귀 방지용 그럴듯한 값을 둔다. 백엔드 API 확정 시 이 합성을 제거하고 실값 매핑으로 교체한다.
-//   ⭐ 예외: 게임 보유수(stats.following)는 GET /api/v1/steam/status의 library_games_count 실값으로
+//   ⭐ 예외1: 게임 보유수(stats.following)는 GET /api/v1/steam/status의 library_games_count 실값으로
 //      덮어쓴다(MYPAGE-FE-009). 총 플레이시간(totalPlayHours)은 전체 누적 API가 없어 mock 유지.
+//   ⭐ 예외2: 6대 성향(personality)은 GET /api/v1/stats/me 실값으로 덮어쓴다(MYPAGE-FE-010).
+//      여기 personality는 stats/me 실패 시의 폴백으로만 남는다.
 //   ⚠️ mock 핸들러(값) import는 번들 오염이라 금지 → 여기 자체 정의한다(타입만 mock에서 가져온다).
 const PROFILE_FALLBACK: Pick<
   MockUserProfile,
@@ -64,16 +66,49 @@ export interface LibraryResponse {
   allGenres: string[];
 }
 
-// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + GET /api/v1/steam/status를 MockUserProfile로 합성한다.
-//   실값: nickname·email·bio·스팀 연동 필드(연동여부·SteamID·아바타·동기화시각) + 게임 보유수(library_games_count).
+// GET /api/v1/stats/me — 현재 사용자 6대 성향 스탯(설문/Steam 합산, 0~100) (MYPAGE-FE-010).
+//   응답 stats는 설문 도메인 SurveyStats와 동일 6축. 백엔드 미러 정리 전이라 국소 타이핑한다.
+//   onUnhandledRequest:'bypass'라 mock 없이 실서버로 직결된다(auth/me와 동일).
+interface MyStatsResponse {
+  stats: Record<string, number>;
+  source_type: string;
+  steam_linked: boolean;
+  last_updated_at: string;
+}
+
+function getMyStats(): Promise<MyStatsResponse> {
+  return api.get('api/v1/stats/me').json<MyStatsResponse>();
+}
+
+// 6축 키 → 한글 라벨·표시 순서. SurveyResultPage의 정식 컨벤션을 그대로 따른다.
+const PERSONALITY_AXES: { key: string; label: string }[] = [
+  { key: 'exploration', label: '탐험' },
+  { key: 'combat', label: '액션' },
+  { key: 'growth', label: '성장' },
+  { key: 'healing', label: '힐링' },
+  { key: 'cooperation', label: '협동' },
+  { key: 'strategy', label: '전략' },
+];
+
+// stats/me(0~100) → PersonalityRadar value(0~10 스케일, 표시 ×10). 누락 축은 0.
+function mapPersonality(res: MyStatsResponse): MockUserProfile['personality'] {
+  return PERSONALITY_AXES.map((axis) => ({
+    label: axis.label,
+    value: (res.stats[axis.key] ?? 0) / 10,
+  }));
+}
+
+// 내 프로필 조회 — 실서버 GET /api/v1/auth/me(UserResponse) + steam/status + stats/me를 MockUserProfile로 합성한다.
+//   실값: nickname·email·bio·스팀 연동 필드 + 게임 보유수(library_games_count) + 6대 성향(stats/me).
 //   steamNickname은 별도 필드가 없어 SteamID(steam_id_64)로 대체한다.
-//   나머지(총 플레이시간·성향·프로필 상세)는 PROFILE_FALLBACK(임시 mock)이다.
-//   steam/status는 미연동 유저도 200(library_games_count=0)을 주지만, 호출 실패 시 보유수 때문에
-//   프로필 전체가 깨지지 않도록 catch로 격리한다(실패 시 보유수 0).
+//   나머지(총 플레이시간·프로필 상세)는 PROFILE_FALLBACK(임시 mock)이다.
+//   steam/status·stats/me는 호출 실패가 프로필 전체를 깨지 않도록 각각 catch로 격리한다
+//   (실패 시 보유수 0 / 성향은 PROFILE_FALLBACK mock 폴백).
 export async function getMyProfile(): Promise<MockUserProfile> {
-  const [me, steam] = await Promise.all([
+  const [me, steam, stats] = await Promise.all([
     getMeRaw(),
     getSteamStatus().catch(() => null),
+    getMyStats().catch(() => null),
   ]);
   return {
     id: String(me.id),
@@ -90,6 +125,7 @@ export async function getMyProfile(): Promise<MockUserProfile> {
       ...PROFILE_FALLBACK.stats,
       following: steam?.library_games_count ?? 0,
     },
+    personality: stats ? mapPersonality(stats) : PROFILE_FALLBACK.personality,
   };
 }
 
