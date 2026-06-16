@@ -175,19 +175,9 @@ export function LibrarySection() {
           </h2>
           {library && (
             <span className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
-              {total}개 · 자동 동기화
+              {total}개
             </span>
           )}
-        </div>
-        <div
-          className={css({ display: 'flex', gap: '2', alignItems: 'center' })}
-        >
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-            모두 · Steam · 직접
-          </span>
-          <Button variant="secondary" size="sm">
-            동기화
-          </Button>
         </div>
       </div>
 
