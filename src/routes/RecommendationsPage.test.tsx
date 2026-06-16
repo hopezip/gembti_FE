@@ -151,6 +151,8 @@ describe('RecommendationsPage', () => {
     renderPage();
 
     expect(screen.getByText(/골라봤어요/)).toBeInTheDocument();
+    expect(screen.queryByText(/취향 일치율/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/도전 적합도/)).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'GamBTI 추천 게임' }),
     ).toBeInTheDocument();

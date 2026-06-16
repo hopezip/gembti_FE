@@ -6,6 +6,7 @@ export interface LatestRecommendationRaw {
   title: string;
   image_url: string | null;
   genres: string[];
+  rating: number | null;
   similarity_score: number;
   similarity_rank: number;
 }
@@ -17,9 +18,11 @@ export interface DiscountedRecommendationRaw {
   image_url: string | null;
   genres: string[];
   similarity_score: number;
-  discount_rate: number;
-  original_price: number;
-  sale_price: number;
+  similarity_rank: number;
+  discount_percent: number;
+  original_price_krw: number | null;
+  price_krw: number | null;
+  rating: number | null;
 }
 
 export interface HighlyRatedRecommendationRaw {
@@ -28,20 +31,24 @@ export interface HighlyRatedRecommendationRaw {
   title: string;
   image_url: string | null;
   genres: string[];
-  rating: number;
+  rating: number | null;
   review_count: number;
   similarity_score: number;
   similarity_rank: number;
 }
 
 export interface PopularGameRaw {
+  recommendation_item_id: number;
   rank: number;
   game_id: number;
   title: string;
   image_url: string | null;
   genres: string[];
   current_players: number;
-  rating: number;
+  rating: number | null;
+  current_players_updated_at: string | null;
+  similarity_score: number;
+  similarity_rank: number;
 }
 
 export interface RecommendationListResponseRaw<T> {
@@ -54,6 +61,7 @@ export interface LatestRecommendation {
   title: string;
   imageUrl: string | null;
   genres: string[];
+  rating: number | null;
   similarityScore: number;
   similarityRank: number;
 }
@@ -65,9 +73,11 @@ export interface DiscountedRecommendation {
   imageUrl: string | null;
   genres: string[];
   similarityScore: number;
+  similarityRank: number;
   discountRate: number;
-  originalPrice: number;
-  salePrice: number;
+  originalPrice: number | null;
+  salePrice: number | null;
+  rating: number | null;
 }
 
 export interface HighlyRatedRecommendation {
@@ -76,18 +86,22 @@ export interface HighlyRatedRecommendation {
   title: string;
   imageUrl: string | null;
   genres: string[];
-  rating: number;
+  rating: number | null;
   reviewCount: number;
   similarityScore: number;
   similarityRank: number;
 }
 
 export interface PopularGame {
+  recommendationItemId: number;
   rank: number;
   gameId: number;
   title: string;
   imageUrl: string | null;
   genres: string[];
   currentPlayers: number;
-  rating: number;
+  rating: number | null;
+  currentPlayersUpdatedAt: string | null;
+  similarityScore: number;
+  similarityRank: number;
 }

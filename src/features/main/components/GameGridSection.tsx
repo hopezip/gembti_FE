@@ -102,6 +102,8 @@ interface GameGridSectionProps<T> {
   pageSize?: number;
   /** 모든 항목을 노출한 뒤에도 더보기 버튼 자리를 유지한다. */
   persistMoreButton?: boolean;
+  /** 탭 바로 아래에 붙는 섹션처럼 상단 여백이 불필요할 때 사용한다. */
+  flushTop?: boolean;
 }
 
 export function GameGridSection<T>({
@@ -114,6 +116,7 @@ export function GameGridSection<T>({
   emptyText,
   pageSize = DEFAULT_PAGE_SIZE,
   persistMoreButton = false,
+  flushTop = false,
 }: GameGridSectionProps<T>) {
   const [visible, setVisible] = useState(pageSize);
 
@@ -131,7 +134,7 @@ export function GameGridSection<T>({
   const hasMore = visible < items.length;
 
   return (
-    <PageContainer className={css({ py: '10' })}>
+    <PageContainer className={css({ pt: flushTop ? '0' : '10', pb: '10' })}>
       <h2 className={styles.heading}>{title}</h2>
 
       {isLoading ? (
