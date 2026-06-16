@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getDiscountedRecommendations,
   getHighlyRatedRecommendations,
@@ -12,10 +12,26 @@ interface QueryOptions {
 }
 
 export function useLatestRecommendations(options?: QueryOptions) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ['recommendations', 'latest', RECOMMENDATION_LIMIT],
     queryFn: ({ signal }) =>
-      getLatestRecommendations({ limit: RECOMMENDATION_LIMIT, signal }),
+      getLatestRecommendations({
+        limit: RECOMMENDATION_LIMIT,
+        signal,
+        onGenerated: async () => {
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: ['recommendations', 'discounted'],
+            }),
+            queryClient.invalidateQueries({
+              queryKey: ['recommendations', 'highly-rated'],
+            }),
+            queryClient.invalidateQueries({ queryKey: ['games', 'popular'] }),
+          ]);
+        },
+      }),
     enabled: options?.enabled ?? true,
   });
 }

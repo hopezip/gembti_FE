@@ -2,7 +2,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GameGridSection } from '@/features/main/components/GameGridSection';
-import { GuestRecommendations } from '@/features/recommendations/components/GuestRecommendations';
 import {
   RECOMMENDATION_PAGE_SIZE,
   type DiscountedRecommendation,
@@ -10,6 +9,7 @@ import {
   type LatestRecommendation,
   type PopularGame,
 } from '@/features/recommendations/api/recommendations';
+import { GuestRecommendations } from '@/features/recommendations/components/GuestRecommendations';
 import {
   DiscountedRecommendationCard,
   HighlyRatedRecommendationCard,
@@ -25,47 +25,67 @@ import {
 } from '@/features/recommendations/hooks/useRecommendations';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 
-const cardLink = css({
-  display: 'block',
-  color: 'inherit',
-  textDecoration: 'none',
-  borderRadius: 'xl',
-  _focusVisible: {
-    outline: '2px solid',
-    outlineColor: 'accent.default',
-    outlineOffset: '2px',
-  },
-});
-
-const recommendationTabs = [
-  { id: 'personalized', label: 'GamBTI 추천' },
-  { id: 'discounted', label: '할인 중' },
-  { id: 'highly-rated', label: '유저 고평가' },
-  { id: 'popular', label: '인기 게임' },
+const tabs = [
+  { id: 'personalized', label: 'GamBTI 추천', mobileLabel: '추천' },
+  { id: 'discounted', label: '할인 중', mobileLabel: '할인' },
+  { id: 'highly-rated', label: '유저 고평가', mobileLabel: '고평가' },
+  { id: 'popular', label: '인기 게임', mobileLabel: '인기' },
 ] as const;
 
-type RecommendationTab = (typeof recommendationTabs)[number]['id'];
+type TabId = (typeof tabs)[number]['id'];
+type RecommendationItem =
+  | LatestRecommendation
+  | DiscountedRecommendation
+  | HighlyRatedRecommendation
+  | PopularGame;
 
-const tabStyles = {
-  container: css({ pt: '10' }),
-  list: css({
+const gridCopy: Record<
+  TabId,
+  { title: string; errorText: string; emptyText: string }
+> = {
+  personalized: {
+    title: 'GamBTI 추천 게임',
+    errorText: '추천 게임을 불러오지 못했어요.',
+    emptyText: '아직 맞춤 추천 게임이 없어요. 잠시 후 다시 시도해 주세요.',
+  },
+  discounted: {
+    title: '할인 중인 취향 저격 게임',
+    errorText: '세일 게임을 불러오지 못했어요.',
+    emptyText: '지금은 취향 맞춤 게임 중 세일 중인 게임이 없어요.',
+  },
+  'highly-rated': {
+    title: '유저들이 인정한 취향 게임',
+    errorText: '추천 게임을 불러오지 못했어요.',
+    emptyText: '지금은 취향 맞춤 게임 중 고평가 게임이 없어요.',
+  },
+  popular: {
+    title: '지금 가장 핫한 게임',
+    errorText: '인기 게임을 불러오지 못했어요.',
+    emptyText: '지금은 취향 맞춤 인기 게임이 없어요.',
+  },
+};
+
+const styles = {
+  page: css({ flex: '1', display: 'flex', flexDirection: 'column' }),
+  tabs: css({ py: '8' }),
+  tabList: css({
     display: 'flex',
-    gap: '2',
+    alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    overflowX: 'auto',
-    overflowY: 'hidden',
   }),
   tab: css({
     position: 'relative',
-    flexShrink: 0,
-    px: '5',
-    py: '3.5',
+    flex: { base: '1 1 25%', sm: '0 0 auto' },
+    minW: 0,
+    px: { base: '1', sm: '5' },
+    py: { base: '3', sm: '3.5' },
     border: 0,
     bg: 'transparent',
     color: 'fg.muted',
-    fontSize: 'md',
+    fontSize: { base: 'sm', sm: 'md' },
     fontWeight: 'medium',
+    whiteSpace: 'nowrap',
     cursor: 'pointer',
     _hover: { color: 'fg.default' },
     _focusVisible: {
@@ -76,8 +96,7 @@ const tabStyles = {
     _after: {
       content: '""',
       position: 'absolute',
-      left: 0,
-      right: 0,
+      insetInline: 0,
       bottom: '-1px',
       h: '0.5',
       bg: 'transparent',
@@ -88,184 +107,127 @@ const tabStyles = {
       _after: { bg: 'accent.default' },
     },
   }),
+  desktopLabel: css({ display: { base: 'none', sm: 'inline' } }),
+  mobileLabel: css({ display: { base: 'inline', sm: 'none' } }),
+  cardLink: css({
+    display: 'block',
+    color: 'inherit',
+    textDecoration: 'none',
+    borderRadius: 'xl',
+    _focusVisible: {
+      outline: '2px solid',
+      outlineColor: 'accent.default',
+      outlineOffset: '2px',
+    },
+  }),
 };
 
-function isRecommendationTab(value: string | null): value is RecommendationTab {
-  return recommendationTabs.some((tab) => tab.id === value);
+function isTab(value: string | null): value is TabId {
+  return tabs.some((tab) => tab.id === value);
+}
+
+function renderCard(tab: TabId, item: RecommendationItem) {
+  const card =
+    tab === 'personalized' ? (
+      <LatestRecommendationCard game={item as LatestRecommendation} />
+    ) : tab === 'discounted' ? (
+      <DiscountedRecommendationCard game={item as DiscountedRecommendation} />
+    ) : tab === 'highly-rated' ? (
+      <HighlyRatedRecommendationCard game={item as HighlyRatedRecommendation} />
+    ) : (
+      <PopularGameCard game={item as PopularGame} />
+    );
+
+  return (
+    <Link
+      key={item.gameId}
+      to={`/games/${item.gameId}`}
+      className={styles.cardLink}
+    >
+      {card}
+    </Link>
+  );
 }
 
 export function RecommendationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const status = useAuthStore((s) => s.status);
+  const status = useAuthStore((state) => state.status);
   const hasCompletedSurvey = useAuthStore(
-    (s) => s.user?.hasCompletedSurvey ?? false,
+    (state) => state.user?.hasCompletedSurvey ?? false,
   );
   const showPersonalized = status === 'authenticated' && hasCompletedSurvey;
-
-  const latest = useLatestRecommendations({ enabled: showPersonalized });
-  const discounted = useDiscountedRecommendations({
-    enabled: showPersonalized,
-  });
-  const highlyRated = useHighlyRatedRecommendations({
-    enabled: showPersonalized,
-  });
-  const popular = usePopularGames({ enabled: showPersonalized });
   const category = searchParams.get('category');
-  const activeTab: RecommendationTab = isRecommendationTab(category)
-    ? category
-    : 'personalized';
+  const activeTab: TabId = isTab(category) ? category : 'personalized';
+  const queries = {
+    personalized: useLatestRecommendations({ enabled: showPersonalized }),
+    discounted: useDiscountedRecommendations({ enabled: showPersonalized }),
+    'highly-rated': useHighlyRatedRecommendations({
+      enabled: showPersonalized,
+    }),
+    popular: usePopularGames({ enabled: showPersonalized }),
+  };
 
-  const selectTab = (tab: RecommendationTab) => {
-    const nextParams = new URLSearchParams(searchParams);
-    if (tab === 'personalized') {
-      nextParams.delete('category');
-    } else {
-      nextParams.set('category', tab);
-    }
-    setSearchParams(nextParams);
+  const selectTab = (id: TabId) => {
+    const next = new URLSearchParams(searchParams);
+    id === 'personalized' ? next.delete('category') : next.set('category', id);
+    setSearchParams(next);
   };
 
   if (!showPersonalized) {
     return (
-      <main
-        className={css({ flex: '1', display: 'flex', flexDirection: 'column' })}
-      >
+      <main className={styles.page}>
         <GuestRecommendations isAuthenticated={status === 'authenticated'} />
       </main>
     );
   }
 
   return (
-    <main
-      className={css({ flex: '1', display: 'flex', flexDirection: 'column' })}
-    >
+    <main className={styles.page}>
       <RecommendationHero />
-      <PageContainer className={tabStyles.container}>
-        <div className={tabStyles.list} role="tablist" aria-label="추천 분류">
-          {recommendationTabs.map((tab) => (
+      <PageContainer className={styles.tabs}>
+        <div className={styles.tabList} role="tablist" aria-label="추천 분류">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               id={`recommendation-tab-${tab.id}`}
               type="button"
               role="tab"
+              aria-label={tab.label}
               aria-selected={activeTab === tab.id}
               aria-controls={`recommendation-panel-${tab.id}`}
-              className={tabStyles.tab}
+              className={styles.tab}
               onClick={() => selectTab(tab.id)}
             >
-              {tab.label}
+              <span className={styles.desktopLabel}>{tab.label}</span>
+              <span className={styles.mobileLabel}>{tab.mobileLabel}</span>
             </button>
           ))}
         </div>
       </PageContainer>
 
-      <div
-        id="recommendation-panel-personalized"
-        role="tabpanel"
-        aria-labelledby="recommendation-tab-personalized"
-        hidden={activeTab !== 'personalized'}
-      >
-        <GameGridSection<LatestRecommendation>
-          title="GamBTI 추천 게임"
-          items={latest.data ?? []}
-          isLoading={latest.isLoading}
-          isError={latest.isError}
-          errorText="추천 게임을 불러오지 못했어요."
-          emptyText="아직 추천 게임이 없어요."
-          pageSize={RECOMMENDATION_PAGE_SIZE}
-          persistMoreButton
-          renderCard={(item) => (
-            <Link
-              key={item.recommendationItemId}
-              to={`/games/${item.gameId}`}
-              className={cardLink}
-            >
-              <LatestRecommendationCard game={item} />
-            </Link>
-          )}
-        />
-      </div>
-
-      <div
-        id="recommendation-panel-discounted"
-        role="tabpanel"
-        aria-labelledby="recommendation-tab-discounted"
-        hidden={activeTab !== 'discounted'}
-      >
-        <GameGridSection<DiscountedRecommendation>
-          title="할인 중인 취향 저격 게임"
-          items={discounted.data ?? []}
-          isLoading={discounted.isLoading}
-          isError={discounted.isError}
-          errorText="세일 게임을 불러오지 못했어요."
-          emptyText="현재 세일 중인 맞춤 게임이 없어요."
-          pageSize={RECOMMENDATION_PAGE_SIZE}
-          persistMoreButton
-          renderCard={(item) => (
-            <Link
-              key={item.recommendationItemId}
-              to={`/games/${item.gameId}`}
-              className={cardLink}
-            >
-              <DiscountedRecommendationCard game={item} />
-            </Link>
-          )}
-        />
-      </div>
-
-      <div
-        id="recommendation-panel-highly-rated"
-        role="tabpanel"
-        aria-labelledby="recommendation-tab-highly-rated"
-        hidden={activeTab !== 'highly-rated'}
-      >
-        <GameGridSection<HighlyRatedRecommendation>
-          title="유저들이 인정한 취향 게임"
-          items={highlyRated.data ?? []}
-          isLoading={highlyRated.isLoading}
-          isError={highlyRated.isError}
-          errorText="추천 게임을 불러오지 못했어요."
-          emptyText="평가 좋은 맞춤 게임이 없어요."
-          pageSize={RECOMMENDATION_PAGE_SIZE}
-          persistMoreButton
-          renderCard={(item) => (
-            <Link
-              key={item.recommendationItemId}
-              to={`/games/${item.gameId}`}
-              className={cardLink}
-            >
-              <HighlyRatedRecommendationCard game={item} />
-            </Link>
-          )}
-        />
-      </div>
-
-      <div
-        id="recommendation-panel-popular"
-        role="tabpanel"
-        aria-labelledby="recommendation-tab-popular"
-        hidden={activeTab !== 'popular'}
-      >
-        <GameGridSection<PopularGame>
-          title="지금 가장 핫한 게임"
-          items={popular.data ?? []}
-          isLoading={popular.isLoading}
-          isError={popular.isError}
-          errorText="인기 게임을 불러오지 못했어요."
-          emptyText="인기 게임이 없어요."
-          pageSize={RECOMMENDATION_PAGE_SIZE}
-          persistMoreButton
-          renderCard={(item) => (
-            <Link
-              key={item.gameId}
-              to={`/games/${item.gameId}`}
-              className={cardLink}
-            >
-              <PopularGameCard game={item} />
-            </Link>
-          )}
-        />
-      </div>
+      {tabs.map(({ id }) => {
+        const query = queries[id];
+        return (
+          <div
+            key={id}
+            id={`recommendation-panel-${id}`}
+            role="tabpanel"
+            aria-labelledby={`recommendation-tab-${id}`}
+            hidden={activeTab !== id}
+          >
+            <GameGridSection<RecommendationItem>
+              {...gridCopy[id]}
+              items={(query.data ?? []) as RecommendationItem[]}
+              isLoading={query.isLoading}
+              isError={query.isError}
+              pageSize={RECOMMENDATION_PAGE_SIZE}
+              persistMoreButton
+              flushTop
+              renderCard={(item) => renderCard(id, item)}
+            />
+          </div>
+        );
+      })}
     </main>
   );
 }

@@ -47,12 +47,12 @@ export const MOCK_LATEST_RECOMMENDATIONS = {
 export const MOCK_DISCOUNTED_RECOMMENDATIONS = {
   games: Array.from({ length: MOCK_RECOMMENDATION_COUNT }, (_, index) => {
     const originalPrice = 69_800 - (index % 4) * 10_000;
-    const discountRate = 20 + (index % 5) * 10;
+    const discountPercent = 20 + (index % 5) * 10;
     return {
       ...baseItem(index, 2000),
-      discount_rate: discountRate,
-      original_price: originalPrice,
-      sale_price: Math.round((originalPrice * (100 - discountRate)) / 100),
+      discount_percent: discountPercent,
+      original_price_krw: originalPrice,
+      price_krw: Math.round((originalPrice * (100 - discountPercent)) / 100),
     };
   }),
 };

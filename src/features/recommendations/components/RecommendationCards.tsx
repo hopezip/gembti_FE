@@ -66,15 +66,17 @@ export function DiscountedRecommendationCard({
       thumbnailUrl={game.imageUrl}
       genres={game.genres}
       footer={
-        <div className={priceStyles.row}>
-          <span className={priceStyles.discount}>{game.discountRate}%</span>
-          <span className={priceStyles.original}>
-            {formatPrice(game.originalPrice)}
-          </span>
-          <span className={priceStyles.sale}>
-            {formatPrice(game.salePrice)}
-          </span>
-        </div>
+        game.originalPrice != null && game.salePrice != null ? (
+          <div className={priceStyles.row}>
+            <span className={priceStyles.discount}>{game.discountRate}%</span>
+            <span className={priceStyles.original}>
+              {formatPrice(game.originalPrice)}
+            </span>
+            <span className={priceStyles.sale}>
+              {formatPrice(game.salePrice)}
+            </span>
+          </div>
+        ) : undefined
       }
     />
   );
@@ -90,7 +92,11 @@ export function HighlyRatedRecommendationCard({
       title={game.title}
       thumbnailUrl={game.imageUrl}
       genres={game.genres}
-      reasonTagline={`★ ${game.rating.toFixed(1)} · 리뷰 ${formatKoreanCount(game.reviewCount)}+`}
+      reasonTagline={
+        game.rating != null
+          ? `★ ${game.rating.toFixed(1)} · 리뷰 ${formatKoreanCount(game.reviewCount)}+`
+          : `리뷰 ${formatKoreanCount(game.reviewCount)}+`
+      }
     />
   );
 }
