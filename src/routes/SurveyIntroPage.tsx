@@ -2,6 +2,7 @@ import { CircleHelp, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/Button';
+import { SurveyEmberBackground } from '@/features/survey/components/SurveyEmberBackground';
 import { surveyIntroStyles as styles } from '@/features/survey/components/surveyIntro.styles';
 
 const surveyTraits = [
@@ -42,6 +43,7 @@ export function SurveyIntroPage() {
 
   return (
     <main className={styles.page}>
+      <SurveyEmberBackground />
       <PageContainer className={styles.content}>
         <div className={styles.heroCopy}>
           <h1 className={styles.title}>
