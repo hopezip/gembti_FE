@@ -10,14 +10,6 @@ import { checkNickname as checkNicknameApi } from '@/services/users';
 
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
 
-// 생년월일은 가입 이후 변경 불가가 원칙이나, 1900~2020 밖(미래·비정상)이거나 미설정인 경우에 한해
-//   1회 수정을 허용한다(잘못 들어간 값 자가 교정용). 올바른 값으로 저장하면 다음부터 다시 잠긴다.
-function isValidBirthdate(v: string | null | undefined): boolean {
-  if (!v || !/^\d{4}-\d{2}-\d{2}/.test(v)) return false;
-  const year = Number(v.slice(0, 4));
-  return year >= 1900 && year <= 2020;
-}
-
 interface Props {
   profile: MockUserProfile;
 }
@@ -28,11 +20,8 @@ export function BasicInfoCard({ profile }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [nickname, setNickname] = useState('');
   const [gender, setGender] = useState('');
-  const [birthdate, setBirthdate] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
-  // 현재 생일이 유효 범위(1900~2020) 밖이면 1회 수정을 허용한다.
-  const birthdateCorrectable = !isValidBirthdate(profile.birthdate);
   // 저장 실패를 사용자에게 표면화하기 위한 에러 메시지(닉네임 저장 먹통 방지).
   const [saveError, setSaveError] = useState('');
 
@@ -52,7 +41,6 @@ export function BasicInfoCard({ profile }: Props) {
   function enterEdit() {
     setNickname(profile.nickname ?? '');
     setGender(profile.gender ?? '');
-    setBirthdate(profile.birthdate ?? '');
     setNicknameCheck('idle');
     setSaveError('');
     setIsEditMode(true);
@@ -73,22 +61,18 @@ export function BasicInfoCard({ profile }: Props) {
   const nicknameChanged = nickname.trim() !== (profile.nickname ?? '');
 
   function handleSave() {
-    // 생년월일은 가입 시 고정값이라 보통 전송하지 않는다.
-    //   단, 현재 값이 1900~2020 밖이라 1회 교정이 허용된 경우에만 birthdate를 함께 보낸다.
+    // 생년월일은 가입 시 고정값이라 전송하지 않는다(닉네임·성별만 전송).
     setSaveError('');
     mutation.mutate({
       nickname: nickname.trim(),
       gender: (gender || null) as MockUserProfile['gender'],
-      ...(birthdateCorrectable ? { birthdate: birthdate.trim() } : {}),
     });
   }
 
   const canSave =
     !mutation.isPending &&
     nickname.trim().length > 0 &&
-    (!nicknameChanged || nicknameCheck === 'available') &&
-    // 교정 모드에서는 1900~2020 범위의 올바른 날짜를 입력해야 저장할 수 있다.
-    (!birthdateCorrectable || isValidBirthdate(birthdate));
+    (!nicknameChanged || nicknameCheck === 'available');
 
   const rowCss = css({
     display: 'flex',
@@ -214,54 +198,20 @@ export function BasicInfoCard({ profile }: Props) {
             )}
           </div>
 
-          {/* 생년월일 — 가입 시 입력값으로 고정(읽기 전용). 단 값이 1900~2020 밖이면 1회 교정 허용. */}
+          {/* 생년월일 — 가입 시 입력값으로 고정(항상 읽기 전용, 변경 불가) */}
           <div className={rowCss}>
             <span className={labelCss}>생년월일</span>
-            {isEditMode && birthdateCorrectable ? (
-              <div
+            <span className={valueCss}>{profile.birthdate ?? '미설정'}</span>
+            {isEditMode && (
+              <span
                 className={css({
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flex: 1,
-                  minW: 0,
+                  fontSize: 'xs',
+                  color: 'fg.subtle',
+                  flexShrink: 0,
                 })}
               >
-                <Input
-                  size="sm"
-                  type="date"
-                  min="1900-01-01"
-                  max="2020-12-31"
-                  value={birthdate}
-                  onChange={(e) => setBirthdate(e.target.value)}
-                  className={css({ minW: 0, colorScheme: 'dark' })}
-                />
-                <span
-                  className={css({
-                    mt: '1',
-                    fontSize: 'xs',
-                    color: 'fg.subtle',
-                  })}
-                >
-                  생년월일이 올바르지 않아 1회 수정할 수 있어요 (1900~2020)
-                </span>
-              </div>
-            ) : (
-              <>
-                <span className={valueCss}>
-                  {profile.birthdate ?? '미설정'}
-                </span>
-                {isEditMode && (
-                  <span
-                    className={css({
-                      fontSize: 'xs',
-                      color: 'fg.subtle',
-                      flexShrink: 0,
-                    })}
-                  >
-                    가입 시 입력값 · 변경 불가
-                  </span>
-                )}
-              </>
+                변경 불가
+              </span>
             )}
           </div>
 
