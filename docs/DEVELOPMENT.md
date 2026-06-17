@@ -21,9 +21,11 @@
 
 `.env.local`:
 ```
-VITE_USE_MOCK=true   # MSW 사용 (Swagger 미완성 동안 기본값)
-VITE_USE_MOCK=false  # 실서버
+VITE_USE_MOCK=true   # 개발 서버에서 MSW 사용 (Swagger 미완성 동안 기본값)
+VITE_USE_MOCK=false  # 개발 서버에서도 실서버 사용
 ```
+
+`pnpm build` 결과물에서는 배포 환경변수 오설정과 무관하게 MSW가 시작되지 않는다.
 
 ## 로그 위치
 

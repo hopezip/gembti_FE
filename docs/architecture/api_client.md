@@ -6,7 +6,7 @@
 - `docs/03-api/openapi.json`, `.openapi.merged.json`, `src/types/api.ts`, `src/lib/api/*.ts`, `src/mocks/handlers/*.ts`는 자동 생성 → 직접 편집 금지
 - **예외**: `docs/03-api/openapi.draft.json`은 프론트가 미확정 도메인 계약을 **수동 작성하는 임시 파일**이라 편집 허용(TASK-DEVEX-018). 단 모든 path에 `x-status: frontend-draft` + `api/v1/` 프리픽스 통일. 백엔드 확정 시 해당 path를 draft에서 삭제(전환 흐름).
 - HTTP 클라이언트는 ky 단일 인스턴스(`src/lib/ky.ts`), `credentials: 'include'`로 쿠키 자동 전송 + access는 `Authorization: Bearer` 부착(하이브리드, auth.md)
-- MSW로 개발 (`VITE_USE_MOCK=true`). ⚠️ **auth(`/api/v1/auth/*`)는 실서버(gembti.cloud) passthrough**(LOGIN-FE-006, 핸들러 미등록 + `onUnhandledRequest:'bypass'`). steam/games/home은 mock. `VITE_API_BASE_URL`로 대상 지정.
+- MSW는 개발 서버에서만 사용 (`VITE_USE_MOCK=true`). 프로덕션 빌드는 값과 무관하게 MSW를 시작하지 않는다. ⚠️ **auth(`/api/v1/auth/*`)는 실서버(gembti.cloud) passthrough**(LOGIN-FE-006, 핸들러 미등록 + `onUnhandledRequest:'bypass'`). steam/games/home은 mock. `VITE_API_BASE_URL`로 대상 지정.
 
 ## 폴더/파일 위치
 

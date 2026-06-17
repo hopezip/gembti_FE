@@ -26,8 +26,9 @@ Route Component
 ```
 
 환경 토글:
-- `VITE_USE_MOCK=true` → MSW로 응답
-- `VITE_USE_MOCK=false` → 실서버 호출
+- 개발 서버에서 `VITE_USE_MOCK=true` → MSW로 응답
+- 개발 서버에서 `VITE_USE_MOCK=false` → 실서버 호출
+- 프로덕션 빌드에서는 `VITE_USE_MOCK=true`여도 MSW를 시작하지 않음
 
 ## 전역 사용자 상태 (REQ 3.1 기반)
 
