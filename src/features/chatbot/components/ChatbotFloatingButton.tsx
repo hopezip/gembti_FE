@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircleMore, X } from 'lucide-react';
 import { css } from 'styled-system/css';
 import { ChatbotWindow } from '@/features/chatbot/components/ChatbotWindow';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 
 // 고객센터 챗봇 플로팅 진입 버튼 (CHATBOT-FE-001/003).
 //   GlobalShell이 전역 1회 렌더. 로그인(authenticated) 유저에게만 노출한다(CHATBOT-FE-003).
-//   클릭 시 팝오버 대화창(ChatbotWindow)을 토글한다.
+//   클릭 시 팝오버 대화창(ChatbotWindow)을 토글한다. 주황 원형 + 말풍선 아이콘 + 글로우.
 export function ChatbotFloatingButton() {
   const isAuthenticated = useAuthStore((s) => s.status === 'authenticated');
+  const userName = useAuthStore((s) => s.user?.nickname ?? '');
   const [open, setOpen] = useState(false);
 
   // 비로그인 유저에게는 버튼 자체를 노출하지 않는다.
@@ -16,7 +17,9 @@ export function ChatbotFloatingButton() {
 
   return (
     <>
-      {open && <ChatbotWindow onClose={() => setOpen(false)} />}
+      {open && (
+        <ChatbotWindow onClose={() => setOpen(false)} userName={userName} />
+      )}
       <button
         type="button"
         aria-label={open ? '챗봇 닫기' : '고객센터 챗봇 열기'}
@@ -37,7 +40,8 @@ export function ChatbotFloatingButton() {
           color: 'fg.onAccent',
           boxShadow: 'glow',
           cursor: 'pointer',
-          _hover: { bg: 'accent.hover' },
+          transition: 'transform 150ms, background 150ms',
+          _hover: { bg: 'accent.hover', transform: 'translateY(-2px)' },
           _focusVisible: {
             outline: '2px solid',
             outlineColor: 'accent.default',
@@ -48,7 +52,7 @@ export function ChatbotFloatingButton() {
         {open ? (
           <X size={24} aria-hidden="true" />
         ) : (
-          <MessageCircle size={24} aria-hidden="true" />
+          <MessageCircleMore size={26} aria-hidden="true" />
         )}
       </button>
     </>

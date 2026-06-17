@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Send, X } from 'lucide-react';
+import { Bot, Send, X } from 'lucide-react';
 import { css } from 'styled-system/css';
 import { sendChatMessage } from '@/features/chatbot/api/chat';
 
@@ -8,28 +8,43 @@ import { sendChatMessage } from '@/features/chatbot/api/chat';
 //   순수 프리젠테이션 + 로컬 대화 상태. 세션ID는 첫 응답값을 보관해 이후 요청에 재전송한다.
 //   다른 도메인을 import하지 않는다(chatbot 격리).
 
+const BRAND = 'GamBTI AI';
+
 interface ChatMessage {
   id: number;
   role: 'user' | 'bot';
   text: string;
+  time: string;
 }
 
-const GREETING: ChatMessage = {
-  id: 0,
-  role: 'bot',
-  text: '안녕하세요! GamBTI 고객센터예요. 무엇을 도와드릴까요?',
-};
+function nowTime(): string {
+  return new Date().toLocaleTimeString('ko-KR', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
 
 interface Props {
   onClose: () => void;
+  /** 유저 아바타 이니셜 표시용(로그인 닉네임). */
+  userName: string;
 }
 
-export function ChatbotWindow({ onClose }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
+export function ChatbotWindow({ onClose, userName }: Props) {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    {
+      id: 0,
+      role: 'bot',
+      text: '안녕하세요! GamBTI AI예요. 게임 추천이나 이용 관련 무엇이든 물어보세요.',
+      time: nowTime(),
+    },
+  ]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const nextId = useRef(1);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const initials = (userName.trim().slice(0, 2) || '나').toUpperCase();
 
   const mutation = useMutation({
     mutationFn: (message: string) => sendChatMessage({ message, sessionId }),
@@ -43,7 +58,10 @@ export function ChatbotWindow({ onClose }: Props) {
   });
 
   function appendMessage(role: ChatMessage['role'], text: string) {
-    setMessages((prev) => [...prev, { id: nextId.current++, role, text }]);
+    setMessages((prev) => [
+      ...prev,
+      { id: nextId.current++, role, text, time: nowTime() },
+    ]);
   }
 
   // 새 메시지가 추가되면 목록 맨 아래로 스크롤한다.
@@ -63,7 +81,7 @@ export function ChatbotWindow({ onClose }: Props) {
 
   return (
     <section
-      aria-label="고객센터 챗봇 대화창"
+      aria-label="GamBTI AI 챗봇 대화창"
       className={css({
         position: 'fixed',
         right: '6',
@@ -71,10 +89,10 @@ export function ChatbotWindow({ onClose }: Props) {
         zIndex: 'modal',
         display: 'flex',
         flexDirection: 'column',
-        w: '360px',
+        w: '380px',
         maxW: 'calc(100vw - 32px)',
-        h: '480px',
-        maxH: 'calc(100vh - 140px)',
+        h: '600px',
+        maxH: 'calc(100vh - 120px)',
         bg: 'bg.surface',
         border: '1px solid',
         borderColor: 'border.default',
@@ -83,33 +101,53 @@ export function ChatbotWindow({ onClose }: Props) {
         overflow: 'hidden',
       })}
     >
-      {/* 헤더 */}
+      {/* 헤더 — 중앙 브랜딩 + 우측 닫기 */}
       <header
         className={css({
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
+          gap: '2',
           px: '4',
-          py: '3',
+          py: '3.5',
           borderBottom: '1px solid',
           borderColor: 'border.default',
           bg: 'bg.surfaceRaised',
         })}
       >
         <span
+          aria-hidden="true"
+          className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            w: '7',
+            h: '7',
+            borderRadius: 'lg',
+            bg: 'accent.default',
+            color: 'fg.onAccent',
+          })}
+        >
+          <Bot size={16} />
+        </span>
+        <span
           className={css({
             fontSize: 'md',
-            fontWeight: 'semibold',
+            fontWeight: 'bold',
+            letterSpacing: 'wide',
             color: 'fg.default',
           })}
         >
-          GamBTI 고객센터
+          {BRAND}
         </span>
         <button
           type="button"
           aria-label="챗봇 닫기"
           onClick={onClose}
           className={css({
+            position: 'absolute',
+            right: '3',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -133,44 +171,51 @@ export function ChatbotWindow({ onClose }: Props) {
           minH: 0,
           overflowY: 'auto',
           px: '4',
-          py: '3',
+          py: '4',
           display: 'flex',
           flexDirection: 'column',
-          gap: '2.5',
+          gap: '4',
         })}
       >
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={css({
-              alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-              maxW: '80%',
-              px: '3',
-              py: '2',
-              borderRadius: 'lg',
-              fontSize: 'sm',
-              lineHeight: 'snug',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              bg: m.role === 'user' ? 'accent.default' : 'bg.surfaceRaised',
-              color: m.role === 'user' ? 'fg.onAccent' : 'fg.default',
-            })}
-          >
-            {m.text}
-          </div>
-        ))}
-        {mutation.isPending && (
-          <span
-            className={css({
-              alignSelf: 'flex-start',
-              fontSize: 'xs',
-              color: 'fg.subtle',
-              px: '1',
-            })}
-          >
-            답변을 작성 중이에요…
-          </span>
+        {/* 날짜 구분선 */}
+        <div
+          className={css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3',
+            color: 'fg.subtle',
+            fontSize: 'xs',
+            _before: {
+              content: '""',
+              flex: 1,
+              h: '1px',
+              bg: 'border.default',
+            },
+            _after: {
+              content: '""',
+              flex: 1,
+              h: '1px',
+              bg: 'border.default',
+            },
+          })}
+        >
+          오늘
+        </div>
+
+        {messages.map((m) =>
+          m.role === 'bot' ? (
+            <BotRow key={m.id} text={m.text} time={m.time} />
+          ) : (
+            <UserRow
+              key={m.id}
+              text={m.text}
+              time={m.time}
+              initials={initials}
+            />
+          ),
         )}
+
+        {mutation.isPending && <TypingRow />}
       </div>
 
       {/* 입력창 */}
@@ -189,20 +234,20 @@ export function ChatbotWindow({ onClose }: Props) {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="메시지를 입력하세요"
+          placeholder="메시지를 입력하세요…"
           aria-label="메시지 입력"
           // biome-ignore lint/a11y/noAutofocus: 대화창을 열면 바로 입력 가능해야 한다.
           autoFocus
           className={css({
             flex: 1,
             minW: 0,
-            px: '3',
-            py: '2',
+            px: '4',
+            py: '2.5',
             fontSize: 'sm',
             bg: 'bg.canvas',
             border: '1px solid',
             borderColor: 'border.default',
-            borderRadius: 'md',
+            borderRadius: 'full',
             color: 'fg.default',
             outline: 'none',
             _focus: { borderColor: 'accent.default' },
@@ -218,9 +263,9 @@ export function ChatbotWindow({ onClose }: Props) {
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            w: '9',
-            h: '9',
-            borderRadius: 'md',
+            w: '10',
+            h: '10',
+            borderRadius: 'full',
             bg: 'accent.default',
             color: 'fg.onAccent',
             cursor: 'pointer',
@@ -232,5 +277,174 @@ export function ChatbotWindow({ onClose }: Props) {
         </button>
       </form>
     </section>
+  );
+}
+
+// 봇 아바타(주황 라운드 사각 + 로고).
+function BotAvatar() {
+  return (
+    <span
+      aria-hidden="true"
+      className={css({
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        w: '8',
+        h: '8',
+        borderRadius: 'lg',
+        bg: 'accent.default',
+        color: 'fg.onAccent',
+      })}
+    >
+      <Bot size={18} />
+    </span>
+  );
+}
+
+// 봇 메시지 행 — 아바타 + 이름 + 버블 + 시간(좌측 정렬).
+function BotRow({ text, time }: { text: string; time: string }) {
+  return (
+    <div
+      className={css({ display: 'flex', gap: '2.5', alignItems: 'flex-start' })}
+    >
+      <BotAvatar />
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1',
+          maxW: '80%',
+        })}
+      >
+        <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+          {BRAND}
+        </span>
+        <div
+          className={css({
+            px: '3.5',
+            py: '2.5',
+            borderRadius: 'xl',
+            borderTopLeftRadius: 'sm',
+            fontSize: 'sm',
+            lineHeight: 'snug',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            bg: 'bg.surfaceRaised',
+            color: 'fg.default',
+          })}
+        >
+          {text}
+        </div>
+        <span className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
+          {time}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// 유저 메시지 행 — 버블 + 시간 + 아바타(우측 정렬).
+function UserRow({
+  text,
+  time,
+  initials,
+}: {
+  text: string;
+  time: string;
+  initials: string;
+}) {
+  return (
+    <div
+      className={css({
+        display: 'flex',
+        gap: '2.5',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+      })}
+    >
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1',
+          alignItems: 'flex-end',
+          maxW: '80%',
+        })}
+      >
+        <div
+          className={css({
+            px: '3.5',
+            py: '2.5',
+            borderRadius: 'xl',
+            borderTopRightRadius: 'sm',
+            fontSize: 'sm',
+            lineHeight: 'snug',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            bg: 'accent.default',
+            color: 'fg.onAccent',
+          })}
+        >
+          {text}
+        </div>
+        <span className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
+          {time}
+        </span>
+      </div>
+      <span
+        aria-hidden="true"
+        className={css({
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          w: '8',
+          h: '8',
+          borderRadius: 'full',
+          bg: 'accent.soft',
+          color: 'accent.fg',
+          fontSize: '2xs',
+          fontWeight: 'bold',
+        })}
+      >
+        {initials}
+      </span>
+    </div>
+  );
+}
+
+// 타이핑 인디케이터 — 봇 버블 안 점 3개.
+function TypingRow() {
+  return (
+    <div
+      className={css({ display: 'flex', gap: '2.5', alignItems: 'flex-start' })}
+    >
+      <BotAvatar />
+      <div
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1',
+          px: '4',
+          py: '3',
+          borderRadius: 'xl',
+          borderTopLeftRadius: 'sm',
+          bg: 'bg.surfaceRaised',
+        })}
+      >
+        {['d1', 'd2', 'd3'].map((d) => (
+          <span
+            key={d}
+            className={css({
+              w: '1.5',
+              h: '1.5',
+              borderRadius: 'full',
+              bg: 'fg.subtle',
+            })}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
