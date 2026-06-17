@@ -97,6 +97,14 @@ export function getBirthMaxDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// 만 minAge세 이상 컷오프 생년월일(오늘로부터 minAge년 전). 이 날짜 이하(같거나 과거)여야 만 minAge세 이상이다.
+//   프로필 기본정보 생년월일 범위 상한에 쓴다(MYPAGE-FE-017, 가입 만 15세 정책과 정합).
+export function getBirthMaxDateForAge(minAge: number): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - minAge);
+  return d.toISOString().slice(0, 10);
+}
+
 export const signupStep2Schema = z.object({
   code: z
     .string()

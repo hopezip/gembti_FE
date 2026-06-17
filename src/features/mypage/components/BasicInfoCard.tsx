@@ -5,17 +5,20 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
 import { updateMyProfile } from '@/features/mypage/api/mypage';
+import { BIRTH_MIN_DATE, getBirthMaxDateForAge } from '@/lib/schemas/auth';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { checkNickname as checkNicknameApi } from '@/services/users';
 
 type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
 
-// 생년월일은 가입 이후 변경 불가가 원칙이나, 1900~2020 밖(미래·비정상)이거나 미설정인 경우에 한해
+// 생년월일 허용 범위: 1900-01-01 ~ 만 15세 컷오프(오늘로부터 15년 전). 가입 만 15세 정책과 정합(MYPAGE-FE-017).
+const BIRTH_MAX_DATE = getBirthMaxDateForAge(15);
+
+// 생년월일은 가입 이후 변경 불가가 원칙이나, 위 범위 밖(미래·너무 어림·1900 이전)이거나 미설정인 경우에 한해
 //   1회 수정을 허용한다(잘못 들어간 값 자가 교정용). 올바른 값으로 저장하면 다음부터 다시 잠긴다.
 function isValidBirthdate(v: string | null | undefined): boolean {
   if (!v || !/^\d{4}-\d{2}-\d{2}/.test(v)) return false;
-  const year = Number(v.slice(0, 4));
-  return year >= 1900 && year <= 2020;
+  return v >= BIRTH_MIN_DATE && v <= BIRTH_MAX_DATE;
 }
 
 interface Props {
@@ -31,7 +34,7 @@ export function BasicInfoCard({ profile }: Props) {
   const [birthdate, setBirthdate] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
-  // 현재 생일이 유효 범위(1900~2020) 밖이면 1회 수정을 허용한다.
+  // 현재 생일이 유효 범위(1900~만 15세) 밖이면 1회 수정을 허용한다.
   const birthdateCorrectable = !isValidBirthdate(profile.birthdate);
   // 저장 실패를 사용자에게 표면화하기 위한 에러 메시지(닉네임 저장 먹통 방지).
   const [saveError, setSaveError] = useState('');
@@ -74,7 +77,7 @@ export function BasicInfoCard({ profile }: Props) {
 
   function handleSave() {
     // 생년월일은 가입 시 고정값이라 보통 전송하지 않는다.
-    //   단, 현재 값이 1900~2020 밖이라 1회 교정이 허용된 경우에만 birthdate를 함께 보낸다.
+    //   단, 현재 값이 허용 범위(1900~만 15세) 밖이라 1회 교정이 허용된 경우에만 birthdate를 함께 보낸다.
     setSaveError('');
     mutation.mutate({
       nickname: nickname.trim(),
@@ -87,7 +90,7 @@ export function BasicInfoCard({ profile }: Props) {
     !mutation.isPending &&
     nickname.trim().length > 0 &&
     (!nicknameChanged || nicknameCheck === 'available') &&
-    // 교정 모드에서는 1900~2020 범위의 올바른 날짜를 입력해야 저장할 수 있다.
+    // 교정 모드에서는 1900~만 15세 범위의 올바른 날짜를 입력해야 저장할 수 있다.
     (!birthdateCorrectable || isValidBirthdate(birthdate));
 
   const rowCss = css({
@@ -214,7 +217,7 @@ export function BasicInfoCard({ profile }: Props) {
             )}
           </div>
 
-          {/* 생년월일 — 가입 시 입력값으로 고정(읽기 전용). 단 값이 1900~2020 밖이면 1회 교정 허용. */}
+          {/* 생년월일 — 가입 시 입력값으로 고정(읽기 전용). 단 값이 1900~만 15세 밖이면 1회 교정 허용. */}
           <div className={rowCss}>
             <span className={labelCss}>생년월일</span>
             {isEditMode && birthdateCorrectable ? (
@@ -229,8 +232,8 @@ export function BasicInfoCard({ profile }: Props) {
                 <Input
                   size="sm"
                   type="date"
-                  min="1900-01-01"
-                  max="2020-12-31"
+                  min={BIRTH_MIN_DATE}
+                  max={BIRTH_MAX_DATE}
                   value={birthdate}
                   onChange={(e) => setBirthdate(e.target.value)}
                   className={css({ minW: 0, colorScheme: 'dark' })}
@@ -242,7 +245,7 @@ export function BasicInfoCard({ profile }: Props) {
                     color: 'fg.subtle',
                   })}
                 >
-                  생년월일이 올바르지 않아 1회 수정할 수 있어요 (1900~2020)
+                  생년월일이 올바르지 않아 1회 수정할 수 있어요 (만 15세 이상)
                 </span>
               </div>
             ) : (
