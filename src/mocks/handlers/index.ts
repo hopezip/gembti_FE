@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { chatbotHandlers } from './chatbot';
 import { gameHandlers } from './games';
 import { mypageHandlers } from './mypage';
 import { recommendationHandlers } from './recommendations';
@@ -17,4 +18,5 @@ export const handlers = [
   ...gameHandlers,
   ...mypageHandlers,
   ...steamHandlers,
+  ...chatbotHandlers,
 ];
