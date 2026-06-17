@@ -69,15 +69,7 @@ const MOCK_PROFILE: MockUserProfile = {
 };
 
 export const mypageHandlers = [
-  http.get('*/api/v1/users/check-nickname', ({ request }) => {
-    const url = new URL(request.url);
-    const nickname = url.searchParams.get('nickname') ?? '';
-    // 현재 사용 중인 닉네임은 중복으로 처리
-    const takenNicknames = [MOCK_PROFILE.nickname];
-    const available =
-      nickname.trim().length >= 2 && !takenNicknames.includes(nickname.trim());
-    return HttpResponse.json({ available });
-  }),
+  // check-nickname 핸들러 제거됨(MYPAGE-FE-017): 닉네임 중복확인은 실서버 GET /api/v1/auth/nickname/check로 이전.
 
   http.get('*/api/v1/users/check-email', ({ request }) => {
     const url = new URL(request.url);
