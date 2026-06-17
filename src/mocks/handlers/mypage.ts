@@ -14,6 +14,8 @@ export interface MockUserProfile {
   steamId: string | null;
   steamNickname: string | null;
   steamSyncedAt: string | null;
+  // Steam 동기화 상태(success | private | failed | empty). 비공개 라이브러리 안내 분기에 사용.
+  steamSyncStatus: string | null;
   email: string;
   birthdate: string;
   gender: '남성' | '여성' | '기타' | null;
@@ -43,6 +45,7 @@ const MOCK_PROFILE: MockUserProfile = {
   steamId: 'My_Steam_ID',
   steamNickname: 'My_Steam_ID',
   steamSyncedAt: '2025-05-28T10:30:00Z',
+  steamSyncStatus: 'success',
   email: 'my_email@example.com',
   birthdate: '1995-05-14',
   gender: '남성',

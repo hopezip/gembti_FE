@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
 import { SearchInput } from '@/components/ui/SearchInput';
-import { getMyLibrary } from '@/features/mypage/api/mypage';
+import { getMyLibrary, getMyProfile } from '@/features/mypage/api/mypage';
 import type { LibraryGame } from '@/features/mypage/api/mypage';
 
 type LibrarySort = 'recent' | 'oldest';
@@ -112,6 +112,15 @@ export function LibrarySection() {
     queryKey: ['mypage', 'library'],
     queryFn: getMyLibrary,
   });
+
+  // 비공개 안내 분기용 — MyPage가 이미 채운 프로필 쿼리를 캐시 재사용한다(추가 호출 없음).
+  const { data: profile } = useQuery({
+    queryKey: ['mypage', 'profile'],
+    queryFn: getMyProfile,
+  });
+  // Steam은 연동됐지만 게임 세부정보가 비공개라 라이브러리를 못 가져온 경우.
+  const isLibraryPrivate =
+    profile?.steamConnected === true && profile.steamSyncStatus === 'private';
 
   const allGames = library ?? [];
   const genres = [...new Set(allGames.flatMap((g) => g.genres))].sort();
@@ -273,16 +282,21 @@ export function LibrarySection() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          type={search ? 'search' : 'party'}
-          target={search || undefined}
-          title={search ? undefined : '라이브러리가 비어 있어요'}
-          description={
-            search
-              ? undefined
-              : 'Steam을 연동하면 게임 라이브러리가 자동으로 동기화돼요.'
-          }
-        />
+        search ? (
+          <EmptyState type="search" target={search} />
+        ) : isLibraryPrivate ? (
+          <EmptyState
+            type="party"
+            title="게임 세부정보가 비공개예요"
+            description="Steam 프로필의 게임 세부정보가 비공개로 설정돼 있어 라이브러리를 가져오지 못했어요. Steam에서 게임 세부정보를 공개로 바꾸면 자동으로 동기화돼요."
+          />
+        ) : (
+          <EmptyState
+            type="party"
+            title="라이브러리가 비어 있어요"
+            description="Steam을 연동하면 게임 라이브러리가 자동으로 동기화돼요."
+          />
+        )
       ) : (
         <>
           <div
