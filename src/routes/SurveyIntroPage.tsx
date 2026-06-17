@@ -2,7 +2,6 @@ import { CircleHelp, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/Button';
-import { SurveyEmberBackground } from '@/features/survey/components/SurveyEmberBackground';
 import { surveyIntroStyles as styles } from '@/features/survey/components/surveyIntro.styles';
 
 const surveyTraits = [
@@ -43,7 +42,6 @@ export function SurveyIntroPage() {
 
   return (
     <main className={styles.page}>
-      <SurveyEmberBackground />
       <PageContainer className={styles.content}>
         <div className={styles.heroCopy}>
           <h1 className={styles.title}>
@@ -62,7 +60,7 @@ export function SurveyIntroPage() {
           <ul className={styles.quickInfoList} aria-label="설문 안내">
             <li className={styles.quickInfoItem}>
               <CircleHelp className={styles.quickInfoIcon} size={16} />
-              <span>7개 질문</span>
+              <span>12개 질문</span>
             </li>
             <li className={styles.quickInfoItem}>
               <Clock3 className={styles.quickInfoIcon} size={16} />

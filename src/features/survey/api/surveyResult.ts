@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/ky';
+import { RECOMMENDATION_LIMIT } from '@/features/recommendations/api/recommendations';
 import type {
   SurveyLatestResultResponse,
   SurveyRecommendationsResponse,
@@ -60,7 +61,7 @@ export function useSurveyRecommendations(enabled: boolean) {
       api
         .post('api/v1/recommendations/generate', {
           signal,
-          searchParams: { limit: 4 },
+          searchParams: { limit: RECOMMENDATION_LIMIT },
         })
         .json<SurveyRecommendationsResponse>(),
     enabled,
