@@ -150,6 +150,7 @@ export async function getMyProfile(): Promise<MockUserProfile> {
     steamId: me.steam_id_64 ?? null,
     steamNickname: me.steam_id_64 ?? null,
     steamSyncedAt: me.last_synced_at ?? null,
+    steamSyncStatus: me.steam_sync_status ?? null,
     ...PROFILE_FALLBACK,
     // auth/me 실값으로 생일·성별을 덮어쓴다(PROFILE_FALLBACK 뒤에 두어 우선).
     birthdate: me.birth_date ?? '',
