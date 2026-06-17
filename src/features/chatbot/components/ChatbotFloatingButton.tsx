@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircleMore, X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { css } from 'styled-system/css';
 import { ChatbotWindow } from '@/features/chatbot/components/ChatbotWindow';
 import { useAuthStore } from '@/lib/store/useAuthStore';
@@ -40,8 +40,14 @@ export function ChatbotFloatingButton() {
           color: 'fg.onAccent',
           boxShadow: 'glow',
           cursor: 'pointer',
-          transition: 'transform 150ms, background 150ms',
-          _hover: { bg: 'accent.hover', transform: 'translateY(-2px)' },
+          transition: 'transform 150ms, background 150ms, box-shadow 150ms',
+          _hover: {
+            bg: 'accent.hover',
+            transform: 'translateY(-2px)',
+            // 호버 시 글로우 강화(시안 '호버 상태').
+            boxShadow:
+              '0 14px 40px -6px rgba(239,90,44,.75), 0 6px 16px rgba(0,0,0,.4)',
+          },
           _focusVisible: {
             outline: '2px solid',
             outlineColor: 'accent.default',
@@ -52,7 +58,7 @@ export function ChatbotFloatingButton() {
         {open ? (
           <X size={24} aria-hidden="true" />
         ) : (
-          <MessageCircleMore size={26} aria-hidden="true" />
+          <Bot size={26} aria-hidden="true" />
         )}
       </button>
     </>

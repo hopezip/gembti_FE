@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Bot, Send, X } from 'lucide-react';
+import {
+  BarChart3,
+  Bot,
+  Library,
+  type LucideIcon,
+  Minus,
+  Search,
+  Send,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { css } from 'styled-system/css';
 import { sendChatMessage } from '@/features/chatbot/api/chat';
 
@@ -9,6 +19,16 @@ import { sendChatMessage } from '@/features/chatbot/api/chat';
 //   다른 도메인을 import하지 않는다(chatbot 격리).
 
 const BRAND = 'GamBTI AI';
+const BRAND_SUB = '게임 추천 AI 어시스턴트';
+const MAX_LEN = 500;
+
+// 첫 대화에서 보여줄 빠른 추천 칩 — 클릭 시 해당 문구를 그대로 전송한다.
+const SUGGESTIONS: { icon: LucideIcon; label: string }[] = [
+  { icon: Search, label: '장르 추천' },
+  { icon: BarChart3, label: '성향 분석' },
+  { icon: Sparkles, label: '탐험' },
+  { icon: Library, label: '내 라이브러리' },
+];
 
 interface ChatMessage {
   id: number;
@@ -35,7 +55,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
     {
       id: 0,
       role: 'bot',
-      text: '안녕하세요! GamBTI AI예요. 게임 추천이나 이용 관련 무엇이든 물어보세요.',
+      text: '안녕하세요! GamBTI AI예요. 어떤 게임을 찾고 계신가요?',
       time: nowTime(),
     },
   ]);
@@ -45,6 +65,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
   const initials = (userName.trim().slice(0, 2) || '나').toUpperCase();
+  const hasUserMessage = messages.some((m) => m.role === 'user');
 
   const mutation = useMutation({
     mutationFn: (message: string) => sendChatMessage({ message, sessionId }),
@@ -64,6 +85,15 @@ export function ChatbotWindow({ onClose, userName }: Props) {
     ]);
   }
 
+  // 유저 메시지를 전송한다(폼 제출·추천 칩 공용).
+  function send(text: string) {
+    const t = text.trim();
+    if (!t || mutation.isPending) return;
+    appendMessage('user', t);
+    setInput('');
+    mutation.mutate(t);
+  }
+
   // 새 메시지가 추가되면 목록 맨 아래로 스크롤한다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages 변경을 트리거로 스크롤한다(본문은 ref만 읽음).
   useEffect(() => {
@@ -72,11 +102,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const text = input.trim();
-    if (!text || mutation.isPending) return;
-    appendMessage('user', text);
-    setInput('');
-    mutation.mutate(text);
+    send(input);
   }
 
   return (
@@ -89,9 +115,9 @@ export function ChatbotWindow({ onClose, userName }: Props) {
         zIndex: 'modal',
         display: 'flex',
         flexDirection: 'column',
-        w: '380px',
+        w: '400px',
         maxW: 'calc(100vw - 32px)',
-        h: '600px',
+        h: '620px',
         maxH: 'calc(100vh - 120px)',
         bg: 'bg.surface',
         border: '1px solid',
@@ -101,63 +127,48 @@ export function ChatbotWindow({ onClose, userName }: Props) {
         overflow: 'hidden',
       })}
     >
-      {/* 헤더 — 중앙 브랜딩 + 우측 닫기 */}
+      {/* 헤더 — 아바타 + 브랜드/부제 + 최소화/닫기 */}
       <header
         className={css({
-          position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2',
+          gap: '2.5',
           px: '4',
-          py: '3.5',
+          py: '3',
           borderBottom: '1px solid',
           borderColor: 'border.default',
           bg: 'bg.surfaceRaised',
         })}
       >
-        <span
-          aria-hidden="true"
-          className={css({
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            w: '7',
-            h: '7',
-            borderRadius: 'lg',
-            bg: 'accent.default',
-            color: 'fg.onAccent',
-          })}
+        <BotAvatar size="md" />
+        <div className={css({ flex: 1, minW: 0 })}>
+          <p
+            className={css({
+              fontSize: 'sm',
+              fontWeight: 'bold',
+              color: 'fg.default',
+              lineHeight: 'tight',
+            })}
+          >
+            {BRAND}
+          </p>
+          <p className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
+            {BRAND_SUB}
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-label="챗봇 최소화"
+          onClick={onClose}
+          className={iconBtnCss}
         >
-          <Bot size={16} />
-        </span>
-        <span
-          className={css({
-            fontSize: 'md',
-            fontWeight: 'bold',
-            letterSpacing: 'wide',
-            color: 'fg.default',
-          })}
-        >
-          {BRAND}
-        </span>
+          <Minus size={18} aria-hidden="true" />
+        </button>
         <button
           type="button"
           aria-label="챗봇 닫기"
           onClick={onClose}
-          className={css({
-            position: 'absolute',
-            right: '3',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            w: '7',
-            h: '7',
-            borderRadius: 'md',
-            color: 'fg.subtle',
-            cursor: 'pointer',
-            _hover: { bg: 'bg.canvas', color: 'fg.default' },
-          })}
+          className={iconBtnCss}
         >
           <X size={18} aria-hidden="true" />
         </button>
@@ -177,29 +188,20 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           gap: '4',
         })}
       >
-        {/* 날짜 구분선 */}
-        <div
-          className={css({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '3',
-            color: 'fg.subtle',
-            fontSize: 'xs',
-            _before: {
-              content: '""',
-              flex: 1,
-              h: '1px',
-              bg: 'border.default',
-            },
-            _after: {
-              content: '""',
-              flex: 1,
-              h: '1px',
-              bg: 'border.default',
-            },
-          })}
-        >
-          오늘
+        {/* 날짜 구분선(알약) */}
+        <div className={css({ display: 'flex', justifyContent: 'center' })}>
+          <span
+            className={css({
+              px: '3',
+              py: '0.5',
+              borderRadius: 'full',
+              bg: 'bg.surfaceRaised',
+              fontSize: '2xs',
+              color: 'fg.subtle',
+            })}
+          >
+            오늘
+          </span>
         </div>
 
         {messages.map((m) =>
@@ -213,6 +215,49 @@ export function ChatbotWindow({ onClose, userName }: Props) {
               initials={initials}
             />
           ),
+        )}
+
+        {/* 빠른 추천 칩 — 아직 유저 발화 전일 때만 */}
+        {!hasUserMessage && (
+          <div
+            className={css({
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '2',
+              pl: '10', // 봇 아바타 폭만큼 들여쓰기
+            })}
+          >
+            {SUGGESTIONS.map(({ icon: Icon, label }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => send(label)}
+                disabled={mutation.isPending}
+                className={css({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '1.5',
+                  px: '3',
+                  py: '1.5',
+                  borderRadius: 'full',
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  bg: 'bg.surfaceRaised',
+                  fontSize: 'xs',
+                  color: 'fg.muted',
+                  cursor: 'pointer',
+                  _hover: {
+                    borderColor: 'accent.default',
+                    color: 'fg.default',
+                  },
+                  _disabled: { opacity: 0.5, cursor: 'not-allowed' },
+                })}
+              >
+                <Icon size={13} aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+          </div>
         )}
 
         {mutation.isPending && <TypingRow />}
@@ -231,29 +276,46 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           borderColor: 'border.default',
         })}
       >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="메시지를 입력하세요…"
-          aria-label="메시지 입력"
-          // biome-ignore lint/a11y/noAutofocus: 대화창을 열면 바로 입력 가능해야 한다.
-          autoFocus
-          className={css({
-            flex: 1,
-            minW: 0,
-            px: '4',
-            py: '2.5',
-            fontSize: 'sm',
-            bg: 'bg.canvas',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 'full',
-            color: 'fg.default',
-            outline: 'none',
-            _focus: { borderColor: 'accent.default' },
-            _placeholder: { color: 'fg.placeholder' },
-          })}
-        />
+        <div className={css({ position: 'relative', flex: 1, minW: 0 })}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            maxLength={MAX_LEN}
+            placeholder="메시지를 입력하세요…"
+            aria-label="메시지 입력"
+            // biome-ignore lint/a11y/noAutofocus: 대화창을 열면 바로 입력 가능해야 한다.
+            autoFocus
+            className={css({
+              w: 'full',
+              pl: '4',
+              pr: '12', // 글자수 카운터 자리
+              py: '2.5',
+              fontSize: 'sm',
+              bg: 'bg.canvas',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'full',
+              color: 'fg.default',
+              outline: 'none',
+              _focus: { borderColor: 'accent.default' },
+              _placeholder: { color: 'fg.placeholder' },
+            })}
+          />
+          <span
+            aria-hidden="true"
+            className={css({
+              position: 'absolute',
+              right: '3',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '2xs',
+              color: 'fg.subtle',
+              pointerEvents: 'none',
+            })}
+          >
+            {input.length}/{MAX_LEN}
+          </span>
+        </div>
         <button
           type="submit"
           aria-label="전송"
@@ -280,8 +342,23 @@ export function ChatbotWindow({ onClose, userName }: Props) {
   );
 }
 
-// 봇 아바타(주황 라운드 사각 + 로고).
-function BotAvatar() {
+const iconBtnCss = css({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  w: '7',
+  h: '7',
+  borderRadius: 'md',
+  color: 'fg.subtle',
+  cursor: 'pointer',
+  _hover: { bg: 'bg.canvas', color: 'fg.default' },
+});
+
+// 봇 아바타(주황 원형 + 로봇 로고).
+function BotAvatar({ size = 'sm' }: { size?: 'sm' | 'md' }) {
+  const dim = size === 'md' ? '9' : '8';
+  const icon = size === 'md' ? 20 : 18;
   return (
     <span
       aria-hidden="true"
@@ -290,14 +367,14 @@ function BotAvatar() {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        w: '8',
-        h: '8',
-        borderRadius: 'lg',
+        w: dim,
+        h: dim,
+        borderRadius: 'full',
         bg: 'accent.default',
         color: 'fg.onAccent',
       })}
     >
-      <Bot size={18} />
+      <Bot size={icon} />
     </span>
   );
 }
