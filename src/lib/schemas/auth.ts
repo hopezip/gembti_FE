@@ -97,6 +97,14 @@ export function getBirthMaxDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export const SIGNUP_MIN_AGE = 15;
+// 가입 가능한 가장 늦은 생년월일 = 오늘로부터 SIGNUP_MIN_AGE년 전. 이보다 이후 출생이면 만 15세 미만이라 가입 불가.
+export function getMaxBirthDateForSignup(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - SIGNUP_MIN_AGE);
+  return d.toISOString().slice(0, 10);
+}
+
 export const signupStep2Schema = z.object({
   code: z
     .string()
@@ -111,6 +119,11 @@ export const signupStep2Schema = z.object({
     .refine(
       (v) => v >= BIRTH_MIN_DATE && v <= getBirthMaxDate(),
       '생년월일은 1900년 이후, 오늘까지만 선택할 수 있어요',
+    )
+    // 만 15세 미만 차단 — 오늘로부터 15년 전보다 이후 출생이면 가입 불가.
+    .refine(
+      (v) => v <= getMaxBirthDateForSignup(),
+      `만 ${SIGNUP_MIN_AGE}세 미만은 가입할 수 없어요`,
     ),
   gender: z.enum(['male', 'female', 'other']),
 });
