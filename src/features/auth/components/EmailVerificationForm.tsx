@@ -36,8 +36,8 @@ import { OtpInput } from './OtpInput';
 //   verify를 통과해야 signup이 200(미통과 시 403). 코드 오류는 OTP 영역 에러로,
 //   닉네임 중복은 닉네임 필드 에러로 표시한다.
 // ⚠️ signup_token 흐름 폐기 · 타이머는 상수 TTL.
-// 닉네임 중복확인(LOGIN-FE-010): "중복 확인" 버튼으로 미리 안내(보조용). 실서버 엔드포인트가 없어
-//   MSW(GET /api/v1/users/check-nickname) 전용이며 가입을 강제로 막지 않는다. 최종 중복 검증은
+// 닉네임 중복확인(LOGIN-FE-010): "중복 확인" 버튼으로 미리 안내(보조용). 실서버 GET /api/v1/auth/nickname/check
+//   호출이며(MYPAGE-FE-017로 mock 제거) 가입을 강제로 막지 않는다. 최종 중복 검증은
 //   가입 단계 응답(nickname-duplicated 폴백)이 담당한다.
 
 // 코드 검증 실패 메시지 매핑.
