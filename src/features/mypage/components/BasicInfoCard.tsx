@@ -59,18 +59,26 @@ export function BasicInfoCard({ profile }: Props) {
 
   // 닉네임을 실제로 변경한 경우에만 중복 확인을 통과해야 저장할 수 있다.
   const nicknameChanged = nickname.trim() !== (profile.nickname ?? '');
+  const genderChanged = (gender || null) !== (profile.gender ?? null);
+  const hasChanges = nicknameChanged || genderChanged;
 
   function handleSave() {
-    // 생년월일은 가입 시 고정값이라 전송하지 않는다(닉네임·성별만 전송).
+    if (!hasChanges) {
+      setIsEditMode(false);
+      return;
+    }
+    // 생년월일은 가입 시 고정값이라 전송하지 않는다. 변경된 필드만 보내 중복 검증/불필요한 갱신을 피한다.
     setSaveError('');
-    mutation.mutate({
-      nickname: nickname.trim(),
-      gender: (gender || null) as MockUserProfile['gender'],
-    });
+    const patch: Partial<MockUserProfile> = {};
+    if (nicknameChanged) patch.nickname = nickname.trim();
+    if (genderChanged)
+      patch.gender = (gender || null) as MockUserProfile['gender'];
+    mutation.mutate(patch);
   }
 
   const canSave =
     !mutation.isPending &&
+    hasChanges &&
     nickname.trim().length > 0 &&
     (!nicknameChanged || nicknameCheck === 'available');
 
