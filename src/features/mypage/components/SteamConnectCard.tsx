@@ -1,8 +1,9 @@
-import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
+import { STEAM_AUTH_START_URL } from '@/config/steam';
+import { setSteamLinkAuthIntent } from '@/features/onboarding/lib/steamAuthIntent';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
 interface Props {
@@ -21,7 +22,10 @@ function relativeTime(isoStr: string): string {
 }
 
 export function SteamConnectCard({ profile }: Props) {
-  const navigate = useNavigate();
+  const startSteamLink = () => {
+    setSteamLinkAuthIntent('/mypage');
+    window.location.assign(STEAM_AUTH_START_URL);
+  };
 
   return (
     <Card padding="md" className={css({ h: 'full' })}>
@@ -116,11 +120,7 @@ export function SteamConnectCard({ profile }: Props) {
           >
             Steam 계정이 연동되지 않았습니다
           </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate('/onboarding/steam')}
-          >
+          <Button variant="primary" size="sm" onClick={startSteamLink}>
             Steam 연동하기
           </Button>
         </div>

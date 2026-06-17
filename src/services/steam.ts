@@ -1,4 +1,5 @@
 import { api } from '@/lib/ky';
+import { linkSteam } from '@/lib/api/steam';
 import type {
   SteamSyncResult,
   SteamSyncStatusValue,
@@ -105,27 +106,17 @@ export async function skipSteam(): Promise<SteamSkipResult> {
   };
 }
 
-// ── 스팀 계정 연동(REQ-003 A안이라 현재 미사용 스켈레톤) ──────────────────────
-// REQ-003가 A안(백엔드 OpenID 위임)으로 가정돼 FE는 이 함수를 호출하지 않는다.
-//   B안(FE가 steamId를 직접 전달)로 확정되면 호출부를 배선한다.
-//   파서 형태는 mock(POST api/v1/steam/link → { steam_linked, steam_id })과 일치시킨다(REQ-005 통일안).
+// ── 스팀 계정 연동 ──────────────────────────────────────────────────────────
+// OpenID 콜백에서 받은 steam_id를 현재 로그인 사용자에게 연결한다.
 export interface SteamLinkResult {
   steamLinked: boolean;
   steamId: string;
 }
 
-interface LinkRaw {
-  steam_linked: boolean;
-  steam_id: string;
-}
-
-// 스팀 계정 연동(미사용 스켈레톤). REQ-003 확정 전까지 호출부 없음.
 export async function steamLink(steamId: string): Promise<SteamLinkResult> {
-  const env = await api
-    .post('api/v1/steam/link', { json: { steam_id: steamId } })
-    .json<ApiEnvelope<LinkRaw>>();
+  const res = await linkSteam({ steam_id: steamId });
   return {
-    steamLinked: env.data.steam_linked,
-    steamId: env.data.steam_id,
+    steamLinked: res.steam_linked,
+    steamId: res.steam_id_64,
   };
 }

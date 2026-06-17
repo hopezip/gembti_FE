@@ -1,5 +1,6 @@
 import { css } from 'styled-system/css';
 import { STEAM_AUTH_START_URL } from '@/config/steam';
+import { clearSteamAuthIntent } from '@/features/onboarding/lib/steamAuthIntent';
 
 // "Steam으로 계속하기" — 백엔드 OpenID 진입(GET /api/v1/auth/steam)으로 브라우저를 이동시킨다.
 //   REQ-003 A안(백엔드 위임): FE는 백엔드 엔드포인트로 보내고, 백엔드가 Steam OpenID로 리다이렉트한다.
@@ -21,6 +22,7 @@ export function SteamButton({
     <button
       type="button"
       onClick={() => {
+        clearSteamAuthIntent();
         window.location.href = STEAM_AUTH_START_URL;
       }}
       className={css({

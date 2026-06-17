@@ -6,10 +6,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const refreshAccessToken = vi.fn();
 const getMe = vi.fn();
 const toastCreate = vi.fn();
+const linkSteam = vi.fn();
 
 vi.mock('@/lib/ky', () => ({
   refreshAccessToken: (...args: unknown[]) => refreshAccessToken(...args),
   api: {},
+}));
+vi.mock('@/lib/api/steam', () => ({
+  linkSteam: (...args: unknown[]) => linkSteam(...args),
 }));
 vi.mock('@/services/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/auth')>();
@@ -20,6 +24,7 @@ vi.mock('@/components/ui/Toast', () => ({
 }));
 
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import { STEAM_AUTH_INTENT_STORAGE_KEY } from '@/features/onboarding/lib/steamAuthIntent';
 import { SteamCallbackPage } from './SteamCallbackPage';
 
 function renderAt(search: string) {
@@ -31,6 +36,7 @@ function renderAt(search: string) {
         <Route path="/" element={<div>HOME</div>} />
         <Route path="/survey/intro" element={<div>SURVEY INTRO</div>} />
         <Route path="/login" element={<div>LOGIN</div>} />
+        <Route path="/mypage" element={<div>MYPAGE</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -45,6 +51,7 @@ const MOCK_USER = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.sessionStorage.clear();
   useAuthStore.getState().clearAuth();
 });
 
@@ -57,6 +64,7 @@ describe('SteamCallbackPage', () => {
 
     expect(await screen.findByText('SURVEY INTRO')).toBeInTheDocument();
     expect(getMe).toHaveBeenCalledWith('mock-access-token');
+    expect(linkSteam).not.toHaveBeenCalled();
     expect(useAuthStore.getState().status).toBe('authenticated');
     expect(useAuthStore.getState().user?.nickname).toBe('SteamUser');
   });
@@ -97,5 +105,48 @@ describe('SteamCallbackPage', () => {
     expect(getMe).not.toHaveBeenCalled();
     expect(toastCreate).toHaveBeenCalled();
     expect(useAuthStore.getState().status).toBe('anonymous');
+  });
+
+  it('마이페이지 연동 intent + result=success → steam_id로 link 후 /mypage로 이동한다', async () => {
+    refreshAccessToken.mockResolvedValue('mock-access-token');
+    getMe.mockResolvedValue(MOCK_USER);
+    linkSteam.mockResolvedValue({
+      steam_linked: true,
+      steam_id_64: '76561197960287930',
+      steam_sync_status: 'success',
+    });
+    window.sessionStorage.setItem(
+      STEAM_AUTH_INTENT_STORAGE_KEY,
+      JSON.stringify({ type: 'link', returnTo: '/mypage' }),
+    );
+
+    renderAt('?result=success&steam_id=76561197960287930');
+
+    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(linkSteam).toHaveBeenCalledWith({
+      steam_id: '76561197960287930',
+    });
+    expect(window.sessionStorage.getItem(STEAM_AUTH_INTENT_STORAGE_KEY)).toBe(
+      null,
+    );
+    expect(useAuthStore.getState().status).toBe('authenticated');
+  });
+
+  it('마이페이지 연동 intent인데 steam_id가 없으면 link 없이 /mypage로 복귀한다', async () => {
+    refreshAccessToken.mockResolvedValue('mock-access-token');
+    getMe.mockResolvedValue(MOCK_USER);
+    window.sessionStorage.setItem(
+      STEAM_AUTH_INTENT_STORAGE_KEY,
+      JSON.stringify({ type: 'link', returnTo: '/mypage' }),
+    );
+
+    renderAt('?result=success');
+
+    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(linkSteam).not.toHaveBeenCalled();
+    expect(toastCreate).toHaveBeenCalled();
+    expect(window.sessionStorage.getItem(STEAM_AUTH_INTENT_STORAGE_KEY)).toBe(
+      null,
+    );
   });
 });

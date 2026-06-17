@@ -3,7 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { vstack } from 'styled-system/patterns';
 import { toaster } from '@/components/ui/Toast';
+import { safeRedirect } from '@/features/auth/lib/safeRedirect';
+import {
+  clearSteamAuthIntent,
+  readSteamAuthIntent,
+} from '@/features/onboarding/lib/steamAuthIntent';
+import { linkSteam } from '@/lib/api/steam';
 import { refreshAccessToken } from '@/lib/ky';
+import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { getMe } from '@/services/auth';
 
@@ -11,6 +18,7 @@ import { getMe } from '@/services/auth';
 // 사용자용 화면이 아니라, 백엔드 OpenID 인증 리다이렉트가 떨어지는 착지점이다.
 // 백엔드는 결과를 `result` 쿼리로 알려준다(토큰은 바디로 주지 않는다):
 //   - result=success          → 기존 유저. refresh(쿠키)+me로 세션을 복원하고 홈으로.
+//                               마이페이지 연동 intent가 있으면 steam_id로 POST /steam/link 후 /mypage로.
 //   - result=signup_required  → 신규 유저. Steam 신규 가입은 미지원이라(LOGIN-FE-014)
 //                               "이메일로 가입" 안내 토스트 후 /signup으로 돌린다.
 //   - result=failed (그 외)   → 인증 실패. 사유를 토스트로 알리고 로그인으로.
@@ -22,6 +30,13 @@ export function SteamCallbackPage() {
 
   useEffect(() => {
     const result = searchParams.get('result');
+    const intent = readSteamAuthIntent();
+    const isLinkIntent = intent?.type === 'link';
+    const returnTo = safeRedirect(isLinkIntent ? intent.returnTo : null);
+
+    function clearLinkIntent() {
+      if (isLinkIntent) clearSteamAuthIntent();
+    }
 
     // 신규 유저 — Steam 신규 가입은 미지원이다(LOGIN-FE-014). 가입 화면으로 보내지 않고
     //   이메일 회원가입을 안내한 뒤 /signup으로 돌린다(Steam 로그인은 기존 유저 전용).
@@ -29,9 +44,12 @@ export function SteamCallbackPage() {
       toaster.create({
         type: 'error',
         title: 'Steam으로는 가입할 수 없어요',
-        description: '이메일로 회원가입해주세요.',
+        description: isLinkIntent
+          ? 'Steam 계정 확인 결과를 연동할 수 없어요. 다시 시도해주세요.'
+          : '이메일로 회원가입해주세요.',
       });
-      navigate('/signup', { replace: true });
+      clearLinkIntent();
+      navigate(isLinkIntent ? returnTo : '/signup', { replace: true });
       return;
     }
 
@@ -43,7 +61,8 @@ export function SteamCallbackPage() {
         title: 'Steam 인증에 실패했어요',
         description: reason ? `사유: ${reason}` : '잠시 후 다시 시도해주세요.',
       });
-      navigate('/login', { replace: true });
+      clearLinkIntent();
+      navigate(isLinkIntent ? returnTo : '/login', { replace: true });
       return;
     }
 
@@ -58,13 +77,53 @@ export function SteamCallbackPage() {
           title: '로그인 세션 복원에 실패했어요',
           description: '다시 로그인해주세요.',
         });
-        navigate('/login', { replace: true });
+        clearLinkIntent();
+        navigate('/login', {
+          replace: true,
+          state: isLinkIntent ? { redirect: returnTo } : undefined,
+        });
         return;
       }
       try {
         const user = await getMe(accessToken);
         if (cancelled) return;
         setSession({ user, accessToken });
+
+        if (isLinkIntent) {
+          const steamId =
+            searchParams.get('steam_id') ?? searchParams.get('steam_id_64');
+
+          if (!steamId || !/^\d{17}$/.test(steamId)) {
+            clearLinkIntent();
+            toaster.create({
+              type: 'error',
+              title: 'Steam 연동 정보를 확인할 수 없어요',
+              description: '다시 시도해주세요.',
+            });
+            navigate(returnTo, { replace: true });
+            return;
+          }
+
+          await linkSteam({ steam_id: steamId });
+          if (cancelled) return;
+          clearLinkIntent();
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: ['mypage', 'profile'],
+            }),
+            queryClient.invalidateQueries({
+              queryKey: ['mypage', 'library'],
+            }),
+          ]);
+          toaster.create({
+            type: 'success',
+            title: 'Steam 계정이 연동됐어요',
+            description: '라이브러리를 다시 불러오고 있어요.',
+          });
+          navigate(returnTo, { replace: true });
+          return;
+        }
+
         // 설문 미완료 유저는 설문 인트로로 유도하고, 완료 유저만 홈으로 보낸다(SURVEY-FE-006).
         //   홈의 개인화/게스트 분기는 MainPage가 hasCompletedSurvey로 처리한다.
         navigate(user.hasCompletedSurvey ? '/' : '/survey/intro', {
@@ -74,10 +133,15 @@ export function SteamCallbackPage() {
         if (cancelled) return;
         toaster.create({
           type: 'error',
-          title: '사용자 정보를 불러오지 못했어요',
-          description: '다시 로그인해주세요.',
+          title: isLinkIntent
+            ? 'Steam 계정을 연동하지 못했어요'
+            : '사용자 정보를 불러오지 못했어요',
+          description: isLinkIntent
+            ? '잠시 후 다시 시도해주세요.'
+            : '다시 로그인해주세요.',
         });
-        navigate('/login', { replace: true });
+        clearLinkIntent();
+        navigate(isLinkIntent ? returnTo : '/login', { replace: true });
       }
     })();
     return () => {
