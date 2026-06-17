@@ -1,5 +1,4 @@
 import { http, HttpResponse } from 'msw';
-import { chatbotHandlers } from './chatbot';
 import { gameHandlers } from './games';
 import { mypageHandlers } from './mypage';
 import { recommendationHandlers } from './recommendations';
@@ -18,5 +17,5 @@ export const handlers = [
   ...gameHandlers,
   ...mypageHandlers,
   ...steamHandlers,
-  ...chatbotHandlers,
+  // 챗봇(support/chat)은 mock 없이 실서버로 직결한다(CHATBOT-FE-001, onUnhandledRequest:'bypass').
 ];

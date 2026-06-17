@@ -1,5 +1,6 @@
 // 고객센터 챗봇 API 레이어 (CHATBOT-FE-002).
 //   POST /api/v1/support/chat/messages (인증 필요) — ky가 Bearer 부착/401 refresh 전담.
+//   mock 없이 실서버로 직결한다(MSW 미등록 → onUnhandledRequest:'bypass').
 //   ⚠️ 스웨거 응답 200 본문이 `{}`로 미정의라 봇 답변 형태가 불명확하다.
 //      message/reply/answer 등 흔한 키를 관대하게 탐색하고, 비면 폴백 문구를 쓴다.
 //      백엔드가 응답 스키마를 확정하면 이 파싱을 교체한다.
