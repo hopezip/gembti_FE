@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { css, cx } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { SurveyEmberBackground } from '@/features/survey/components/SurveyEmberBackground';
 import { SurveyQuestionSection } from '@/features/survey/components/SurveyQuestionSection';
 import { surveyBackgroundPageStyle } from '@/features/survey/components/surveyIntro.styles';
 import { useAuthStore } from '@/lib/store/useAuthStore';
@@ -30,6 +31,7 @@ export function SurveyPage() {
 
   return (
     <main className={cx(surveyBackgroundPageStyle, styles.page)}>
+      <SurveyEmberBackground />
       <PageContainer className={styles.content}>
         <SurveyQuestionSection
           onComplete={(answers, totalQuestions) => {

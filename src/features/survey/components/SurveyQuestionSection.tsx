@@ -1,10 +1,14 @@
+import { useEffect } from 'react';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { useSurveyQuestions } from '@/features/survey/api/surveyQuestions';
 import type { SurveyQuestion } from '@/features/survey/api/surveyQuestions';
-import type { SurveySubmitAnswer } from '@/features/survey/api/types';
+import type {
+  SurveyAnswerValue,
+  SurveySubmitAnswer,
+} from '@/features/survey/api/types';
 import { useSurveyQuestionSection } from '@/features/survey/hooks/useSurveyQuestionSection';
 import { SurveyAnswerScale } from './SurveyAnswerScale';
 import { SurveyQuestionControls } from './SurveyQuestionControls';
@@ -50,6 +54,31 @@ function SurveyQuestionContent({
   });
   const currentQuestion = questions[currentIndex];
   const questionLines = splitQuestionLines(currentQuestion.question);
+
+  // 키보드 단축키: 숫자 1~5로 응답 선택, Enter로 다음 문항(미선택 시 nextQuestion 내부에서 무시).
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // 입력 필드 포커스 중에는 단축키를 가로채지 않는다.
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+      ) {
+        return;
+      }
+
+      if (event.key >= '1' && event.key <= '5') {
+        event.preventDefault();
+        selectAnswer(Number(event.key) as SurveyAnswerValue);
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        nextQuestion();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectAnswer, nextQuestion]);
 
   return (
     <>
