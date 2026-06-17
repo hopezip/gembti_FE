@@ -298,6 +298,25 @@ describe('signupStep2Schema', () => {
     }
   });
 
+  it('만 15세 미만(생년월일이 너무 최근)이면 실패한다', () => {
+    // 고정 날짜 대신 동적으로 — 오늘 기준 10년 전이면 만 15세 미만이다.
+    const tooYoung = new Date();
+    tooYoung.setFullYear(tooYoung.getFullYear() - 10);
+    const tooYoungStr = tooYoung.toISOString().slice(0, 10);
+    const result = signupStep2Schema.safeParse({
+      ...valid,
+      birth: tooYoungStr,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (i) => i.message === '만 15세 미만은 가입할 수 없어요',
+        ),
+      ).toBe(true);
+    }
+  });
+
   it('성별 enum 외 값(unspecified)은 실패한다', () => {
     expect(
       signupStep2Schema.safeParse({ ...valid, gender: 'unspecified' }).success,

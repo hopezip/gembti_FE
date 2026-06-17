@@ -39,8 +39,9 @@ function koToGender(g: MockUserProfile['gender']): Gender | null {
 //   화면 회귀 방지용 그럴듯한 값을 둔다. 백엔드 API 확정 시 이 합성을 제거하고 실값 매핑으로 교체한다.
 //   ⭐ 예외1: 게임 보유수(stats.following)는 GET /api/v1/auth/me/activity의 library_game_count 실값으로 덮어쓴다
 //      (MYPAGE-FE-011). 총 플레이시간(stats.totalPlayHours) 합성은 화면 통계 제거로 폐기했다(MYPAGE-FE-014, 폴백값 유지).
-//   ⭐ 예외2: 6대 성향(personality)은 GET /api/v1/stats/me 실값으로 덮어쓴다(MYPAGE-FE-010).
-//      여기 personality는 stats/me 실패 시의 폴백으로만 남는다.
+//   ⭐ 예외2: 6대 성향(personality)은 GET /api/v1/stats/me 실값에서만 온다(MYPAGE-FE-010).
+//      stats/me 실패(미진단·백엔드 미구현)면 빈 배열([])을 반환해, 레이더 대신 "미진단 빈 상태"를 노출한다.
+//      → 설문 안 한 유저에게 가짜 더미 레이더가 채워져 보이던 버그 방지. PROFILE_FALLBACK엔 personality를 두지 않는다.
 //   ⭐ 예외3: 생년월일·성별은 auth/me의 birth_date·gender 실값으로 덮어쓴다(MYPAGE-FE-011, 프로필 수정 실연결).
 //   ⚠️ mock 핸들러(값) import는 번들 오염이라 금지 → 여기 자체 정의한다(타입만 mock에서 가져온다).
 const PROFILE_FALLBACK: Pick<
@@ -53,7 +54,6 @@ const PROFILE_FALLBACK: Pick<
   | 'website'
   | 'favoriteGenres'
   | 'stats'
-  | 'personality'
 > = {
   handle: 'my_handle',
   joinedAt: '2024.11',
@@ -68,14 +68,6 @@ const PROFILE_FALLBACK: Pick<
     totalPlayHours: 1284,
     reviewCount: 12,
   },
-  personality: [
-    { label: '탐험', value: 9 },
-    { label: '액션', value: 8 },
-    { label: '서사', value: 6 },
-    { label: '전략', value: 5 },
-    { label: '도전', value: 4 },
-    { label: '합동', value: 3 },
-  ],
 };
 
 // 내 라이브러리 게임 도메인(camelCase). 백엔드 SteamLibraryGameResponse에서 화면이 쓰는 필드만 추린다.
@@ -159,7 +151,7 @@ export async function getMyProfile(): Promise<MockUserProfile> {
       ...PROFILE_FALLBACK.stats,
       following: activity?.library_game_count ?? 0,
     },
-    personality: stats ? mapPersonality(stats) : PROFILE_FALLBACK.personality,
+    personality: stats ? mapPersonality(stats) : [],
   };
 }
 
@@ -169,8 +161,8 @@ export async function getMyProfile(): Promise<MockUserProfile> {
 export async function updateMyProfile(
   patch: Partial<MockUserProfile>,
 ): Promise<void> {
-  // 생년월일은 회원가입 이후 변경 불가가 원칙이라 호출부(BasicInfoCard)가 보통 birthdate를 넣지 않는다.
-  //   단 값이 1900~2020 밖이라 1회 교정이 허용된 경우에만 birthdate를 넣어 보내므로, patch에 있을 때만 전송한다.
+  // 생년월일은 회원가입 이후 변경 불가라 현재 BasicInfoCard에서는 전송하지 않는다.
+  //   API 계약상 birth_date가 남아 있으므로, 다른 호출부가 명시적으로 넘긴 경우에만 매핑한다.
   const body: ProfileUpdateRequest = {};
   if (patch.nickname !== undefined) body.nickname = patch.nickname;
   if (patch.bio !== undefined) body.bio = patch.bio;
