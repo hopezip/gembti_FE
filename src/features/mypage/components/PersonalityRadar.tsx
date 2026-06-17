@@ -50,14 +50,63 @@ const AXIS_COLOR = 'rgba(255,255,255,0.08)';
 
 export function PersonalityRadar({ personality }: Props) {
   const navigate = useNavigate();
-  // 설문을 완료한 사용자에게만 '취향 다시 진단' CTA를 노출한다.
+  // 진단 완료 여부로 CTA 라벨만 분기한다(버튼 자체는 미진단자에게도 노출).
   const hasCompletedSurvey = useAuthStore(
     (state) => state.user?.hasCompletedSurvey ?? false,
   );
-  // 재진단 시 기존 설문 진행 상태를 초기화한다.
+  // 진단/재진단 시 기존 설문 진행 상태를 초기화한다.
   const resetSurveyProgress = useSurveyProgressStore(
     (state) => state.resetProgress,
   );
+  // 완료자: '취향 다시 진단' / 미진단자: '진단하러가기'.
+  const ctaLabel = hasCompletedSurvey ? '취향 다시 진단' : '진단하러가기';
+  const goToSurvey = () => {
+    resetSurveyProgress();
+    navigate('/survey/intro');
+  };
+
+  // 성향 데이터가 없으면(stats/me 미구현·미진단) 가짜 레이더 대신 빈 상태 + 진단 CTA를 노출한다.
+  if (personality.length === 0) {
+    return (
+      <Card
+        padding="md"
+        className={css({ h: 'full', display: 'flex', flexDirection: 'column' })}
+      >
+        <span
+          className={css({
+            fontSize: 'sm',
+            fontWeight: 'semibold',
+            color: 'fg.default',
+            mb: '4',
+          })}
+        >
+          6대 성향 레이더
+        </span>
+        <div
+          className={css({
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3',
+            textAlign: 'center',
+            py: '6',
+          })}
+        >
+          <p className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
+            {hasCompletedSurvey
+              ? '성향 데이터를 불러올 수 없어요'
+              : '아직 취향을 진단하지 않았어요'}
+          </p>
+          <Button variant="primary" size="sm" onClick={goToSurvey}>
+            {ctaLabel}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   const valuePts = personality
     .map((p, i) => pt(i, p.value / 10))
     .map((p) => `${p.x},${p.y}`)
@@ -83,18 +132,9 @@ export function PersonalityRadar({ personality }: Props) {
         >
           6대 성향 레이더
         </span>
-        {hasCompletedSurvey && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              resetSurveyProgress();
-              navigate('/survey/intro');
-            }}
-          >
-            취향 다시 진단
-          </Button>
-        )}
+        <Button variant="ghost" size="sm" onClick={goToSurvey}>
+          {ctaLabel}
+        </Button>
       </div>
 
       {/* 차트 + 범례 */}

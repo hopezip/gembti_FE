@@ -11,7 +11,7 @@ import { EMAIL_CODE_TTL_SECONDS } from '@/config/auth';
 import { useResendCooldown } from '@/features/auth/hooks/useResendCooldown';
 import {
   BIRTH_MIN_DATE,
-  getBirthMaxDate,
+  getMaxBirthDateForSignup,
   NICKNAME_MAX_LENGTH,
   type SignupStep2Input,
   signupStep2Schema,
@@ -104,6 +104,11 @@ export function EmailVerificationForm({
   const cooldown = useResendCooldown();
 
   const nickname = watch('nickname') ?? '';
+
+  // 만 15세 미만 라이브 차단 — 입력값을 즉시 읽어 안내/제출 비활성에 반영한다.
+  const birthValue = watch('birth') ?? '';
+  const maxBirthDate = getMaxBirthDateForSignup();
+  const isBirthUnder15 = birthValue !== '' && birthValue > maxBirthDate;
 
   // 닉네임 중복 확인 — 기존 MSW 핸들러 재사용(실서버 엔드포인트 없음).
   async function checkNickname() {
@@ -401,7 +406,11 @@ export function EmailVerificationForm({
           label="생년월일"
           id="signup-birth"
           required
-          error={errors.birth?.message}
+          help="가입 후에는 변경할 수 없어요"
+          error={
+            errors.birth?.message ??
+            (isBirthUnder15 ? '만 15세 미만은 가입할 수 없어요' : undefined)
+          }
         >
           <Controller
             control={control}
@@ -410,10 +419,12 @@ export function EmailVerificationForm({
               <Input
                 id="signup-birth"
                 type="date"
-                // 1900-01-01 ~ 오늘만 선택 가능(미래 생일·1900년 이전 차단, LOGIN-FE-016).
+                // 1900-01-01 ~ 오늘로부터 15년 전만 선택 가능(미래 생일·1900년 이전·만 15세 미만 차단).
                 min={BIRTH_MIN_DATE}
-                max={getBirthMaxDate()}
-                aria-invalid={Boolean(errors.birth) || undefined}
+                max={maxBirthDate}
+                aria-invalid={
+                  Boolean(errors.birth) || isBirthUnder15 || undefined
+                }
                 disabled={isSubmitting}
                 value={field.value}
                 onChange={field.onChange}
@@ -449,7 +460,7 @@ export function EmailVerificationForm({
       <Button
         type="submit"
         variant="primary"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isBirthUnder15}
         aria-busy={isSubmitting || undefined}
       >
         {isSubmitting ? '가입 처리 중…' : '가입 완료 →'}
