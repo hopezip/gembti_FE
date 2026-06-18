@@ -29,8 +29,6 @@ const image = css({
   h: 'full',
   objectFit: 'cover',
   objectPosition: 'center',
-  // 모바일(≤768px): 커버 이미지가 좌우로 잘리지 않고 전체가 보이도록 contain(RESPONSIVE-FE-002).
-  '@media (max-width: 768px)': { objectFit: 'contain' },
 });
 
 export function HeroBackgroundCarousel({ images }: Props) {

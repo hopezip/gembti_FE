@@ -47,12 +47,17 @@ const styles = {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }),
-  // ② 좌→우 어두운 그라데이션 오버레이 — 좌측 텍스트 영역을 진하게, 우측은 투명에 가깝게.
+  // ② bg.canvas 그라데이션 오버레이 — 좌측을 페이지 배경색으로 자연스럽게 블렌딩.
   overlay: css({
     position: 'absolute',
     inset: '0',
-    backgroundImage:
-      'linear-gradient(to right, token(colors.bg.canvas) 0%, token(colors.bg.canvas) 50%, color-mix(in srgb, token(colors.bg.canvas) 80%, transparent) 70%, color-mix(in srgb, token(colors.bg.canvas) 35%, transparent) 100%)',
+    zIndex: '1',
+    background:
+      'linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.82) 28%, rgba(0,0,0,0.45) 52%, rgba(0,0,0,0.12) 72%, transparent 100%)',
+  }),
+  // ③ 검정 반투명 오버레이 — 텍스트 영역(좌측)만 어둡게, 우측은 투명.
+  darkOverlay: css({
+    display: 'none',
   }),
   // ③ 콘텐츠 거터 래퍼 — 절대배치 레이어 위로 올린다.
   gutter: css({
@@ -89,12 +94,13 @@ const styles = {
     '@media (max-width: 768px)': { fontSize: '6xl' },
   }),
   accentWord: css({ color: 'accent.default' }),
-  // 피처 3행 — 아이콘 박스 + 2줄 카피.
+  // 피처 3행 — 아이콘 박스 + 2줄 카피. 모바일에서는 숨김.
   features: css({
     display: 'flex',
     gap: '6',
     mt: '7',
     flexWrap: 'wrap',
+    '@media (max-width: 768px)': { display: 'none' },
   }),
   featureItem: css({
     display: 'flex',
@@ -150,7 +156,7 @@ export function HeroBanner() {
       <div className={styles.bgLayer} aria-hidden="true" />
       <HeroBackgroundCarousel images={bannerImages} />
 
-      {/* ② 그라데이션 오버레이 */}
+      {/* ② bg.canvas 그라데이션 오버레이 */}
       <div className={styles.overlay} aria-hidden="true" />
 
       {/* ③ 좌측 텍스트 오버레이 — pageGutter/pageContainer 합성으로 다른 영역과 좌우 라인 정렬 */}
