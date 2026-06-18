@@ -34,7 +34,8 @@ export function ScrollToTopButton() {
       className={css({
         position: 'fixed',
         right: { base: '4', sm: '6' },
-        bottom: '6',
+        // 우하단 챗봇 플로팅 버튼(bottom:6) 위에 쌓이도록 올린다(CHATBOT-FE-001 겹침 방지).
+        bottom: '24',
         zIndex: 'modal',
         display: 'inline-flex',
         alignItems: 'center',

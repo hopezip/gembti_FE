@@ -3,6 +3,7 @@ import { css } from 'styled-system/css';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { ScrollToTopButton } from './ScrollToTopButton';
+import { ChatbotFloatingButton } from '@/features/chatbot/components/ChatbotFloatingButton';
 import { Toaster } from '@/components/ui/Toast';
 
 // 글로벌 셸 (DESIGN_SYSTEM 4.1) — 모든 라우트를 감싸는 공통 레이아웃 라우트의 element.
@@ -41,6 +42,7 @@ export function GlobalShell() {
       </div>
       <Footer />
       <ScrollToTopButton />
+      <ChatbotFloatingButton />
       <Toaster />
     </div>
   );

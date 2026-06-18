@@ -17,4 +17,5 @@ export const handlers = [
   ...gameHandlers,
   ...mypageHandlers,
   ...steamHandlers,
+  // 챗봇(support/chat)은 mock 없이 실서버로 직결한다(CHATBOT-FE-001, onUnhandledRequest:'bypass').
 ];
