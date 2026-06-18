@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import {
   BarChart3,
   ExternalLink,
-  Library,
+  Folder,
   type LucideIcon,
   Minus,
   Search,
@@ -26,11 +26,20 @@ const BRAND = 'GAMBIT AI';
 const BRAND_SUB = '게임 추천 AI 어시스턴트';
 const MAX_LEN = 100;
 
-const SUGGESTIONS: { icon: LucideIcon; label: string }[] = [
-  { icon: Search, label: '장르 추천' },
-  { icon: BarChart3, label: '성향 분석' },
-  { icon: Sparkles, label: '탐험' },
-  { icon: Library, label: '내 라이브러리' },
+// 칩별 아이콘은 시안에 맞춰 색을 다르게 한다(정적 css 클래스 — Panda 추출용).
+const SUGGESTIONS: { icon: LucideIcon; label: string; iconClass: string }[] = [
+  { icon: Search, label: '장르 추천', iconClass: css({ color: 'fg.default' }) },
+  {
+    icon: BarChart3,
+    label: '성향 분석',
+    iconClass: css({ color: 'danger.fg' }),
+  },
+  { icon: Sparkles, label: '탐험', iconClass: css({ color: 'warning.fg' }) },
+  {
+    icon: Folder,
+    label: '내 라이브러리',
+    iconClass: css({ color: 'accent.default' }),
+  },
 ];
 
 export interface GameCardData {
@@ -428,7 +437,7 @@ function Chips({
 }) {
   return (
     <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
-      {SUGGESTIONS.map(({ icon: Icon, label }) => (
+      {SUGGESTIONS.map(({ icon: Icon, label, iconClass }) => (
         <button
           key={label}
           type="button"
@@ -451,11 +460,7 @@ function Chips({
             _disabled: { opacity: 0.5, cursor: 'not-allowed' },
           })}
         >
-          <Icon
-            size={13}
-            aria-hidden="true"
-            className={css({ color: 'accent.hover' })}
-          />
+          <Icon size={13} aria-hidden="true" className={iconClass} />
           {label}
         </button>
       ))}
