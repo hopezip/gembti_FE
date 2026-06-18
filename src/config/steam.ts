@@ -15,6 +15,11 @@ export const STEAM_AUTH_START_URL =
   import.meta.env.VITE_STEAM_AUTH_START_URL ??
   `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1/auth/steam`;
 
+// Steam 공개 설정(게임 세부정보 공개로 변경) 페이지 URL.
+//   게임 세부정보가 비공개라 라이브러리를 못 가져올 때, 유저를 이 페이지로 보내 공개로 바꾸게 한다.
+export const STEAM_PRIVACY_SETTINGS_URL =
+  'https://steamcommunity.com/my/edit/settings';
+
 // 동기화 상태 폴링 주기(ms). 훅의 refetchInterval 기본값으로 쓴다.
 export const STEAM_POLL_INTERVAL_MS = 2000;
 
