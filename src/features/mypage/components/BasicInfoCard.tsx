@@ -29,6 +29,8 @@ export function BasicInfoCard({ profile }: Props) {
   const [gender, setGender] = useState('');
   const [nicknameCheck, setNicknameCheck] =
     useState<NicknameCheckStatus>('idle');
+  // 한글 IME 조합 중에는 중간 자모가 잠깐 잡히므로, 조합이 끝난 뒤에만 규칙 위반을 표시한다.
+  const [isComposing, setIsComposing] = useState(false);
   // 저장 실패를 사용자에게 표면화하기 위한 에러 메시지(닉네임 저장 먹통 방지).
   const [saveError, setSaveError] = useState('');
 
@@ -53,8 +55,13 @@ export function BasicInfoCard({ profile }: Props) {
     setIsEditMode(true);
   }
 
-  // 닉네임이 스키마(2~8자, 특수기호 불가)를 통과할 때만 중복확인을 호출한다(LOGIN-FE-017).
+  // 닉네임이 스키마(2~8자, 완성형 한글/영문/숫자)를 통과할 때만 중복확인을 호출한다(LOGIN-FE-017).
   const isNicknameValid = nicknameSchema.safeParse(nickname.trim()).success;
+  // 조합이 끝났고 비어있지 않으며 규칙 위반이면 라이브 안내(초성·특수기호·길이 등).
+  const nicknameRuleError =
+    !isComposing && nickname.trim() && !isNicknameValid
+      ? nicknameSchema.safeParse(nickname.trim()).error?.issues[0]?.message
+      : undefined;
 
   async function checkNickname() {
     if (!isNicknameValid) return;
@@ -182,6 +189,9 @@ export function BasicInfoCard({ profile }: Props) {
                       setNickname(e.target.value);
                       setNicknameCheck('idle');
                     }}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    aria-invalid={Boolean(nicknameRuleError) || undefined}
                     className={css({ flex: 1, minW: 0 })}
                     autoFocus
                   />
@@ -205,15 +215,22 @@ export function BasicInfoCard({ profile }: Props) {
                     mt: '1',
                     fontSize: 'xs',
                     color:
-                      nicknameCheck === 'taken' || nicknameCheck === 'error'
+                      nicknameRuleError ||
+                      nicknameCheck === 'taken' ||
+                      nicknameCheck === 'error'
                         ? 'danger.fg'
                         : 'green.500',
                   })}
                 >
-                  {nicknameCheck === 'available' && '사용 가능한 닉네임입니다'}
-                  {nicknameCheck === 'taken' && '이미 사용 중인 닉네임입니다'}
-                  {nicknameCheck === 'error' &&
-                    '확인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'}
+                  {/* 규칙 위반(초성·특수기호·길이)이 우선 — 위반 중엔 중복확인이 비활성이라 결과 메시지와 겹치지 않는다 */}
+                  {nicknameRuleError ??
+                    (nicknameCheck === 'available'
+                      ? '사용 가능한 닉네임입니다'
+                      : nicknameCheck === 'taken'
+                        ? '이미 사용 중인 닉네임입니다'
+                        : nicknameCheck === 'error'
+                          ? '확인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+                          : '')}
                 </span>
               </div>
             ) : (

@@ -231,6 +231,21 @@ describe('nicknameSchema (2~8자)', () => {
     }
   });
 
+  it('초성·자모만 있으면 실패하고 전용 메시지를 낸다 (LOGIN-FE-017)', () => {
+    const result = nicknameSchema.safeParse('ㄱㄴ');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // refine이 regex보다 먼저라 첫 메시지는 초성 전용 안내.
+      expect(result.error.issues[0].message).toBe(
+        '초성·자모는 쓸 수 없어요. 완성된 한글로 입력해주세요',
+      );
+    }
+  });
+
+  it('완성형 한글에 자모가 섞이면 실패한다 (예: "안녕ㅎ")', () => {
+    expect(nicknameSchema.safeParse('안녕ㅎ').success).toBe(false);
+  });
+
   it('공백이 들어가면 실패한다', () => {
     expect(nicknameSchema.safeParse('game ovr').success).toBe(false);
   });
