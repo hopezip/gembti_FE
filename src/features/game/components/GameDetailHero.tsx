@@ -61,8 +61,25 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
       })}
       style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}
     >
-      {/* 콘텐츠 — PageContainer 폭(1232px). 텍스트는 자체 text-shadow로 가독을 확보한다. */}
-      <div className={cx(css(pageGutter), css({ position: 'relative' }))}>
+      {/* 오버레이 — 좌측 텍스트 영역 가독성 확보 (HeroBanner와 동일 패턴). */}
+      <div
+        aria-hidden="true"
+        className={css({
+          position: 'absolute',
+          inset: '0',
+          zIndex: '1',
+          background:
+            'linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.82) 28%, rgba(0,0,0,0.45) 52%, rgba(0,0,0,0.12) 72%, transparent 100%)',
+        })}
+      />
+
+      {/* 콘텐츠 — PageContainer 폭(1232px). */}
+      <div
+        className={cx(
+          css(pageGutter),
+          css({ position: 'relative', zIndex: '2' }),
+        )}
+      >
         <div className={css(pageContainer)}>
           {/* 좌측 텍스트 컬럼 — 1232 컨테이너 안에서 좌측(flex-start)에 붙인다(Figma 좌측 정렬). */}
           <div
@@ -88,7 +105,18 @@ export function GameDetailHero({ detail }: GameDetailHeroProps) {
                 })}
               >
                 {categories.map((c) => (
-                  <Tag key={c}>{c}</Tag>
+                  <Tag
+                    key={c}
+                    className={css({
+                      bg: 'rgba(0,0,0,0.45)',
+                      backdropFilter: 'blur(6px)',
+                      color: 'fg.default',
+                      borderColor: 'rgba(255,255,255,0.25)',
+                      py: '2px',
+                    })}
+                  >
+                    {c}
+                  </Tag>
                 ))}
               </div>
             )}
