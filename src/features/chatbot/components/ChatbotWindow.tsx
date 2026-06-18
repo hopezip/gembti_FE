@@ -2,27 +2,30 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
   BarChart3,
-  Bot,
+  ExternalLink,
   Library,
   type LucideIcon,
   Minus,
   Search,
   Send,
   Sparkles,
+  Star,
   X,
 } from 'lucide-react';
 import { css } from 'styled-system/css';
+import mascot from '@/assets/chatbot-mascot.png';
 import { sendChatMessage } from '@/features/chatbot/api/chat';
 
 // 챗봇 팝오버 대화 UI (CHATBOT-FE-002).
 //   순수 프리젠테이션 + 로컬 대화 상태. 세션ID는 첫 응답값을 보관해 이후 요청에 재전송한다.
 //   다른 도메인을 import하지 않는다(chatbot 격리).
+//   리치 메시지(progress/cards/price)는 시안 UI를 위한 프리젠테이션 컴포넌트다 — 실 백엔드가
+//   구조화 응답을 줄 때 채워진다. 현재 실 대화는 text만 오고, 데모(프리뷰)는 initialMessages로 주입한다.
 
-const BRAND = 'GamBTI AI';
+const BRAND = 'GAMBIT AI';
 const BRAND_SUB = '게임 추천 AI 어시스턴트';
-const MAX_LEN = 500;
+const MAX_LEN = 100;
 
-// 첫 대화에서 보여줄 빠른 추천 칩 — 클릭 시 해당 문구를 그대로 전송한다.
 const SUGGESTIONS: { icon: LucideIcon; label: string }[] = [
   { icon: Search, label: '장르 추천' },
   { icon: BarChart3, label: '성향 분석' },
@@ -30,71 +33,80 @@ const SUGGESTIONS: { icon: LucideIcon; label: string }[] = [
   { icon: Library, label: '내 라이브러리' },
 ];
 
-interface ChatMessage {
-  id: number;
-  role: 'user' | 'bot';
-  text: string;
-  time: string;
+export interface GameCardData {
+  badge: string;
+  title: string;
+  genres: string;
+  rating: string;
+}
+export interface PriceData {
+  discount: string;
+  original: string;
+  sale: string;
 }
 
-function nowTime(): string {
-  return new Date().toLocaleTimeString('ko-KR', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
+export type ChatMessage =
+  | { id: number; role: 'user' | 'bot'; kind: 'text'; text: string }
+  | { id: number; role: 'bot'; kind: 'chips' }
+  | { id: number; role: 'bot'; kind: 'progress'; text: string; percent: number }
+  | { id: number; role: 'bot'; kind: 'cards'; cards: GameCardData[] }
+  | { id: number; role: 'bot'; kind: 'price'; text: string; price: PriceData };
 
 interface Props {
   onClose: () => void;
   /** 유저 아바타 이니셜 표시용(로그인 닉네임). */
   userName: string;
+  /** 데모/프리뷰용 초기 대화 주입(미지정 시 인사말 + 추천칩). */
+  initialMessages?: ChatMessage[];
 }
 
-export function ChatbotWindow({ onClose, userName }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    {
-      id: 0,
-      role: 'bot',
-      text: '안녕하세요! GamBTI AI예요. 어떤 게임을 찾고 계신가요?',
-      time: nowTime(),
-    },
-  ]);
+const DEFAULT_MESSAGES: ChatMessage[] = [
+  {
+    id: 0,
+    role: 'bot',
+    kind: 'text',
+    text: '안녕하세요! GAMBIT AI예요. 어떤 게임을 찾고 계신가요?',
+  },
+  { id: 1, role: 'bot', kind: 'chips' },
+];
+
+export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages ?? DEFAULT_MESSAGES,
+  );
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const nextId = useRef(1);
+  const nextId = useRef(1000);
   const listRef = useRef<HTMLDivElement>(null);
 
   const initials = (userName.trim().slice(0, 2) || '나').toUpperCase();
-  const hasUserMessage = messages.some((m) => m.role === 'user');
 
   const mutation = useMutation({
     mutationFn: (message: string) => sendChatMessage({ message, sessionId }),
     onSuccess: (reply) => {
       setSessionId(reply.sessionId);
-      appendMessage('bot', reply.message);
+      appendText('bot', reply.message);
     },
     onError: () => {
-      appendMessage('bot', '전송에 실패했어요. 잠시 후 다시 시도해주세요.');
+      appendText('bot', '전송에 실패했어요. 잠시 후 다시 시도해주세요.');
     },
   });
 
-  function appendMessage(role: ChatMessage['role'], text: string) {
+  function appendText(role: 'user' | 'bot', text: string) {
     setMessages((prev) => [
       ...prev,
-      { id: nextId.current++, role, text, time: nowTime() },
+      { id: nextId.current++, role, kind: 'text', text },
     ]);
   }
 
-  // 유저 메시지를 전송한다(폼 제출·추천 칩 공용).
   function send(text: string) {
     const t = text.trim();
     if (!t || mutation.isPending) return;
-    appendMessage('user', t);
+    appendText('user', t);
     setInput('');
     mutation.mutate(t);
   }
 
-  // 새 메시지가 추가되면 목록 맨 아래로 스크롤한다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages 변경을 트리거로 스크롤한다(본문은 ref만 읽음).
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
@@ -107,7 +119,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
 
   return (
     <section
-      aria-label="GamBTI AI 챗봇 대화창"
+      aria-label="GAMBIT AI 챗봇 대화창"
       className={css({
         position: 'fixed',
         right: '6',
@@ -127,7 +139,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
         overflow: 'hidden',
       })}
     >
-      {/* 헤더 — 아바타 + 브랜드/부제 + 최소화/닫기 */}
+      {/* 헤더 */}
       <header
         className={css({
           display: 'flex',
@@ -140,7 +152,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           bg: 'bg.surfaceRaised',
         })}
       >
-        <BotAvatar size="md" />
+        <Mascot size="md" />
         <div className={css({ flex: 1, minW: 0 })}>
           <p
             className={css({
@@ -152,7 +164,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           >
             {BRAND}
           </p>
-          <p className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
+          <p className={css({ fontSize: '2xs', color: 'accent.hover' })}>
             {BRAND_SUB}
           </p>
         </div>
@@ -181,6 +193,9 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           flex: 1,
           minH: 0,
           overflowY: 'auto',
+          // 스크롤바는 숨기되 마우스 휠 스크롤은 유지한다.
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
           px: '4',
           py: '4',
           display: 'flex',
@@ -188,7 +203,6 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           gap: '4',
         })}
       >
-        {/* 날짜 구분선(알약) */}
         <div className={css({ display: 'flex', justifyContent: 'center' })}>
           <span
             className={css({
@@ -204,61 +218,15 @@ export function ChatbotWindow({ onClose, userName }: Props) {
           </span>
         </div>
 
-        {messages.map((m) =>
-          m.role === 'bot' ? (
-            <BotRow key={m.id} text={m.text} time={m.time} />
-          ) : (
-            <UserRow
-              key={m.id}
-              text={m.text}
-              time={m.time}
-              initials={initials}
-            />
-          ),
-        )}
-
-        {/* 빠른 추천 칩 — 아직 유저 발화 전일 때만 */}
-        {!hasUserMessage && (
-          <div
-            className={css({
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '2',
-              pl: '10', // 봇 아바타 폭만큼 들여쓰기
-            })}
-          >
-            {SUGGESTIONS.map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => send(label)}
-                disabled={mutation.isPending}
-                className={css({
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '1.5',
-                  px: '3',
-                  py: '1.5',
-                  borderRadius: 'full',
-                  border: '1px solid',
-                  borderColor: 'border.default',
-                  bg: 'bg.surfaceRaised',
-                  fontSize: 'xs',
-                  color: 'fg.muted',
-                  cursor: 'pointer',
-                  _hover: {
-                    borderColor: 'accent.default',
-                    color: 'fg.default',
-                  },
-                  _disabled: { opacity: 0.5, cursor: 'not-allowed' },
-                })}
-              >
-                <Icon size={13} aria-hidden="true" />
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+        {messages.map((m) => (
+          <MessageRow
+            key={m.id}
+            message={m}
+            initials={initials}
+            onChip={send}
+            chipsDisabled={mutation.isPending}
+          />
+        ))}
 
         {mutation.isPending && <TypingRow />}
       </div>
@@ -288,7 +256,7 @@ export function ChatbotWindow({ onClose, userName }: Props) {
             className={css({
               w: 'full',
               pl: '4',
-              pr: '12', // 글자수 카운터 자리
+              pr: '12',
               py: '2.5',
               fontSize: 'sm',
               bg: 'bg.canvas',
@@ -355,82 +323,369 @@ const iconBtnCss = css({
   _hover: { bg: 'bg.canvas', color: 'fg.default' },
 });
 
-// 봇 아바타(주황 원형 + 로봇 로고).
-function BotAvatar({ size = 'sm' }: { size?: 'sm' | 'md' }) {
+// 로봇 마스코트 아바타(에셋 이미지).
+function Mascot({ size = 'sm' }: { size?: 'sm' | 'md' }) {
   const dim = size === 'md' ? '9' : '8';
-  const icon = size === 'md' ? 20 : 18;
   return (
-    <span
+    <img
+      src={mascot}
+      alt=""
       aria-hidden="true"
       className={css({
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         flexShrink: 0,
         w: dim,
         h: dim,
-        borderRadius: 'full',
-        bg: 'accent.default',
-        color: 'fg.onAccent',
+        borderRadius: 'lg',
+        objectFit: 'cover',
       })}
-    >
-      <Bot size={icon} />
-    </span>
+    />
   );
 }
 
-// 봇 메시지 행 — 아바타 + 이름 + 버블 + 시간(좌측 정렬).
-function BotRow({ text, time }: { text: string; time: string }) {
+// 메시지 1건 — 종류별 렌더.
+function MessageRow({
+  message,
+  initials,
+  onChip,
+  chipsDisabled,
+}: {
+  message: ChatMessage;
+  initials: string;
+  onChip: (label: string) => void;
+  chipsDisabled: boolean;
+}) {
+  if (message.role === 'user') {
+    return (
+      <UserRow
+        text={message.kind === 'text' ? message.text : ''}
+        initials={initials}
+      />
+    );
+  }
+
+  // 봇: 아바타 + 콘텐츠
+  let content: React.ReactNode = null;
+  if (message.kind === 'text') content = <Bubble>{message.text}</Bubble>;
+  else if (message.kind === 'chips')
+    content = <Chips onPick={onChip} disabled={chipsDisabled} />;
+  else if (message.kind === 'progress')
+    content = <ProgressBubble text={message.text} percent={message.percent} />;
+  else if (message.kind === 'cards')
+    content = <GameCards cards={message.cards} />;
+  else if (message.kind === 'price')
+    content = <PriceBubble text={message.text} price={message.price} />;
+
   return (
     <div
       className={css({ display: 'flex', gap: '2.5', alignItems: 'flex-start' })}
     >
-      <BotAvatar />
+      <Mascot />
       <div
         className={css({
           display: 'flex',
           flexDirection: 'column',
-          gap: '1',
-          maxW: '80%',
+          gap: '1.5',
+          maxW: '85%',
+          minW: 0,
         })}
       >
         <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
           {BRAND}
         </span>
-        <div
-          className={css({
-            px: '3.5',
-            py: '2.5',
-            borderRadius: 'xl',
-            borderTopLeftRadius: 'sm',
-            fontSize: 'sm',
-            lineHeight: 'snug',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            bg: 'bg.surfaceRaised',
-            color: 'fg.default',
-          })}
-        >
-          {text}
-        </div>
-        <span className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
-          {time}
-        </span>
+        {content}
       </div>
     </div>
   );
 }
 
-// 유저 메시지 행 — 버블 + 시간 + 아바타(우측 정렬).
-function UserRow({
-  text,
-  time,
-  initials,
+function Bubble({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className={css({
+        px: '3.5',
+        py: '2.5',
+        borderRadius: 'xl',
+        borderTopLeftRadius: 'sm',
+        fontSize: 'sm',
+        lineHeight: 'snug',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        bg: 'bg.surfaceRaised',
+        color: 'fg.default',
+      })}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Chips({
+  onPick,
+  disabled,
 }: {
-  text: string;
-  time: string;
-  initials: string;
+  onPick: (label: string) => void;
+  disabled: boolean;
 }) {
+  return (
+    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '2' })}>
+      {SUGGESTIONS.map(({ icon: Icon, label }) => (
+        <button
+          key={label}
+          type="button"
+          onClick={() => onPick(label)}
+          disabled={disabled}
+          className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '1.5',
+            px: '3',
+            py: '1.5',
+            borderRadius: 'full',
+            border: '1px solid',
+            borderColor: 'border.default',
+            bg: 'bg.surfaceRaised',
+            fontSize: 'xs',
+            color: 'fg.muted',
+            cursor: 'pointer',
+            _hover: { borderColor: 'accent.default', color: 'fg.default' },
+            _disabled: { opacity: 0.5, cursor: 'not-allowed' },
+          })}
+        >
+          <Icon
+            size={13}
+            aria-hidden="true"
+            className={css({ color: 'accent.hover' })}
+          />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ProgressBubble({ text, percent }: { text: string; percent: number }) {
+  return (
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2',
+        px: '3.5',
+        py: '3',
+        borderRadius: 'xl',
+        borderTopLeftRadius: 'sm',
+        bg: 'bg.surfaceRaised',
+        minW: '60',
+      })}
+    >
+      <span
+        className={css({
+          fontSize: 'sm',
+          lineHeight: 'snug',
+          color: 'fg.default',
+          whiteSpace: 'pre-wrap',
+        })}
+      >
+        {text}
+      </span>
+      <div
+        className={css({
+          h: '1.5',
+          borderRadius: 'full',
+          bg: 'bg.canvas',
+          overflow: 'hidden',
+        })}
+      >
+        <div
+          className={css({
+            h: 'full',
+            borderRadius: 'full',
+            bg: 'accent.default',
+          })}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span
+        className={css({
+          alignSelf: 'flex-end',
+          fontSize: 'xs',
+          fontWeight: 'bold',
+          color: 'accent.hover',
+        })}
+      >
+        {percent}%
+      </span>
+    </div>
+  );
+}
+
+function GameCards({ cards }: { cards: GameCardData[] }) {
+  return (
+    <div
+      className={css({
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '2',
+      })}
+    >
+      {cards.map((c) => (
+        <div
+          key={c.title}
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: 'lg',
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'border.default',
+            bg: 'bg.surfaceRaised',
+          })}
+        >
+          {/* 표지(플레이스홀더 — 실제 커버아트는 백엔드 데이터 필요) */}
+          <div
+            className={css({
+              position: 'relative',
+              aspectRatio: '16/10',
+              bgGradient: 'to-br',
+              gradientFrom: 'gray.700',
+              gradientTo: 'gray.900',
+            })}
+          >
+            <span
+              className={css({
+                position: 'absolute',
+                top: '1.5',
+                left: '1.5',
+                px: '1.5',
+                py: '0.5',
+                borderRadius: 'sm',
+                bg: 'accent.default',
+                color: 'fg.onAccent',
+                fontSize: '2xs',
+                fontWeight: 'bold',
+              })}
+            >
+              {c.badge}
+            </span>
+          </div>
+          <div
+            className={css({
+              p: '2',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5',
+            })}
+          >
+            <span
+              className={css({
+                fontSize: 'xs',
+                fontWeight: 'bold',
+                color: 'fg.default',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              })}
+            >
+              {c.title}
+            </span>
+            <span className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
+              {c.genres}
+            </span>
+            <span
+              className={css({
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '1',
+                fontSize: '2xs',
+                color: 'warning.fg',
+                fontWeight: 'semibold',
+              })}
+            >
+              <Star size={11} fill="currentColor" aria-hidden="true" />
+              {c.rating}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PriceBubble({ text, price }: { text: string; price: PriceData }) {
+  return (
+    <div
+      className={css({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2',
+        px: '3.5',
+        py: '3',
+        borderRadius: 'xl',
+        borderTopLeftRadius: 'sm',
+        bg: 'bg.surfaceRaised',
+      })}
+    >
+      <span className={css({ fontSize: 'sm', color: 'fg.default' })}>
+        {text}
+      </span>
+      <div
+        className={css({ display: 'flex', alignItems: 'baseline', gap: '2' })}
+      >
+        <span
+          className={css({
+            fontSize: 'sm',
+            fontWeight: 'bold',
+            color: 'success.fg',
+          })}
+        >
+          {price.discount}
+        </span>
+        <span
+          className={css({
+            fontSize: 'xs',
+            color: 'fg.subtle',
+            textDecoration: 'line-through',
+          })}
+        >
+          {price.original}
+        </span>
+        <span
+          className={css({
+            fontSize: 'sm',
+            fontWeight: 'bold',
+            color: 'fg.default',
+          })}
+        >
+          {price.sale}
+        </span>
+      </div>
+      <button
+        type="button"
+        className={css({
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1.5',
+          px: '3',
+          py: '2',
+          borderRadius: 'md',
+          border: '1px solid',
+          borderColor: 'accent.default',
+          color: 'accent.fg',
+          fontSize: 'xs',
+          fontWeight: 'semibold',
+          cursor: 'pointer',
+          _hover: { bg: 'accent.soft' },
+        })}
+      >
+        Steam 페이지 보기
+        <ExternalLink size={13} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function UserRow({ text, initials }: { text: string; initials: string }) {
   return (
     <div
       className={css({
@@ -442,32 +697,20 @@ function UserRow({
     >
       <div
         className={css({
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1',
-          alignItems: 'flex-end',
+          px: '3.5',
+          py: '2.5',
+          borderRadius: 'xl',
+          borderTopRightRadius: 'sm',
+          fontSize: 'sm',
+          lineHeight: 'snug',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
           maxW: '80%',
+          bg: 'accent.default',
+          color: 'fg.onAccent',
         })}
       >
-        <div
-          className={css({
-            px: '3.5',
-            py: '2.5',
-            borderRadius: 'xl',
-            borderTopRightRadius: 'sm',
-            fontSize: 'sm',
-            lineHeight: 'snug',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            bg: 'accent.default',
-            color: 'fg.onAccent',
-          })}
-        >
-          {text}
-        </div>
-        <span className={css({ fontSize: '2xs', color: 'fg.subtle' })}>
-          {time}
-        </span>
+        {text}
       </div>
       <span
         aria-hidden="true"
@@ -491,13 +734,12 @@ function UserRow({
   );
 }
 
-// 타이핑 인디케이터 — 봇 버블 안 점 3개.
 function TypingRow() {
   return (
     <div
       className={css({ display: 'flex', gap: '2.5', alignItems: 'flex-start' })}
     >
-      <BotAvatar />
+      <Mascot />
       <div
         className={css({
           display: 'flex',
