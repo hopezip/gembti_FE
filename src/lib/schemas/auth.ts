@@ -31,10 +31,15 @@ export const hasDigit = (v: string) => /\d/.test(v);
 export const hasSpecial = (v: string) =>
   /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(v);
 
-// 닉네임 규칙 — 2~8자, 특수기호 불가(한글/영문/숫자만). (GEMBTI_API: minLength 2 / maxLength 8)
+// 닉네임 규칙 — 2~8자, 특수기호 불가(완성형 한글/영문/숫자만). (GEMBTI_API: minLength 2 / maxLength 8)
 export const NICKNAME_MIN_LENGTH = 2;
 export const NICKNAME_MAX_LENGTH = 8;
+// 단독 자모(초성 ㄱ-ㅎ / 모음 ㅏ-ㅣ) = 완성되지 않은 한글. 닉네임에 허용하지 않는다.
+//   백엔드도 단독 자모를 400("닉네임 형식이 올바르지 않습니다")으로 거부하므로 FE에서 먼저 막아 안내한다.
+export const HANGUL_JAMO_PATTERN = /[ㄱ-ㅎㅏ-ㅣ]/;
 // 한글(완성형/자모) + 영문 + 숫자만 허용. 공백/특수기호 불가.
+//   ⚠️ 단독 자모 거부는 아래 refine이 전담한다(이 패턴은 "특수기호 불가"만 담당) — 자모 전용 메시지를
+//      특수기호 메시지보다 먼저 보여주기 위해 패턴엔 자모를 남겨두고 refine으로 분리한다.
 export const NICKNAME_PATTERN = /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]+$/;
 
 // 닉네임 단일 필드 스키마(STEP2에서 재사용).
@@ -45,7 +50,12 @@ export const nicknameSchema = z
     `닉네임은 ${NICKNAME_MIN_LENGTH}자 이상이어야 합니다`,
   )
   .max(NICKNAME_MAX_LENGTH, `닉네임은 ${NICKNAME_MAX_LENGTH}자 이하여야 합니다`)
-  .regex(NICKNAME_PATTERN, '닉네임에 특수기호는 쓸 수 없어요');
+  .regex(NICKNAME_PATTERN, '닉네임에 특수기호는 쓸 수 없어요')
+  // 단독 자모(초성/모음)는 완성형이 아니므로 거부 — 전용 메시지로 명시한다.
+  .refine(
+    (v) => !HANGUL_JAMO_PATTERN.test(v),
+    '초성·자모는 쓸 수 없어요. 완성된 한글로 입력해주세요',
+  );
 
 // ── STEP1 (계정정보) ─────────────────────────────────────────────────────────
 // 이메일 + 비밀번호 + 비밀번호확인 + [필수] 만 15세 이상 확인.

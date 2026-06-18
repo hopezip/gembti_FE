@@ -3,9 +3,10 @@ import { api } from '@/lib/ky';
 import type { components } from '@/types/api';
 
 // 인증 도메인 서비스 레이어 (LOGIN-FE-006 실서버(GEMBTI_API) 계약 정합).
-// 백엔드: FastAPI / OpenAPI 3.1 / https://gembti.cloud. 응답 envelope 없음, 에러는 {detail}.
+// 백엔드: FastAPI / OpenAPI 3.1 / https://gembti.cloud. 응답 envelope 없음.
+//   에러 본문은 비즈니스 {error} / FastAPI 검증 {detail} 두 형식 — parseDetail이 둘 다 읽는다.
 //   - 토큰: access_token(메모리 Bearer) + refresh_token(httpOnly 쿠키, 바디에 없음).
-//   - ky 인스턴스(src/lib/ky.ts)가 Authorization 부착·401 refresh(쿠키) 재시도·{detail} 파싱을 전담한다.
+//   - ky 인스턴스(src/lib/ky.ts)가 Authorization 부착·401 refresh(쿠키) 재시도를 전담한다.
 //   - 타입은 자동생성물(src/types/api.ts)에서 가져와 snake_case 응답을 도메인(camel)으로 매핑만 한다.
 
 type AuthResponse = components['schemas']['AuthResponse'];
@@ -51,13 +52,19 @@ function mapAuthUser(raw: UserResponse): AuthUser {
 }
 
 // ── 에러 파싱 ────────────────────────────────────────────────────────────────
-// 백엔드 에러: 비즈니스 { "detail": "메시지" } / 검증 { "detail": [{loc,msg,type}] }.
-//   error_code는 없다. detail을 사람이 읽을 한 줄로 정규화한다.
+// 백엔드 에러 본문은 두 형식이 섞여 있다:
+//   - 비즈니스 에러(403/409 등): { "error": "메시지" }  ← OpenAPI ErrorResponse (실서버 확인)
+//   - FastAPI 검증(422):        { "detail": [{loc,msg,type}] } 또는 { "detail": "메시지" }
+//   error_code는 없다. 두 형식을 모두 읽어 사람이 읽을 한 줄로 정규화한다.
+//   ⚠️ 과거엔 detail만 읽어 비즈니스 에러({error})가 항상 null이 됐고, 이 때문에 가입 닉네임 중복
+//      (409)이 이메일 중복으로 오분류돼 로그인으로 튕겼다(LOGIN-FE-017 ③).
 async function parseDetail(error: unknown): Promise<string | null> {
   if (!(error instanceof HTTPError)) return null;
   const body = await error.response
-    .json<{ detail?: unknown }>()
+    .json<{ detail?: unknown; error?: unknown }>()
     .catch(() => null);
+  // 비즈니스 에러 형식 우선({error} 문자열).
+  if (typeof body?.error === 'string') return body.error;
   const detail = body?.detail;
   if (typeof detail === 'string') return detail;
   if (Array.isArray(detail) && detail.length > 0) {
