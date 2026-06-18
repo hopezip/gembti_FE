@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { GameCard } from '@/components/ui/GameCard';
 import { SearchInput } from '@/components/ui/SearchInput';
+import { STEAM_PRIVACY_SETTINGS_URL } from '@/config/steam';
 import { getMyLibrary, getMyProfile } from '@/features/mypage/api/mypage';
 import type { LibraryGame } from '@/features/mypage/api/mypage';
 
@@ -289,6 +290,21 @@ export function LibrarySection() {
             type="party"
             title="게임 세부정보가 비공개예요"
             description="Steam 프로필의 게임 세부정보가 비공개로 설정돼 있어 라이브러리를 가져오지 못했어요. Steam에서 게임 세부정보를 공개로 바꾸면 자동으로 동기화돼요."
+            action={
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  window.open(
+                    STEAM_PRIVACY_SETTINGS_URL,
+                    '_blank',
+                    'noopener,noreferrer',
+                  )
+                }
+              >
+                Steam 공개 설정 열기
+              </Button>
+            }
           />
         ) : (
           <EmptyState
