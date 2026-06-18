@@ -3,13 +3,15 @@ import { css, cx } from 'styled-system/css';
 import { Chip } from '@/components/ui/Chip';
 
 // SEARCH-FE-003 검색 필터박스 — Figma 검색 결과 페이지(4030:2) 기준.
-// "필터" 헤딩 + 장르 행 / 카테고리 행. 각 행은 칩(다중선택 토글) + 우측 "+ 더보기"(접힘/펼침).
+// "필터" 헤딩 + 장르 행 / 카테고리 행. 각 행은 칩(다중선택 토글)로 구성된다.
 // 칩은 장르·카테고리만, 라벨만 표시(개수 facet 미표시 — 백엔드 미제공). 선택 상태는 Chip data-state="on".
 // 필터 적용은 서버사이드 — 상태/재요청 로직은 소비자(SearchPage)가 소유하고 여기선 선택 UI만 담당한다.
-// 모바일(≤768px): 라벨을 칩 위로 올리고, 접힘 상태의 칩을 한 줄 가로 스크롤로 노출해
-//   필터 영역이 여러 줄로 길어지지 않게 한다(RESPONSIVE-FE-002). "+ 더보기"로 아래로 펼침.
+// 데스크탑(>768px): 모든 칩을 그대로 줄바꿈해 깔끔히 보여준다("+ 더보기" 없음 — RESPONSIVE-FE-004).
+// 모바일(≤768px): 라벨을 칩 위로 올리고, 접힘 상태의 칩을 한 줄로 클립해 필터 영역이
+//   여러 줄로 길어지지 않게 한다(RESPONSIVE-FE-002). 이때만 "+ 더보기"로 아래로 펼친다.
 
-// 접힘 상태에서 노출할 칩 개수. 초과분은 "+ 더보기"로 펼친다.
+// 모바일 접힘 시 한 줄을 넘길 만큼 칩이 많은지 판단하는 기준(이 이상일 때만 '+ 더보기' 노출).
+//   데스크탑은 항상 전부 펼쳐 보여주므로 더보기를 쓰지 않는다.
 const COLLAPSED_COUNT = 5;
 
 const styles = {
@@ -71,6 +73,10 @@ const styles = {
     },
   }),
   more: css({
+    // 데스크탑: 더보기 숨김(모든 칩을 그대로 펼쳐 보여준다 — RESPONSIVE-FE-004).
+    //   모바일(≤768px)에서만 노출해 접힘/펼침을 토글한다.
+    display: 'none',
+    '@media (max-width: 768px)': { display: 'block' },
     flexShrink: 0,
     alignSelf: 'flex-start',
     fontSize: 'sm',
@@ -96,7 +102,8 @@ function FilterRow({ label, options, selected, onToggle }: FilterRowProps) {
   const [showAll, setShowAll] = useState(false);
   // 더보기 버튼(aria-expanded)이 제어하는 칩 목록을 aria-controls로 연결하기 위한 고유 id.
   const listId = useId();
-  const visible = showAll ? options : options.slice(0, COLLAPSED_COUNT);
+  // 칩은 항상 전부 렌더한다. 데스크탑은 그대로 줄바꿈해 보여주고, 모바일 접힘 상태에선
+  //   chipsCollapsed(nowrap+overflow hidden)로 한 줄만 노출하다가 '+ 더보기'로 펼친다.
   const hasMore = options.length > COLLAPSED_COUNT;
 
   return (
@@ -107,7 +114,7 @@ function FilterRow({ label, options, selected, onToggle }: FilterRowProps) {
           id={listId}
           className={cx(styles.chips, !showAll && styles.chipsCollapsed)}
         >
-          {visible.map((option) => {
+          {options.map((option) => {
             const on = selected.includes(option);
             return (
               <Chip
