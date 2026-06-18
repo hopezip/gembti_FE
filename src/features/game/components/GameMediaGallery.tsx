@@ -1,45 +1,41 @@
+import { useState } from 'react';
 import type { JSX } from 'react';
+import { Play } from 'lucide-react';
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { css } from 'styled-system/css';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { GameMediaLightbox } from './GameMediaLightbox';
 
 export interface GameMediaGalleryProps {
-  /** 스크린샷 이미지 URL 목록. 0건 + 트레일러 없으면 섹션 전체 숨김. */
   screenshotUrls: string[];
-  /** 트레일러 URL. 있으면 첫 슬라이드에 정적 ▶ 오버레이 박스를 둔다(재생 동작 없음). */
   trailerUrl?: string | null;
 }
 
-// 스크린샷/트레일러 섹션 (REC-DET-FE-001) — Figma 4014:3938 기준.
-// heading.h3 "스크린샷/트레일러" + 게임카드 크기(290px)의 16:9 박스를 swiper 캐러셀로 한 줄 배치.
-// 좌우 화살표 버튼(swiper Navigation)을 눌러 옆으로 넘긴다(터치 드래그도 지원).
-// 트레일러가 있으면 첫 슬라이드를 ▶ 오버레이 박스로 둔다(정적 표시 전용 — 클릭/재생 없음).
-// screenshotUrls 0건이고 trailerUrl도 없으면 섹션 전체를 숨긴다(null 반환).
-// semantic token만 사용, 다른 도메인 import 없음. 런타임 이미지 URL만 style 인라인(Panda 정적 추출 불가).
-
-// swiper 컨테이너 — 기본 파란 화살표 대신 overlay 원형 + fg.default로 커스텀(semantic token).
 const wrapper = css({
   position: 'relative',
   mt: '4',
   '& .swiper-button-next, & .swiper-button-prev': {
-    width: '10',
-    height: '10',
-    borderRadius: 'full',
-    bg: 'bg.overlay',
-    // 프로젝트 강조색(주황) — semantic accent token.
-    color: 'accent.default',
+    width: '36px!',
+    height: '36px!',
+    marginTop: '-18px!',
+    borderRadius: '9999px!',
+    background: 'rgba(0,0,0,0.65)!',
+    color: 'token(colors.accent.default)!',
+    display: 'flex!',
+    alignItems: 'center!',
+    justifyContent: 'center!',
+    '@media (max-width: 640px)': { display: 'none!' },
   },
-  '& .swiper-button-next::after, & .swiper-button-prev::after': {
-    fontSize: 'md',
-    fontWeight: 'bold',
+  '& .swiper-button-next svg, & .swiper-button-prev svg': {
+    width: '20px!',
+    height: '20px!',
+    '@media (max-width: 640px)': { width: '14px!', height: '14px!' },
   },
-  // 더 넘길 곳이 없는 화살표는 숨긴다(끝 도달 시).
   '& .swiper-button-disabled': { opacity: '0', pointerEvents: 'none' },
 });
 
-// 16:9 미디어 박스(=슬라이드). 너비는 swiper가 slidesPerView=4로 계산한다(게임카드 4열 한 칸과 동일).
 const slide = css({
   position: 'relative',
   aspectRatio: '16/9',
@@ -48,9 +44,20 @@ const slide = css({
   backgroundPosition: 'center',
   borderRadius: 'xl',
   overflow: 'hidden',
+  cursor: 'pointer',
+  transition: 'opacity {durations.fast}',
+  _hover: { opacity: '0.85' },
 });
 
-// ▶ 오버레이 — 트레일러 슬라이드 중앙. overlay 배경 + onAccent(흰색) 아이콘. 클릭 동작 없음.
+const slideVideo = css({
+  position: 'absolute',
+  inset: '0',
+  w: 'full',
+  h: 'full',
+  objectFit: 'cover',
+  pointerEvents: 'none',
+});
+
 const playOverlay = css({
   position: 'absolute',
   top: '50%',
@@ -59,68 +66,102 @@ const playOverlay = css({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '12',
-  height: '12',
+  w: '14',
+  h: '14',
   borderRadius: 'full',
-  bg: 'bg.overlay',
-  color: 'fg.onAccent',
-  fontSize: 'xl',
-  lineHeight: 'none',
+  bg: 'rgba(0,0,0,0.65)',
+  color: 'white',
+  backdropFilter: 'blur(4px)',
+  border: '2px solid rgba(255,255,255,0.3)',
+});
+
+const videoBadge = css({
+  position: 'absolute',
+  top: '2',
+  left: '2',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '1',
+  px: '2',
+  py: '0.5',
+  borderRadius: 'md',
+  bg: 'rgba(0,0,0,0.7)',
+  color: 'white',
+  fontSize: 'xs',
+  fontWeight: 'semibold',
+  backdropFilter: 'blur(4px)',
+  letterSpacing: 'wide',
 });
 
 export function GameMediaGallery({
   screenshotUrls,
   trailerUrl,
 }: GameMediaGalleryProps): JSX.Element | null {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   const hasTrailer = Boolean(trailerUrl);
   const hasScreenshots = screenshotUrls.length > 0;
 
-  // 트레일러도 스크린샷도 없으면 섹션을 그리지 않는다.
-  if (!hasTrailer && !hasScreenshots) {
-    return null;
-  }
+  if (!hasTrailer && !hasScreenshots) return null;
+
+  const slides = [...(trailerUrl ? [trailerUrl] : []), ...screenshotUrls];
 
   return (
     <section>
-      {/* 섹션 헤딩 — 기존 카드 그리드와 통일되도록 heading.h3 사용. */}
-      <h3
-        className={css({
-          textStyle: 'heading.h3',
-          color: 'fg.default',
-        })}
-      >
-        스크린샷/트레일러
+      <h3 className={css({ textStyle: 'heading.h3', color: 'fg.default' })}>
+        {hasTrailer ? '스크린샷 / 트레일러' : '스크린샷'}
       </h3>
 
-      {/* 게임카드 크기 슬라이드를 한 줄에 배치하고, 좌우 화살표로 넘긴다. */}
       <div className={wrapper}>
         <Swiper
           modules={[Navigation]}
           navigation
-          slidesPerView={4}
-          spaceBetween={24}
+          breakpoints={{
+            0: { slidesPerView: 1.1, spaceBetween: 12 },
+            640: { slidesPerView: 2, spaceBetween: 16 },
+            1024: { slidesPerView: 4, spaceBetween: 24 },
+          }}
         >
-          {/* 트레일러 슬라이드(옵션) — 첫 칸. ▶ 오버레이는 정적 표시 전용. */}
           {hasTrailer && (
-            <SwiperSlide
-              className={slide}
-              style={{ backgroundImage: `url(${trailerUrl})` }}
-            >
-              <span className={playOverlay}>▶</span>
+            <SwiperSlide className={slide} onClick={() => setLightboxIndex(0)}>
+              <video
+                src={trailerUrl ?? undefined}
+                muted
+                preload="metadata"
+                className={slideVideo}
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.currentTime = 1;
+                }}
+              />
+              <div className={videoBadge}>
+                <Play size={10} fill="currentColor" />
+                동영상
+              </div>
+              <div className={playOverlay}>
+                <Play size={28} fill="currentColor" />
+              </div>
             </SwiperSlide>
           )}
-
-          {/* 스크린샷 슬라이드들 — 런타임 URL은 inline backgroundImage. */}
-          {screenshotUrls.map((url) => (
+          {screenshotUrls.map((url, i) => (
             <SwiperSlide
-              // 스크린샷 URL을 안정 키로 사용(동일 게임 내 URL은 고유).
               key={url}
               className={slide}
               style={{ backgroundImage: `url(${url})` }}
+              onClick={() => setLightboxIndex(hasTrailer ? i + 1 : i)}
             />
           ))}
         </Swiper>
       </div>
+
+      {lightboxIndex !== null && (
+        <GameMediaLightbox
+          slides={slides}
+          index={lightboxIndex}
+          hasTrailer={hasTrailer}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </section>
   );
 }
