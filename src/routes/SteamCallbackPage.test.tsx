@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // 세션 복원 경계(refresh 쿠키 + me)를 모킹해 콜백 3분기를 결정적으로 검증한다(MSW 미설정 단위환경).
 const refreshAccessToken = vi.fn();
 const getMe = vi.fn();
+const getMeRaw = vi.fn();
 const toastCreate = vi.fn();
 const linkSteam = vi.fn();
 
@@ -17,7 +18,11 @@ vi.mock('@/lib/api/steam', () => ({
 }));
 vi.mock('@/services/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/auth')>();
-  return { ...actual, getMe: (...args: unknown[]) => getMe(...args) };
+  return {
+    ...actual,
+    getMe: (...args: unknown[]) => getMe(...args),
+    getMeRaw: (...args: unknown[]) => getMeRaw(...args),
+  };
 });
 vi.mock('@/components/ui/Toast', () => ({
   toaster: { create: (...args: unknown[]) => toastCreate(...args) },
@@ -130,6 +135,49 @@ describe('SteamCallbackPage', () => {
       null,
     );
     expect(useAuthStore.getState().status).toBe('authenticated');
+  });
+
+  it('link 호출이 실패해도 실제로는 연동돼 있으면 성공으로 처리한다(MYPAGE-FE-019)', async () => {
+    // 백엔드가 OpenID success 단계에서 이미 링크해 POST /steam/link가 409를 던지는 상황.
+    //   me.steam_linked=true면 라이브러리는 채워졌으므로 실패 토스트 없이 성공 처리한다.
+    refreshAccessToken.mockResolvedValue('mock-access-token');
+    getMe.mockResolvedValue(MOCK_USER);
+    linkSteam.mockRejectedValue(new Error('409 conflict'));
+    getMeRaw.mockResolvedValue({ steam_linked: true });
+    window.sessionStorage.setItem(
+      STEAM_AUTH_INTENT_STORAGE_KEY,
+      JSON.stringify({ type: 'link', returnTo: '/mypage' }),
+    );
+
+    renderAt('?result=success&steam_id=76561197960287930');
+
+    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(getMeRaw).toHaveBeenCalled();
+    // 성공 토스트만 떴는지(실패 문구가 섞이지 않았는지) 확인한다.
+    expect(toastCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'success' }),
+    );
+    expect(toastCreate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Steam 계정을 연동하지 못했어요' }),
+    );
+  });
+
+  it('link 호출 실패 + 실제로도 미연동이면 실패 토스트 후 복귀한다(MYPAGE-FE-019)', async () => {
+    refreshAccessToken.mockResolvedValue('mock-access-token');
+    getMe.mockResolvedValue(MOCK_USER);
+    linkSteam.mockRejectedValue(new Error('500'));
+    getMeRaw.mockResolvedValue({ steam_linked: false });
+    window.sessionStorage.setItem(
+      STEAM_AUTH_INTENT_STORAGE_KEY,
+      JSON.stringify({ type: 'link', returnTo: '/mypage' }),
+    );
+
+    renderAt('?result=success&steam_id=76561197960287930');
+
+    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(toastCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Steam 계정을 연동하지 못했어요' }),
+    );
   });
 
   it('마이페이지 연동 intent인데 steam_id가 없으면 link 없이 /mypage로 복귀한다', async () => {

@@ -12,7 +12,7 @@ import { linkSteam } from '@/lib/api/steam';
 import { refreshAccessToken } from '@/lib/ky';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store/useAuthStore';
-import { getMe } from '@/services/auth';
+import { getMe, getMeRaw } from '@/services/auth';
 
 // 스팀 OpenID 콜백 기술 라우트 (/steam/callback, Technical). STEAM-INTER-FE-007.
 // 사용자용 화면이 아니라, 백엔드 OpenID 인증 리다이렉트가 떨어지는 착지점이다.
@@ -104,9 +104,31 @@ export function SteamCallbackPage() {
             return;
           }
 
-          await linkSteam({ steam_id: steamId });
+          // POST /steam/link는 OpenID success 단계에서 백엔드가 이미 링크해 409를 던지거나,
+          //   200이어도 응답 본문이 비어 .json() 파싱에서 throw할 수 있다. 두 경우 모두 백엔드엔
+          //   링크가 남아 라이브러리는 채워지므로, 호출이 실패하면 me로 실제 연동 상태를 한 번
+          //   재확인해 이미 연동돼 있으면 성공으로 처리한다(MYPAGE-FE-019).
+          let linked = true;
+          try {
+            await linkSteam({ steam_id: steamId });
+          } catch {
+            linked = await getMeRaw()
+              .then((me) => me.steam_linked)
+              .catch(() => false);
+          }
           if (cancelled) return;
           clearLinkIntent();
+
+          if (!linked) {
+            toaster.create({
+              type: 'error',
+              title: 'Steam 계정을 연동하지 못했어요',
+              description: '잠시 후 다시 시도해주세요.',
+            });
+            navigate(returnTo, { replace: true });
+            return;
+          }
+
           await Promise.all([
             queryClient.invalidateQueries({
               queryKey: ['mypage', 'profile'],
