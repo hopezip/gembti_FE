@@ -13,6 +13,7 @@ import {
   BIRTH_MIN_DATE,
   getMaxBirthDateForSignup,
   NICKNAME_MAX_LENGTH,
+  nicknameSchema,
   type SignupStep2Input,
   signupStep2Schema,
 } from '@/lib/schemas/auth';
@@ -98,12 +99,16 @@ export function EmailVerificationForm({
   // 코드 영역 에러(verify 실패) — RHF 필드 에러와 별개로 둔다.
   const [codeError, setCodeError] = useState<string | null>(null);
   // 닉네임 중복확인 상태(보조용) — 가입을 막지 않고 안내만 한다.
+  //   'error'는 409 외 실패(400/422/네트워크) — 무반응 대신 안내를 띄운다(LOGIN-FE-017).
   const [nicknameCheck, setNicknameCheck] = useState<
-    'idle' | 'checking' | 'available' | 'taken'
+    'idle' | 'checking' | 'available' | 'taken' | 'error'
   >('idle');
   const cooldown = useResendCooldown();
 
   const nickname = watch('nickname') ?? '';
+  // 닉네임이 스키마(2~8자, 특수기호 불가)를 통과할 때만 중복확인을 호출한다 — 1글자·형식 위반값을
+  //   서버로 보내 400/422 무반응이 나는 걸 막는다(LOGIN-FE-017).
+  const isNicknameValid = nicknameSchema.safeParse(nickname.trim()).success;
 
   // 만 15세 미만 라이브 차단 — 입력값을 즉시 읽어 안내/제출 비활성에 반영한다.
   const birthValue = watch('birth') ?? '';
@@ -113,13 +118,14 @@ export function EmailVerificationForm({
   // 닉네임 중복 확인 — 기존 MSW 핸들러 재사용(실서버 엔드포인트 없음).
   async function checkNickname() {
     const value = nickname.trim();
-    if (!value) return;
+    if (!isNicknameValid) return;
     setNicknameCheck('checking');
     try {
       const res = await checkNicknameApi(value);
       setNicknameCheck(res.available ? 'available' : 'taken');
     } catch {
-      setNicknameCheck('idle');
+      // 409 외 실패(형식 거부/네트워크) — 무반응 대신 에러 안내.
+      setNicknameCheck('error');
     }
   }
 
@@ -376,7 +382,7 @@ export function EmailVerificationForm({
             variant="secondary"
             onClick={checkNickname}
             disabled={
-              isSubmitting || nicknameCheck === 'checking' || !nickname.trim()
+              isSubmitting || nicknameCheck === 'checking' || !isNicknameValid
             }
           >
             {nicknameCheck === 'checking' ? '확인 중…' : '중복 확인'}
@@ -390,6 +396,11 @@ export function EmailVerificationForm({
         {nicknameCheck === 'taken' && (
           <span className={css({ textStyle: 'body.sm', color: 'danger.fg' })}>
             이미 사용 중인 닉네임이에요
+          </span>
+        )}
+        {nicknameCheck === 'error' && (
+          <span className={css({ textStyle: 'body.sm', color: 'danger.fg' })}>
+            확인 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.
           </span>
         )}
       </div>

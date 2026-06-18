@@ -5,10 +5,17 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Input } from '@/components/ui/Input';
 import { updateMyProfile } from '@/features/mypage/api/mypage';
+import { nicknameSchema } from '@/lib/schemas/auth';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { checkNickname as checkNicknameApi } from '@/services/users';
 
-type NicknameCheckStatus = 'idle' | 'checking' | 'available' | 'taken';
+// 'error'는 409 외 실패(400/422/네트워크) — 무반응 대신 안내를 띄운다(LOGIN-FE-017).
+type NicknameCheckStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'taken'
+  | 'error';
 
 interface Props {
   profile: MockUserProfile;
@@ -46,14 +53,18 @@ export function BasicInfoCard({ profile }: Props) {
     setIsEditMode(true);
   }
 
+  // 닉네임이 스키마(2~8자, 특수기호 불가)를 통과할 때만 중복확인을 호출한다(LOGIN-FE-017).
+  const isNicknameValid = nicknameSchema.safeParse(nickname.trim()).success;
+
   async function checkNickname() {
-    if (!nickname.trim()) return;
+    if (!isNicknameValid) return;
     setNicknameCheck('checking');
     try {
       const res = await checkNicknameApi(nickname.trim());
       setNicknameCheck(res.available ? 'available' : 'taken');
     } catch {
-      setNicknameCheck('idle');
+      // 409 외 실패(형식 거부/네트워크) — 무반응 대신 에러 안내.
+      setNicknameCheck('error');
     }
   }
 
@@ -180,7 +191,7 @@ export function BasicInfoCard({ profile }: Props) {
                     onClick={checkNickname}
                     disabled={
                       nicknameCheck === 'checking' ||
-                      !nickname.trim() ||
+                      !isNicknameValid ||
                       !nicknameChanged
                     }
                   >
@@ -194,11 +205,15 @@ export function BasicInfoCard({ profile }: Props) {
                     mt: '1',
                     fontSize: 'xs',
                     color:
-                      nicknameCheck === 'taken' ? 'danger.fg' : 'green.500',
+                      nicknameCheck === 'taken' || nicknameCheck === 'error'
+                        ? 'danger.fg'
+                        : 'green.500',
                   })}
                 >
                   {nicknameCheck === 'available' && '사용 가능한 닉네임입니다'}
                   {nicknameCheck === 'taken' && '이미 사용 중인 닉네임입니다'}
+                  {nicknameCheck === 'error' &&
+                    '확인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'}
                 </span>
               </div>
             ) : (
