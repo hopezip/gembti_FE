@@ -44,6 +44,7 @@ const unlinkedProfile: MockUserProfile = {
   avatarUrl: null,
   joinedAt: '2024.11',
   isPublic: true,
+  loginProvider: 'email',
   steamConnected: false,
   steamId: null,
   steamNickname: null,
@@ -141,6 +142,25 @@ describe('SteamConnectCard', () => {
     expect(
       screen.queryByRole('button', { name: '라이브러리 재동기화' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('Steam 소셜로그인 계정에는 연동 해제 버튼이 없고 재동기화만 보인다', () => {
+    renderCard({ ...connectedProfile, loginProvider: 'steam' });
+
+    expect(
+      screen.queryByRole('button', { name: '연동 해제' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '라이브러리 재동기화' }),
+    ).toBeInTheDocument();
+  });
+
+  it('email 가입 + Steam 연동 계정에는 연동 해제 버튼이 보인다', () => {
+    renderCard({ ...connectedProfile, loginProvider: 'email' });
+
+    expect(
+      screen.getByRole('button', { name: '연동 해제' }),
+    ).toBeInTheDocument();
   });
 
   it('연동 상태에서 재동기화 버튼을 누르면 syncSteam을 호출한다', async () => {

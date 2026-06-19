@@ -183,7 +183,7 @@ export function LibrarySection() {
           >
             내 라이브러리
           </h2>
-          {library && (
+          {library && !isLibraryPrivate && (
             <span className={css({ fontSize: 'sm', color: 'fg.subtle' })}>
               {total}개
             </span>
@@ -300,30 +300,31 @@ export function LibrarySection() {
             />
           ))}
         </div>
+      ) : isLibraryPrivate ? (
+        // 비공개면 잔여 게임 데이터(직전 공개 시점)를 신뢰할 수 없어 그리드 대신 안내를 우선한다.
+        <EmptyState
+          type="party"
+          title="비공개 처리된 라이브러리예요"
+          description="Steam 프로필의 게임 세부정보가 비공개로 설정돼 있어 라이브러리를 가져올 수 없어요. 아래 버튼으로 Steam 프로필 설정에서 게임 세부정보를 공개로 바꾸면 자동으로 동기화돼요."
+          action={
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() =>
+                window.open(
+                  STEAM_PRIVACY_SETTINGS_URL,
+                  '_blank',
+                  'noopener,noreferrer',
+                )
+              }
+            >
+              Steam 공개 설정 열기
+            </Button>
+          }
+        />
       ) : filtered.length === 0 ? (
         search ? (
           <EmptyState type="search" target={search} />
-        ) : isLibraryPrivate ? (
-          <EmptyState
-            type="party"
-            title="게임 세부정보가 비공개예요"
-            description="Steam 프로필의 게임 세부정보가 비공개로 설정돼 있어 라이브러리를 가져오지 못했어요. Steam에서 게임 세부정보를 공개로 바꾸면 자동으로 동기화돼요."
-            action={
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() =>
-                  window.open(
-                    STEAM_PRIVACY_SETTINGS_URL,
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                Steam 공개 설정 열기
-              </Button>
-            }
-          />
         ) : (
           <EmptyState
             type="party"

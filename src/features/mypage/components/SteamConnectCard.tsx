@@ -189,55 +189,57 @@ export function SteamConnectCard({ profile }: Props) {
               </Button>
             )}
 
-            {/* 연동 해제 — 클릭 시 인라인 확인 단계를 거친다(오작동 방지). */}
-            {!confirming ? (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setConfirming(true)}
-              >
-                연동 해제
-              </Button>
-            ) : (
-              <div
-                className={css({
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '3',
-                  p: '3',
-                  bg: 'bg.surfaceRaised',
-                  borderRadius: 'lg',
-                })}
-              >
-                <p className={css({ fontSize: 'xs', color: 'fg.muted' })}>
-                  Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.
-                </p>
+            {/* 연동 해제 — Steam 소셜로그인 계정은 해제 불가(백엔드 정책)라 버튼을 노출하지 않는다.
+                email 가입 + Steam 연동 계정만 해제할 수 있다. */}
+            {profile.loginProvider !== 'steam' &&
+              (!confirming ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setConfirming(true)}
+                >
+                  연동 해제
+                </Button>
+              ) : (
                 <div
                   className={css({
                     display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '2',
+                    flexDirection: 'column',
+                    gap: '3',
+                    p: '3',
+                    bg: 'bg.surfaceRaised',
+                    borderRadius: 'lg',
                   })}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setConfirming(false)}
-                    disabled={disconnect.isPending}
+                  <p className={css({ fontSize: 'xs', color: 'fg.muted' })}>
+                    Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.
+                  </p>
+                  <div
+                    className={css({
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '2',
+                    })}
                   >
-                    취소
-                  </Button>
-                  <Button
-                    variant="dangerSolid"
-                    size="sm"
-                    onClick={() => disconnect.mutate()}
-                    disabled={disconnect.isPending}
-                  >
-                    {disconnect.isPending ? '해제 중...' : '연동 해제'}
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirming(false)}
+                      disabled={disconnect.isPending}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      variant="dangerSolid"
+                      size="sm"
+                      onClick={() => disconnect.mutate()}
+                      disabled={disconnect.isPending}
+                    >
+                      {disconnect.isPending ? '해제 중...' : '연동 해제'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
           </div>
         </>
       ) : (

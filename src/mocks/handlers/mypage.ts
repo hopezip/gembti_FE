@@ -10,6 +10,8 @@ export interface MockUserProfile {
   avatarUrl: string | null;
   joinedAt: string;
   isPublic: boolean;
+  // 로그인 수단(email | steam). steam 소셜로그인 계정은 연동 해제 불가(백엔드 정책).
+  loginProvider: 'email' | 'steam' | null;
   steamConnected: boolean;
   steamId: string | null;
   steamNickname: string | null;
@@ -41,6 +43,7 @@ const MOCK_PROFILE: MockUserProfile = {
   avatarUrl: null,
   joinedAt: '2024.11',
   isPublic: true,
+  loginProvider: 'steam',
   steamConnected: true,
   steamId: 'My_Steam_ID',
   steamNickname: 'My_Steam_ID',
