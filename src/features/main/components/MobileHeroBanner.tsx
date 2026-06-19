@@ -21,7 +21,8 @@ const styles = {
   content: css({
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    textAlign: 'center',
     py: '10',
   }),
   // 상단 라벨 — Sparkles 아이콘 + 안내 카피(기존 HeroBanner와 동일).
@@ -35,10 +36,13 @@ const styles = {
     color: 'fg.muted',
   }),
   labelIcon: css({ color: 'accent.default', flexShrink: 0 }),
-  // 헤드라인 — display 폰트(데스크탑 54px)를 모바일 6xl(30px)로(기존 모바일 분기와 동일 크기).
+  // 헤드라인 — 한 줄(nowrap) 유지를 위해 폭에 비례하는 반응형 크기(clamp).
+  //   카드 1열 구간(<640px, ~320~639px)에서 "당신의 다음 인생 게임을 찾아보세요"가
+  //   줄바꿈 없이 한 줄에 들어가도록 5.6vw로 스케일(최소 17px·최대 32px로 캡).
   headline: css({
     textStyle: 'display.lg',
-    fontSize: '6xl',
+    fontSize: 'clamp(17px, 5.6vw, 32px)',
+    whiteSpace: 'nowrap',
     color: 'fg.default',
     lineHeight: 'tight',
   }),
@@ -64,10 +68,7 @@ export function MobileHeroBanner() {
         </p>
 
         <h1 className={styles.headline}>
-          당신의 <span className={styles.accentWord}>다음</span>
-          <br />
-          인생 게임을
-          <br />
+          당신의 <span className={styles.accentWord}>다음</span> 인생 게임을
           찾아보세요
         </h1>
 
