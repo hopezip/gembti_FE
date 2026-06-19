@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { css } from 'styled-system/css';
-import { vstack } from 'styled-system/patterns';
 import { button } from 'styled-system/recipes';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { getMyProfile } from '@/features/mypage/api/mypage';
 import { ProfileHeader } from '@/features/mypage/components/ProfileHeader';
 import { BasicInfoCard } from '@/features/mypage/components/BasicInfoCard';
@@ -24,7 +24,7 @@ export function MyPage() {
 
   if (isLoading) {
     return (
-      <div className={css({ maxW: '1200px', mx: 'auto', px: '6', py: '8' })}>
+      <PageContainer className={css({ py: '8' })}>
         <div
           className={css({
             display: 'flex',
@@ -64,20 +64,19 @@ export function MyPage() {
             />
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (isError || !profile) {
     return (
-      <div
-        className={vstack({
-          maxW: '1200px',
-          mx: 'auto',
-          px: '6',
+      <PageContainer
+        className={css({
           py: '20',
-          gap: '4',
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
+          gap: '4',
           color: 'fg.subtle',
         })}
       >
@@ -90,16 +89,13 @@ export function MyPage() {
         >
           {isFetching ? '불러오는 중…' : '다시 시도'}
         </button>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div
+    <PageContainer
       className={css({
-        maxW: '1200px',
-        mx: 'auto',
-        px: '6',
         py: '8',
         display: 'flex',
         flexDirection: 'column',
@@ -126,6 +122,6 @@ export function MyPage() {
       <LibrarySection />
 
       <WithdrawalSection />
-    </div>
+    </PageContainer>
   );
 }
