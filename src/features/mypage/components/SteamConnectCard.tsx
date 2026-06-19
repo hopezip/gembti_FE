@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
@@ -9,6 +10,16 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 interface Props {
   profile: MockUserProfile;
 }
+
+// 스팀 OpenID 복귀 결과 — SteamCallbackPage가 navigate state로 전달한다(STEAM-INTER-FE-009).
+//   토스트는 금방 사라져 사용자가 놓치므로, 버튼 옆에 영구 인라인 텍스트로 결과를 명시한다.
+export type SteamLinkStatus = 'success' | 'already_linked' | 'failed';
+
+const STEAM_LINK_STATUS_MESSAGE: Record<SteamLinkStatus, string> = {
+  success: 'Steam 계정이 연동됐어요.',
+  already_linked: '이미 다른 계정에 연동된 Steam 계정이에요.',
+  failed: 'Steam 인증에 실패했어요. 다시 시도해주세요.',
+};
 
 function relativeTime(isoStr: string): string {
   const diff = Date.now() - new Date(isoStr).getTime();
@@ -22,6 +33,10 @@ function relativeTime(isoStr: string): string {
 }
 
 export function SteamConnectCard({ profile }: Props) {
+  const location = useLocation();
+  const linkStatus = (location.state as { steamLinkStatus?: SteamLinkStatus })
+    ?.steamLinkStatus;
+
   const startSteamLink = () => {
     setSteamLinkAuthIntent('/mypage');
     window.location.assign(STEAM_AUTH_START_URL);
@@ -124,6 +139,20 @@ export function SteamConnectCard({ profile }: Props) {
             Steam 연동하기
           </Button>
         </div>
+      )}
+
+      {linkStatus && (
+        <p
+          role="status"
+          className={css({
+            mt: '3',
+            fontSize: 'xs',
+            textAlign: 'center',
+            color: linkStatus === 'success' ? 'success.fg' : 'danger.fg',
+          })}
+        >
+          {STEAM_LINK_STATUS_MESSAGE[linkStatus]}
+        </p>
       )}
     </Card>
   );

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // 세션 복원 경계(refresh 쿠키 + me)를 모킹해 콜백 3분기를 결정적으로 검증한다(MSW 미설정 단위환경).
@@ -32,6 +32,14 @@ import { useAuthStore } from '@/lib/store/useAuthStore';
 import { STEAM_AUTH_INTENT_STORAGE_KEY } from '@/features/onboarding/lib/steamAuthIntent';
 import { SteamCallbackPage } from './SteamCallbackPage';
 
+// 연동 intent 복귀 시 navigate state(steamLinkStatus)를 텍스트로 노출해 단언한다.
+function MyPageProbe() {
+  const location = useLocation();
+  const status = (location.state as { steamLinkStatus?: string } | null)
+    ?.steamLinkStatus;
+  return <div>{status ? `MYPAGE ${status}` : 'MYPAGE'}</div>;
+}
+
 function renderAt(search: string) {
   return render(
     <MemoryRouter initialEntries={[`/steam/callback${search}`]}>
@@ -41,7 +49,7 @@ function renderAt(search: string) {
         <Route path="/" element={<div>HOME</div>} />
         <Route path="/survey/intro" element={<div>SURVEY INTRO</div>} />
         <Route path="/login" element={<div>LOGIN</div>} />
-        <Route path="/mypage" element={<div>MYPAGE</div>} />
+        <Route path="/mypage" element={<MyPageProbe />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -127,7 +135,7 @@ describe('SteamCallbackPage', () => {
 
     renderAt('?result=success&steam_id=76561197960287930');
 
-    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(await screen.findByText('MYPAGE success')).toBeInTheDocument();
     expect(linkSteam).toHaveBeenCalledWith({
       steam_id: '76561197960287930',
     });
@@ -135,6 +143,23 @@ describe('SteamCallbackPage', () => {
       null,
     );
     expect(useAuthStore.getState().status).toBe('authenticated');
+  });
+
+  it('마이페이지 연동 intent + 이미 다른 계정에 연동됨 → already_linked 결과로 /mypage 복귀', async () => {
+    window.sessionStorage.setItem(
+      STEAM_AUTH_INTENT_STORAGE_KEY,
+      JSON.stringify({ type: 'link', returnTo: '/mypage' }),
+    );
+
+    renderAt('?result=failed&reason=steam_already_linked');
+
+    expect(
+      await screen.findByText('MYPAGE already_linked'),
+    ).toBeInTheDocument();
+    expect(toastCreate).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem(STEAM_AUTH_INTENT_STORAGE_KEY)).toBe(
+      null,
+    );
   });
 
   it('link 호출이 실패해도 실제로는 연동돼 있으면 성공으로 처리한다(MYPAGE-FE-019)', async () => {
@@ -151,18 +176,13 @@ describe('SteamCallbackPage', () => {
 
     renderAt('?result=success&steam_id=76561197960287930');
 
-    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(await screen.findByText('MYPAGE success')).toBeInTheDocument();
     expect(getMeRaw).toHaveBeenCalled();
-    // 성공 토스트만 떴는지(실패 문구가 섞이지 않았는지) 확인한다.
-    expect(toastCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' }),
-    );
-    expect(toastCreate).not.toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Steam 계정을 연동하지 못했어요' }),
-    );
+    // 연동 흐름은 토스트가 아니라 인라인 결과로만 알린다.
+    expect(toastCreate).not.toHaveBeenCalled();
   });
 
-  it('link 호출 실패 + 실제로도 미연동이면 실패 토스트 후 복귀한다(MYPAGE-FE-019)', async () => {
+  it('link 호출 실패 + 실제로도 미연동이면 실패 결과로 복귀한다(MYPAGE-FE-019)', async () => {
     refreshAccessToken.mockResolvedValue('mock-access-token');
     getMe.mockResolvedValue(MOCK_USER);
     linkSteam.mockRejectedValue(new Error('500'));
@@ -174,10 +194,8 @@ describe('SteamCallbackPage', () => {
 
     renderAt('?result=success&steam_id=76561197960287930');
 
-    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
-    expect(toastCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Steam 계정을 연동하지 못했어요' }),
-    );
+    expect(await screen.findByText('MYPAGE failed')).toBeInTheDocument();
+    expect(toastCreate).not.toHaveBeenCalled();
   });
 
   it('마이페이지 연동 intent인데 steam_id가 없으면 link 없이 /mypage로 복귀한다', async () => {
@@ -190,9 +208,9 @@ describe('SteamCallbackPage', () => {
 
     renderAt('?result=success');
 
-    expect(await screen.findByText('MYPAGE')).toBeInTheDocument();
+    expect(await screen.findByText('MYPAGE failed')).toBeInTheDocument();
     expect(linkSteam).not.toHaveBeenCalled();
-    expect(toastCreate).toHaveBeenCalled();
+    expect(toastCreate).not.toHaveBeenCalled();
     expect(window.sessionStorage.getItem(STEAM_AUTH_INTENT_STORAGE_KEY)).toBe(
       null,
     );

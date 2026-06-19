@@ -4,6 +4,7 @@ import { css } from 'styled-system/css';
 import { vstack } from 'styled-system/patterns';
 import { toaster } from '@/components/ui/Toast';
 import { safeRedirect } from '@/features/auth/lib/safeRedirect';
+import type { SteamLinkStatus } from '@/features/mypage/components/SteamConnectCard';
 import {
   clearSteamAuthIntent,
   readSteamAuthIntent,
@@ -22,6 +23,9 @@ import { getMe, getMeRaw } from '@/services/auth';
 //   - result=signup_required  → 신규 유저. Steam 신규 가입은 미지원이라(LOGIN-FE-014)
 //                               "이메일로 가입" 안내 토스트 후 /signup으로 돌린다.
 //   - result=failed (그 외)   → 인증 실패. 사유를 토스트로 알리고 로그인으로.
+// 마이페이지 연동 intent일 때는 토스트 대신 결과(success/already_linked/failed)를 returnTo로
+//   navigate state(steamLinkStatus)로 넘겨, SteamConnectCard가 버튼 옆에 영구 텍스트로 명시한다
+//   (STEAM-INTER-FE-009 — 토스트가 금방 사라져 결과를 놓치던 문제).
 // 모두 replace 이동이라 뒤로가기 시 콜백 URL이 히스토리에 남지 않는다.
 export function SteamCallbackPage() {
   const navigate = useNavigate();
@@ -38,31 +42,44 @@ export function SteamCallbackPage() {
       if (isLinkIntent) clearSteamAuthIntent();
     }
 
+    // 연동 결과를 returnTo로 넘긴다 — SteamConnectCard가 인라인 텍스트로 보여준다.
+    function navigateLinkResult(status: SteamLinkStatus) {
+      navigate(returnTo, { replace: true, state: { steamLinkStatus: status } });
+    }
+
     // 신규 유저 — Steam 신규 가입은 미지원이다(LOGIN-FE-014). 가입 화면으로 보내지 않고
     //   이메일 회원가입을 안내한 뒤 /signup으로 돌린다(Steam 로그인은 기존 유저 전용).
     if (result === 'signup_required') {
+      clearLinkIntent();
+      if (isLinkIntent) {
+        navigateLinkResult('failed');
+        return;
+      }
       toaster.create({
         type: 'error',
         title: 'Steam으로는 가입할 수 없어요',
-        description: isLinkIntent
-          ? 'Steam 계정 확인 결과를 연동할 수 없어요. 다시 시도해주세요.'
-          : '이메일로 회원가입해주세요.',
+        description: '이메일로 회원가입해주세요.',
       });
-      clearLinkIntent();
-      navigate(isLinkIntent ? returnTo : '/signup', { replace: true });
+      navigate('/signup', { replace: true });
       return;
     }
 
-    // 실패(또는 알 수 없는 결과) — 사유를 알리고 로그인으로.
+    // 실패(또는 알 수 없는 결과) — 연동 intent면 인라인 결과로, 아니면 토스트 후 로그인으로.
     if (result !== 'success') {
       const reason = searchParams.get('reason');
+      clearLinkIntent();
+      if (isLinkIntent) {
+        navigateLinkResult(
+          reason === 'steam_already_linked' ? 'already_linked' : 'failed',
+        );
+        return;
+      }
       toaster.create({
         type: 'error',
         title: 'Steam 인증에 실패했어요',
         description: reason ? `사유: ${reason}` : '잠시 후 다시 시도해주세요.',
       });
-      clearLinkIntent();
-      navigate(isLinkIntent ? returnTo : '/login', { replace: true });
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -95,12 +112,7 @@ export function SteamCallbackPage() {
 
           if (!steamId || !/^\d{17}$/.test(steamId)) {
             clearLinkIntent();
-            toaster.create({
-              type: 'error',
-              title: 'Steam 연동 정보를 확인할 수 없어요',
-              description: '다시 시도해주세요.',
-            });
-            navigate(returnTo, { replace: true });
+            navigateLinkResult('failed');
             return;
           }
 
@@ -120,12 +132,7 @@ export function SteamCallbackPage() {
           clearLinkIntent();
 
           if (!linked) {
-            toaster.create({
-              type: 'error',
-              title: 'Steam 계정을 연동하지 못했어요',
-              description: '잠시 후 다시 시도해주세요.',
-            });
-            navigate(returnTo, { replace: true });
+            navigateLinkResult('failed');
             return;
           }
 
@@ -137,12 +144,7 @@ export function SteamCallbackPage() {
               queryKey: ['mypage', 'library'],
             }),
           ]);
-          toaster.create({
-            type: 'success',
-            title: 'Steam 계정이 연동됐어요',
-            description: '라이브러리를 다시 불러오고 있어요.',
-          });
-          navigate(returnTo, { replace: true });
+          navigateLinkResult('success');
           return;
         }
 
@@ -153,17 +155,17 @@ export function SteamCallbackPage() {
         });
       } catch {
         if (cancelled) return;
+        clearLinkIntent();
+        if (isLinkIntent) {
+          navigateLinkResult('failed');
+          return;
+        }
         toaster.create({
           type: 'error',
-          title: isLinkIntent
-            ? 'Steam 계정을 연동하지 못했어요'
-            : '사용자 정보를 불러오지 못했어요',
-          description: isLinkIntent
-            ? '잠시 후 다시 시도해주세요.'
-            : '다시 로그인해주세요.',
+          title: '사용자 정보를 불러오지 못했어요',
+          description: '다시 로그인해주세요.',
         });
-        clearLinkIntent();
-        navigate(isLinkIntent ? returnTo : '/login', { replace: true });
+        navigate('/login', { replace: true });
       }
     })();
     return () => {
