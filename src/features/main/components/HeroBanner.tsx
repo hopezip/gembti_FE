@@ -32,13 +32,12 @@ const styles = {
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    // 모바일(≤768px): 높이를 콘텐츠 기준으로 둔다.
-    // RESPONSIVE-FE-003의 aspectRatio(3/2)는 375px에서 높이를 ~250px로 강제했는데,
-    // 콘텐츠(라벨+헤드라인+피처+CTA 2개)는 ~317px라 section의 overflow:hidden에 위·아래가 잘렸다
-    // (CTA 버튼이 안 보이는 버그). aspectRatio를 제거하고 상하 패딩만 둬서 콘텐츠 높이에 맞게 늘린다(RESPONSIVE-FE-004).
+    // 모바일(≤768px): 360px 폭에서도 헤드라인과 CTA가 잘리지 않도록 최소 높이를 확보한다(#272).
+    // RESPONSIVE-FE-005로 <640px(카드 1열)는 MobileHeroBanner가 대신 노출되므로,
+    // 이 풀블리드 배너의 모바일 분기는 실질적으로 640~768px 구간에만 적용된다.
     '@media (max-width: 768px)': {
-      minH: 'auto',
-      py: '10',
+      minH: '340px',
+      py: '8',
     },
   }),
   // ① 배경 레이어 — 단색 fallback. 실제 배경은 위에 겹치는 HeroBackgroundCarousel이 담당(MAIN-FE-009).

@@ -43,16 +43,28 @@ export function WithdrawalSection() {
   });
 
   return (
-    <Card padding="md">
+    <Card
+      padding="md"
+      className={css({
+        '@media (max-width: 768px)': {
+          p: '3',
+        },
+      })}
+    >
       <div
         className={css({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: '4',
+          '@media (max-width: 768px)': {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: '3',
+          },
         })}
       >
-        <div>
+        <div className={css({ minW: 0 })}>
           <p
             className={css({
               fontSize: 'sm',
@@ -71,6 +83,12 @@ export function WithdrawalSection() {
             variant="dangerSolid"
             size="sm"
             onClick={() => setConfirming(true)}
+            className={css({
+              flexShrink: 0,
+              '@media (max-width: 768px)': {
+                alignSelf: 'flex-end',
+              },
+            })}
           >
             회원 탈퇴
           </Button>
