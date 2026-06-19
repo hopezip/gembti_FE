@@ -1,9 +1,13 @@
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
+import { toaster } from '@/components/ui/Toast';
 import { STEAM_AUTH_START_URL } from '@/config/steam';
+import { disconnectSteam } from '@/features/mypage/api/mypage';
 import { setSteamLinkAuthIntent } from '@/features/onboarding/lib/steamAuthIntent';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
@@ -36,11 +40,38 @@ export function SteamConnectCard({ profile }: Props) {
   const location = useLocation();
   const linkStatus = (location.state as { steamLinkStatus?: SteamLinkStatus })
     ?.steamLinkStatus;
+  const queryClient = useQueryClient();
+  // 연동 해제 확인 단계(WithdrawalSection과 동일한 인라인 확인 패턴, 별도 모달 컴포넌트 없음).
+  const [confirming, setConfirming] = useState(false);
 
   const startSteamLink = () => {
     setSteamLinkAuthIntent('/mypage');
     window.location.assign(STEAM_AUTH_START_URL);
   };
+
+  // 연동 해제 — 성공 시 프로필/라이브러리를 재조회해 auth/me 실값 기준으로 갱신한다.
+  const disconnect = useMutation({
+    mutationFn: disconnectSteam,
+    onSuccess: async () => {
+      setConfirming(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['mypage', 'library'] }),
+      ]);
+      toaster.create({
+        type: 'success',
+        title: 'Steam 연동을 해제했어요',
+        description: '연동된 라이브러리 정보가 사라집니다.',
+      });
+    },
+    onError: () => {
+      toaster.create({
+        type: 'error',
+        title: 'Steam 연동 해제에 실패했어요',
+        description: '잠시 후 다시 시도해주세요.',
+      });
+    },
+  });
 
   return (
     <Card padding="md" className={css({ h: 'full' })}>
@@ -115,6 +146,56 @@ export function SteamConnectCard({ profile }: Props) {
               </p>
             </div>
           </div>
+
+          {/* 연동 해제 — 클릭 시 인라인 확인 단계를 거친다(오작동 방지). */}
+          {!confirming ? (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirming(true)}
+            >
+              연동 해제
+            </Button>
+          ) : (
+            <div
+              className={css({
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3',
+                p: '3',
+                bg: 'bg.surfaceRaised',
+                borderRadius: 'lg',
+              })}
+            >
+              <p className={css({ fontSize: 'xs', color: 'fg.muted' })}>
+                Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.
+              </p>
+              <div
+                className={css({
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '2',
+                })}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirming(false)}
+                  disabled={disconnect.isPending}
+                >
+                  취소
+                </Button>
+                <Button
+                  variant="dangerSolid"
+                  size="sm"
+                  onClick={() => disconnect.mutate()}
+                  disabled={disconnect.isPending}
+                >
+                  {disconnect.isPending ? '해제 중...' : '연동 해제'}
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div

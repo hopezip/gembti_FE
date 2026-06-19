@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -7,14 +8,27 @@ import { STEAM_AUTH_INTENT_STORAGE_KEY } from '@/features/onboarding/lib/steamAu
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { SteamConnectCard } from './SteamConnectCard';
 
+const disconnectSteam = vi.fn<() => Promise<void>>();
+vi.mock('@/features/mypage/api/mypage', () => ({
+  disconnectSteam: () => disconnectSteam(),
+}));
+vi.mock('@/components/ui/Toast', () => ({
+  toaster: { create: vi.fn() },
+}));
+
 function renderCard(
   profile: MockUserProfile,
   state?: { steamLinkStatus: string },
 ) {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={[{ pathname: '/mypage', state }]}>
-      <SteamConnectCard profile={profile} />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[{ pathname: '/mypage', state }]}>
+        <SteamConnectCard profile={profile} />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -48,8 +62,19 @@ const unlinkedProfile: MockUserProfile = {
   personality: [],
 };
 
+const connectedProfile: MockUserProfile = {
+  ...unlinkedProfile,
+  steamConnected: true,
+  steamId: 'My_Steam_ID',
+  steamNickname: 'My_Steam_ID',
+  steamSyncedAt: '2025-05-28T10:30:00Z',
+  steamSyncStatus: 'success',
+};
+
 beforeEach(() => {
   assign.mockClear();
+  disconnectSteam.mockReset();
+  disconnectSteam.mockResolvedValue(undefined);
   window.sessionStorage.clear();
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -101,5 +126,50 @@ describe('SteamConnectCard', () => {
     expect(
       screen.queryByText('Steam 인증에 실패했어요. 다시 시도해주세요.'),
     ).not.toBeInTheDocument();
+  });
+
+  it('미연동 상태에서는 연동 해제 버튼이 보이지 않는다', () => {
+    renderCard(unlinkedProfile);
+
+    expect(
+      screen.queryByRole('button', { name: '연동 해제' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('연동 상태에서 해제 버튼 클릭 → 확인 단계를 거쳐 disconnectSteam을 호출한다', async () => {
+    const user = userEvent.setup();
+    renderCard(connectedProfile);
+
+    // 1단계: 해제 버튼 노출
+    await user.click(screen.getByRole('button', { name: '연동 해제' }));
+
+    // 2단계: 확인 안내 + 취소/해제 버튼 노출, 아직 호출 전
+    expect(
+      screen.getByText(
+        'Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.',
+      ),
+    ).toBeInTheDocument();
+    expect(disconnectSteam).not.toHaveBeenCalled();
+
+    // 3단계: 확인하면 disconnectSteam 호출
+    const confirmButtons = screen.getAllByRole('button', { name: '연동 해제' });
+    await user.click(confirmButtons[confirmButtons.length - 1]);
+
+    expect(disconnectSteam).toHaveBeenCalledTimes(1);
+  });
+
+  it('확인 단계에서 취소하면 호출 없이 닫힌다', async () => {
+    const user = userEvent.setup();
+    renderCard(connectedProfile);
+
+    await user.click(screen.getByRole('button', { name: '연동 해제' }));
+    await user.click(screen.getByRole('button', { name: '취소' }));
+
+    expect(
+      screen.queryByText(
+        'Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.',
+      ),
+    ).not.toBeInTheDocument();
+    expect(disconnectSteam).not.toHaveBeenCalled();
   });
 });

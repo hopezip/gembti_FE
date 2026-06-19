@@ -178,6 +178,14 @@ export async function withdrawMe(body: WithdrawRequest): Promise<void> {
 
 // 스팀 수동 재동기화 제거됨 (MYPAGE-FE-011): 라이브에서 POST /steam/sync 삭제(404), 자동 동기화로 대체.
 
+// POST /api/v1/mypage/steam/disconnect — 스팀 연동 해제(MYPAGE-FE-021).
+//   ⚠️ 백엔드 미구현(openapi.draft.json의 frontend-draft 계약) — 추가되면 즉시 동작한다.
+//   응답(MyPageProfile)은 쓰지 않고, 호출부가 프로필/라이브러리 쿼리를 무효화해
+//   실서버 auth/me 기준으로 재조회한다(SteamCallbackPage 연동 흐름과 대칭).
+export async function disconnectSteam(): Promise<void> {
+  await api.post('api/v1/mypage/steam/disconnect');
+}
+
 // 내 라이브러리 — 전용 엔드포인트가 없어 GET /auth/me의 steam_library.games(보유 게임 전체)를 쓴다(MYPAGE-FE-012).
 //   장르 필터/검색/정렬/페이지네이션은 서버가 안 해주므로 호출부(LibrarySection)가 클라이언트에서 처리한다.
 export async function getMyLibrary(): Promise<LibraryGame[]> {
