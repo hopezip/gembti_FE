@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useMutation } from '@tanstack/react-query';
 import {
   BarChart3,
   ExternalLink,
   Folder,
   type LucideIcon,
-  Minus,
   Search,
   Send,
   Sparkles,
@@ -230,14 +231,6 @@ export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
         </div>
         <button
           type="button"
-          aria-label="챗봇 최소화"
-          onClick={onClose}
-          className={iconBtnCss}
-        >
-          <Minus size={18} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
           aria-label="챗봇 닫기"
           onClick={onClose}
           className={iconBtnCss}
@@ -426,7 +419,7 @@ function MessageRow({
 
   // 봇: 아바타 + 콘텐츠
   let content: React.ReactNode = null;
-  if (message.kind === 'text') content = <Bubble>{message.text}</Bubble>;
+  if (message.kind === 'text') content = <Bubble text={message.text} />;
   else if (message.kind === 'chips')
     content = <Chips onPick={onChip} disabled={chipsDisabled} />;
   else if (message.kind === 'progress')
@@ -459,7 +452,8 @@ function MessageRow({
   );
 }
 
-function Bubble({ children }: { children: React.ReactNode }) {
+// 봇 텍스트 버블 — 응답을 마크다운으로 렌더(굵게/리스트/링크/코드블럭/줄바꿈).
+function Bubble({ text }: { text: string }) {
   return (
     <div
       className={css({
@@ -467,18 +461,73 @@ function Bubble({ children }: { children: React.ReactNode }) {
         py: '2.5',
         borderRadius: 'xl',
         borderTopLeftRadius: 'sm',
-        fontSize: 'sm',
-        lineHeight: 'snug',
-        whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         bg: 'bg.surfaceRaised',
         color: 'fg.default',
       })}
     >
-      {children}
+      <Markdown text={text} />
     </div>
   );
 }
+
+// 링크만 새 탭으로 안전하게 열도록 덮어쓰고, 나머지 스타일은 mdRootCss의 자식 선택자로 처리한다.
+const mdComponents: Components = {
+  a: ({ children, href }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ),
+};
+
+function Markdown({ text }: { text: string }) {
+  return (
+    <div className={mdRootCss}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+        {text}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+// 마크다운 산출 HTML을 챗 버블 톤(작은 폰트·다크)에 맞춰 스타일링. 단일 줄바꿈 보존은 p/li의 pre-wrap.
+const mdRootCss = css({
+  fontSize: 'sm',
+  lineHeight: 'snug',
+  color: 'fg.default',
+  '& p': { whiteSpace: 'pre-wrap' },
+  '& p:not(:last-child)': { mb: '2' },
+  '& ul, & ol': { pl: '5', my: '1' },
+  '& ul': { listStyleType: 'disc' },
+  '& ol': { listStyleType: 'decimal' },
+  '& li': { whiteSpace: 'pre-wrap', mb: '0.5' },
+  '& a': { color: 'accent.fg', textDecoration: 'underline' },
+  '& strong': { fontWeight: 'bold' },
+  '& em': { fontStyle: 'italic' },
+  '& code': {
+    fontFamily: 'monospace',
+    fontSize: '0.85em',
+    bg: 'bg.canvas',
+    px: '1',
+    py: '0.5',
+    borderRadius: 'sm',
+  },
+  '& pre': {
+    my: '2',
+    p: '3',
+    bg: 'bg.canvas',
+    borderRadius: 'md',
+    overflowX: 'auto',
+  },
+  '& pre code': { p: '0', bg: 'transparent', fontSize: 'xs' },
+  '& h1, & h2, & h3': { fontWeight: 'bold', my: '1' },
+  '& blockquote': {
+    borderLeft: '2px solid',
+    borderColor: 'border.default',
+    pl: '3',
+    color: 'fg.muted',
+  },
+});
 
 function Chips({
   onPick,
