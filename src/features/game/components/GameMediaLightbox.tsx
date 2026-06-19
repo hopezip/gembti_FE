@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
 import { css, cx } from 'styled-system/css';
+import { Button } from '@/components/ui/Button';
 
 export interface GameMediaLightboxProps {
   slides: string[];
@@ -161,6 +162,22 @@ const thumbPlayOverlay = css({
   color: 'white',
 });
 
+const navBtnShared = {
+  position: 'absolute' as const,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  zIndex: '2',
+  borderRadius: 'full',
+  w: '10',
+  h: '10',
+  px: '0',
+  bg: 'rgba(0,0,0,0.6)',
+  borderColor: 'rgba(255,255,255,0.2)',
+  color: 'accent.default',
+  _hover: { bg: 'rgba(0,0,0,0.85)' },
+  '@media (max-width: 768px)': { display: 'none' },
+};
+
 const counter = css({
   display: 'flex',
   alignItems: 'center',
@@ -272,6 +289,33 @@ export function GameMediaLightbox({
               />
             </>
           )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            css={{ ...navBtnShared, left: '3' }}
+            disabled={!canPrev}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(index - 1);
+            }}
+            aria-label="이전"
+          >
+            <ChevronLeft size={20} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            css={{ ...navBtnShared, right: '3' }}
+            disabled={!canNext}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(index + 1);
+            }}
+            aria-label="다음"
+          >
+            <ChevronRight size={20} />
+          </Button>
         </div>
 
         <div className={thumbnails}>

@@ -137,87 +137,126 @@ export function PersonalityRadar({ personality }: Props) {
         </Button>
       </div>
 
-      {/* 차트 + 범례 */}
-      <div className={css({ display: 'flex', gap: '4', alignItems: 'center' })}>
+      {/* 차트 + 범례 — PC: 좌우 / 모바일: 상하 */}
+      <div
+        className={css({
+          display: 'flex',
+          gap: '16',
+          alignItems: 'center',
+          justifyContent: 'center',
+          '@media (max-width: 520px)': {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: '3',
+          },
+        })}
+      >
         {/* SVG 레이더 */}
-        <svg
-          width={CX * 2}
-          height={CY * 2}
-          viewBox={`0 0 ${CX * 2} ${CY * 2}`}
-          style={{ flexShrink: 0 }}
-          role="img"
-          aria-label="6대 성향 레이더 차트"
+        <div
+          className={css({
+            flexShrink: 0,
+            w: '220px',
+            '@media (max-width: 520px)': {
+              w: 'full',
+              maxW: '240px',
+              mx: 'auto',
+            },
+          })}
         >
-          {/* 배경 격자 */}
-          {LEVELS.map((level) => (
-            <polygon
-              key={level}
-              points={hexPoints(level)}
-              fill="none"
-              stroke={GRID_COLOR}
-              strokeWidth="1"
-            />
-          ))}
-
-          {/* 축선 */}
-          {personality.map((p, i) => {
-            const outer = pt(i, 1.0);
-            return (
-              <line
-                key={p.label}
-                x1={CX}
-                y1={CY}
-                x2={outer.x}
-                y2={outer.y}
-                stroke={AXIS_COLOR}
+          <svg
+            viewBox={`0 0 ${CX * 2} ${CY * 2}`}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+            role="img"
+            aria-label="6대 성향 레이더 차트"
+          >
+            {/* 배경 격자 */}
+            {LEVELS.map((level) => (
+              <polygon
+                key={level}
+                points={hexPoints(level)}
+                fill="none"
+                stroke={GRID_COLOR}
                 strokeWidth="1"
               />
-            );
-          })}
+            ))}
 
-          {/* 값 폴리곤 */}
-          <polygon
-            points={valuePts}
-            fill={ACCENT_COLOR}
-            fillOpacity="0.35"
-            stroke={ACCENT_COLOR}
-            strokeWidth="2"
-          />
+            {/* 축선 */}
+            {personality.map((p, i) => {
+              const outer = pt(i, 1.0);
+              return (
+                <line
+                  key={p.label}
+                  x1={CX}
+                  y1={CY}
+                  x2={outer.x}
+                  y2={outer.y}
+                  stroke={AXIS_COLOR}
+                  strokeWidth="1"
+                />
+              );
+            })}
 
-          {/* 값 점 */}
-          {personality.map((p, i) => {
-            const { x, y } = pt(i, p.value / 10);
-            return (
-              <circle key={p.label} cx={x} cy={y} r="3.5" fill={ACCENT_COLOR} />
-            );
-          })}
+            {/* 값 폴리곤 */}
+            <polygon
+              points={valuePts}
+              fill={ACCENT_COLOR}
+              fillOpacity="0.35"
+              stroke={ACCENT_COLOR}
+              strokeWidth="2"
+            />
 
-          {/* 축 레이블 */}
-          {personality.map((p, i) => {
-            const { x, y } = pt(i, 1.18);
-            const { textAnchor, dx, dy } = labelProps(i);
-            return (
-              <text
-                key={p.label}
-                x={x + dx}
-                y={y + dy}
-                textAnchor={textAnchor}
-                fontSize="11"
-                fill="rgba(255,255,255,0.65)"
-              >
-                {p.label}
-              </text>
-            );
-          })}
-        </svg>
+            {/* 값 점 */}
+            {personality.map((p, i) => {
+              const { x, y } = pt(i, p.value / 10);
+              return (
+                <circle
+                  key={p.label}
+                  cx={x}
+                  cy={y}
+                  r="3.5"
+                  fill={ACCENT_COLOR}
+                />
+              );
+            })}
+
+            {/* 축 레이블 */}
+            {personality.map((p, i) => {
+              const { x, y } = pt(i, 1.18);
+              const { textAnchor, dx, dy } = labelProps(i);
+              return (
+                <text
+                  key={p.label}
+                  className={css({
+                    fontSize: '14px',
+                    '@media (max-width: 520px)': { fontSize: '11px' },
+                  })}
+                  x={x + dx}
+                  y={y + dy}
+                  textAnchor={textAnchor}
+                  fill="rgba(255,255,255,0.65)"
+                >
+                  {p.label}
+                </text>
+              );
+            })}
+          </svg>
+        </div>
 
         {/* 범례 */}
         <div
           className={css({
             display: 'flex',
             flexDirection: 'column',
-            gap: '1.5',
-            flex: 1,
+            gap: '4',
+            flexShrink: 0,
+            minW: 'max-content',
+            '@media (max-width: 520px)': {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, max-content)',
+              justifyContent: 'center',
+              justifyItems: 'start',
+              minW: 0,
+            },
           })}
         >
           {personality.map((p) => (
@@ -227,6 +266,7 @@ export function PersonalityRadar({ personality }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '2',
+                minW: 'max-content',
               })}
             >
               <span
@@ -239,7 +279,12 @@ export function PersonalityRadar({ personality }: Props) {
                 }}
               />
               <span
-                className={css({ fontSize: 'xs', color: 'fg.subtle', flex: 1 })}
+                className={css({
+                  fontSize: 'xs',
+                  color: 'fg.subtle',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                })}
               >
                 {p.label}
               </span>
@@ -248,6 +293,7 @@ export function PersonalityRadar({ personality }: Props) {
                   fontSize: 'xs',
                   color: 'fg.default',
                   fontWeight: 'medium',
+                  flexShrink: 0,
                 })}
               >
                 {p.value * 10}

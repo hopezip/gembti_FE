@@ -30,12 +30,9 @@ const styles = {
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    // 모바일(≤768px): 고정 높이(380px)를 풀고 폭 기준 비율 + 상하 패딩으로 콘텐츠에 타이트하게 맞춘다.
-    // 배경을 contain으로 전체 노출하는 RESPONSIVE-FE-002 이후, 고정 높이가 남겨두던 위아래 레터박스
-    // 여백을 비율 기반으로 축소한다(RESPONSIVE-FE-003). 텍스트가 비율 높이보다 크면 자연히 늘어난다.
+    // 모바일(≤768px): 360px 폭에서도 헤드라인과 CTA가 잘리지 않도록 최소 높이를 확보한다.
     '@media (max-width: 768px)': {
-      minH: 'auto',
-      aspectRatio: '3 / 2',
+      minH: '340px',
       py: '8',
     },
   }),

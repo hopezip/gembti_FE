@@ -200,6 +200,9 @@ export function LibrarySection() {
           mb: '4',
           gap: '3',
           flexWrap: 'wrap',
+          '@media (max-width: 768px)': {
+            alignItems: 'stretch',
+          },
         })}
       >
         {/* 장르 Chip + 정렬 */}
@@ -209,6 +212,10 @@ export function LibrarySection() {
             alignItems: 'center',
             gap: '2',
             flexWrap: 'wrap',
+            '@media (max-width: 768px)': {
+              w: 'full',
+              justifyContent: 'space-between',
+            },
           })}
         >
           <Chip
@@ -251,9 +258,20 @@ export function LibrarySection() {
         </div>
 
         {/* 검색 */}
-        <form onSubmit={handleSearch} className={css({ w: '52' })}>
+        <form
+          onSubmit={handleSearch}
+          className={css({
+            w: '52',
+            '@media (max-width: 768px)': { w: 'full' },
+          })}
+        >
           <SearchInput
             size="sm"
+            className={css({
+              '@media (max-width: 768px)': {
+                py: '4.5',
+              },
+            })}
             aria-label="내 라이브러리 검색"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
