@@ -5,6 +5,7 @@ import { button } from 'styled-system/recipes';
 import { pageContainer, pageGutter } from '@/components/layout/PageContainer';
 import { useBannerImages } from '@/features/main/api/bannerImages';
 import { HeroBackgroundCarousel } from '@/features/main/components/HeroBackgroundCarousel';
+import { MobileHeroBanner } from '@/features/main/components/MobileHeroBanner';
 
 // MAIN-FE-001 비로그인 메인 Hero 배너 (Figma Hero 387:4742).
 // 구조(3층): ① 배경(추천 첫 1건 커버 이미지 또는 그라데이션 placeholder)
@@ -26,11 +27,14 @@ const styles = {
     position: 'relative',
     overflow: 'hidden',
     minH: '460px', // Figma Hero 높이
-    display: 'flex',
+    // sm(640px) 이상에서만 풀블리드 배너 노출. 미만(카드 1열)에서는 MobileHeroBanner가 대신 노출(RESPONSIVE-FE-005).
+    display: { base: 'none', sm: 'flex' },
     alignItems: 'center',
     borderBottom: '1px solid',
     borderColor: 'border.default',
-    // 모바일(≤768px): 360px 폭에서도 헤드라인과 CTA가 잘리지 않도록 최소 높이를 확보한다.
+    // 모바일(≤768px): 360px 폭에서도 헤드라인과 CTA가 잘리지 않도록 최소 높이를 확보한다(#272).
+    // RESPONSIVE-FE-005로 <640px(카드 1열)는 MobileHeroBanner가 대신 노출되므로,
+    // 이 풀블리드 배너의 모바일 분기는 실질적으로 640~768px 구간에만 적용된다.
     '@media (max-width: 768px)': {
       minH: '340px',
       py: '8',
@@ -143,7 +147,8 @@ const styles = {
   }),
 };
 
-export function HeroBanner() {
+// 풀블리드 배너(데스크탑·sm 이상). 좁은 폭(<sm)에서는 display:none으로 숨고 MobileHeroBanner가 대신 노출된다.
+function DesktopHeroBanner() {
   // 배경은 캐러셀(인기 상위 5개 커버, 10초 자동 전환)이 담당한다 (MAIN-FE-009).
   const bannerImages = useBannerImages();
 
@@ -213,5 +218,17 @@ export function HeroBanner() {
         </div>
       </div>
     </section>
+  );
+}
+
+// 메인 히어로 — 화면 폭에 따라 모바일 텍스트형(<sm)과 풀블리드(sm+)를 스왑한다(RESPONSIVE-FE-005).
+// 카드 그리드(GameGridSection)와 동일한 sm(640px) 기준이라 "카드 1열 ↔ 텍스트 히어로"가 항상 함께 전환된다.
+// 둘 다 마크업하고 CSS display로만 토글(JS 분기 없음 → SSR/초기 렌더 깜빡임 없음).
+export function HeroBanner() {
+  return (
+    <>
+      <MobileHeroBanner />
+      <DesktopHeroBanner />
+    </>
   );
 }

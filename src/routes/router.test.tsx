@@ -63,9 +63,12 @@ describe('라우트 골격', () => {
   it('메인 경로(/)가 MainPage Hero 배너(MAIN-FE-001)를 렌더한다', () => {
     // '/'는 PlaceholderPage 대신 MainPage(HeroBanner)를 렌더한다.
     // 배너 텍스트는 추천 데이터 로딩/에러와 무관하게 항상 렌더되므로 <h1>로 검증한다.
+    // RESPONSIVE-FE-005: 히어로는 모바일(텍스트형)/데스크탑(풀블리드) 두 변형을 동시에 마크업하고
+    // CSS display로만 토글한다(런타임은 한쪽만 노출). jsdom은 CSS를 계산하지 않아 <h1>이 둘 다
+    // 잡히므로 getAllByRole로 받아 1개 이상 렌더됨을 검증한다.
     renderAt('/');
     expect(
-      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+      screen.getAllByRole('heading', { name: /인생 게임을 찾아보세요/ })[0],
     ).toBeInTheDocument();
   });
 
@@ -84,7 +87,7 @@ describe('라우트 골격', () => {
     renderAt('/');
     // 배너는 게스트와 통일된 HeroBanner(MAIN-FE-011). 개인화 여부는 추천 섹션 제목으로 구분한다.
     expect(
-      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+      screen.getAllByRole('heading', { name: /인생 게임을 찾아보세요/ })[0],
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '설문 다시하기' }),
@@ -111,7 +114,7 @@ describe('라우트 골격', () => {
     renderAt('/');
     // 게스트 Hero 카피가 보이고, 개인화 Hero/추천 제목은 없다.
     expect(
-      screen.getByRole('heading', { name: /인생 게임을 찾아보세요/ }),
+      screen.getAllByRole('heading', { name: /인생 게임을 찾아보세요/ })[0],
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '설문 진행하기' }),
