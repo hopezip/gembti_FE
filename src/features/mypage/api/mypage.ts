@@ -138,6 +138,7 @@ export async function getMyProfile(): Promise<MockUserProfile> {
     email: me.email,
     bio: me.bio ?? '',
     avatarUrl: me.steam_avatar_url ?? null,
+    loginProvider: me.login_provider ?? null,
     steamConnected: me.steam_linked,
     steamId: me.steam_id_64 ?? null,
     steamNickname: me.steam_id_64 ?? null,

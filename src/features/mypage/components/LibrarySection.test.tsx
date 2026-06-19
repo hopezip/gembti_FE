@@ -50,6 +50,32 @@ describe('LibrarySection 비공개 안내 (MYPAGE-FE-020)', () => {
     openSpy.mockRestore();
   });
 
+  it('비공개 상태면 게임이 남아 있어도 그리드 대신 비공개 안내를 보여준다', async () => {
+    getMyLibraryMock.mockResolvedValue([
+      {
+        id: 1,
+        title: 'Left 4 Dead 2',
+        genres: ['액션'],
+        thumbnailUrl: null,
+        playHours: 0,
+        rating: null,
+        lastPlayedAt: null,
+      },
+    ]);
+    getMyProfileMock.mockResolvedValue({
+      steamConnected: true,
+      steamSyncStatus: 'private',
+    });
+
+    renderSection();
+
+    expect(
+      await screen.findByRole('button', { name: 'Steam 공개 설정 열기' }),
+    ).toBeInTheDocument();
+    // 잔여 게임이 있어도 비공개면 목록을 노출하지 않는다.
+    expect(screen.queryByText('Left 4 Dead 2')).not.toBeInTheDocument();
+  });
+
   it('연동 안 된 빈 라이브러리에는 Steam 공개 설정 버튼이 없다', async () => {
     getMyLibraryMock.mockResolvedValue([]);
     getMyProfileMock.mockResolvedValue({
