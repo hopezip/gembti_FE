@@ -178,6 +178,13 @@ export async function withdrawMe(body: WithdrawRequest): Promise<void> {
 
 // 스팀 수동 재동기화 제거됨 (MYPAGE-FE-011): 라이브에서 POST /steam/sync 삭제(404), 자동 동기화로 대체.
 
+// POST /api/v1/steam/sync — 스팀 라이브러리 수동 재동기화(MYPAGE-FE-022).
+//   라이브 백엔드 실 계약(SteamSyncResponse). 응답은 쓰지 않고, 호출부가 프로필/라이브러리
+//   쿼리를 무효화해 실서버 auth/me 기준으로 재조회한다.
+export async function syncSteam(): Promise<void> {
+  await api.post('api/v1/steam/sync');
+}
+
 // DELETE /api/v1/steam/unlink — 스팀 연동 해제(MYPAGE-FE-021).
 //   라이브 백엔드 실 계약(steam/link와 대칭). 응답은 쓰지 않고, 호출부가 프로필/라이브러리
 //   쿼리를 무효화해 실서버 auth/me 기준으로 재조회한다(SteamCallbackPage 연동 흐름과 대칭).

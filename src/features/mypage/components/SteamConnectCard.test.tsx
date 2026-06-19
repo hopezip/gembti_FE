@@ -9,8 +9,10 @@ import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { SteamConnectCard } from './SteamConnectCard';
 
 const unlinkSteam = vi.fn<() => Promise<void>>();
+const syncSteam = vi.fn<() => Promise<void>>();
 vi.mock('@/features/mypage/api/mypage', () => ({
   unlinkSteam: () => unlinkSteam(),
+  syncSteam: () => syncSteam(),
 }));
 vi.mock('@/components/ui/Toast', () => ({
   toaster: { create: vi.fn() },
@@ -75,6 +77,8 @@ beforeEach(() => {
   assign.mockClear();
   unlinkSteam.mockReset();
   unlinkSteam.mockResolvedValue(undefined);
+  syncSteam.mockReset();
+  syncSteam.mockResolvedValue(undefined);
   window.sessionStorage.clear();
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -128,12 +132,26 @@ describe('SteamConnectCard', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('미연동 상태에서는 연동 해제 버튼이 보이지 않는다', () => {
+  it('미연동 상태에서는 연동 해제/재동기화 버튼이 보이지 않는다', () => {
     renderCard(unlinkedProfile);
 
     expect(
       screen.queryByRole('button', { name: '연동 해제' }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '라이브러리 재동기화' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('연동 상태에서 재동기화 버튼을 누르면 syncSteam을 호출한다', async () => {
+    const user = userEvent.setup();
+    renderCard(connectedProfile);
+
+    await user.click(
+      screen.getByRole('button', { name: '라이브러리 재동기화' }),
+    );
+
+    expect(syncSteam).toHaveBeenCalledTimes(1);
   });
 
   it('연동 상태에서 해제 버튼 클릭 → 확인 단계를 거쳐 unlinkSteam을 호출한다', async () => {
