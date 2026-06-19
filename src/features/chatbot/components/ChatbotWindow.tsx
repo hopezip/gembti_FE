@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useMutation } from '@tanstack/react-query';
 import {
   BarChart3,
@@ -119,22 +120,29 @@ export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
   });
 
   // delta 도착 — 첫 조각이면 새 봇 버블을 만들고, 이후엔 그 버블에 이어붙인다.
+  //   flushSync로 감싸 매 delta를 즉시 커밋한다. 스트림 읽기 루프는 read()가 버퍼된 데이터를
+  //   즉시 반환하는 구간에서 setState가 React 18 자동 배칭으로 한 번에 묶여(= 타이핑이 뭉텅이로
+  //   보임) 버리므로, 배칭을 깨 도착 즉시 한 글자씩 반영되게 한다.
   function handleDelta(chunk: string) {
-    if (streamingId.current === null) {
-      const id = nextId.current++;
-      streamingId.current = id;
-      setMessages((prev) => [
-        ...prev,
-        { id, role: 'bot', kind: 'text', text: chunk },
-      ]);
-    } else {
-      const id = streamingId.current;
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === id && m.kind === 'text' ? { ...m, text: m.text + chunk } : m,
-        ),
-      );
-    }
+    flushSync(() => {
+      if (streamingId.current === null) {
+        const id = nextId.current++;
+        streamingId.current = id;
+        setMessages((prev) => [
+          ...prev,
+          { id, role: 'bot', kind: 'text', text: chunk },
+        ]);
+      } else {
+        const id = streamingId.current;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === id && m.kind === 'text'
+              ? { ...m, text: m.text + chunk }
+              : m,
+          ),
+        );
+      }
+    });
   }
 
   // 특정 봇 텍스트 메시지의 본문을 통째로 교체(최종 확정·에러 표시용).
