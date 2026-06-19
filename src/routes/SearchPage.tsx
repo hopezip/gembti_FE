@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -109,8 +109,15 @@ export function SearchPage() {
   const [accumulated, setAccumulated] = useState<SearchGameSummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // 선택 필터는 URL 쿼리(genre/category, 다중값)에 저장한다 → 새로고침·상세페이지 뒤로가기에도 유지된다.
+  const selectedGenres = useMemo(
+    () => searchParams.getAll('genre'),
+    [searchParams],
+  );
+  const selectedCategories = useMemo(
+    () => searchParams.getAll('category'),
+    [searchParams],
+  );
 
   // URL 변경 시 입력창 동기화
   useEffect(() => {
@@ -128,16 +135,7 @@ export function SearchPage() {
     return () => clearTimeout(timer);
   }, [inputValue, query, setSearchParams]);
 
-  // 검색어 변경 시 선택 필터 리셋(새 검색어엔 이전 필터를 끌고 가지 않는다)
-  // ⚠️ 이미 비어 있으면 새 배열을 만들지 않는다(SEARCH-FE-006). 매번 새 [] 참조를 내면
-  //   아래 누적 리셋 이펙트(selectedGenres/Categories 의존)가 다음 커밋에서 한 번 더 돌아
-  //   이미 채워진 accumulated를 또 비우는데, 누적 이펙트는 캐시된 data라 재실행되지 않아
-  //   목록만 빈 채로 남는다(캐시된 검색어 재검색 시 결과가 안 보이는 버그).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: query 변경에만 반응하는 reset 이펙트
-  useEffect(() => {
-    setSelectedGenres((prev) => (prev.length ? [] : prev));
-    setSelectedCategories((prev) => (prev.length ? [] : prev));
-  }, [query]);
+  // 새 검색어로 바꾸면(아래 setSearchParams가 q만 남김) 필터 쿼리가 URL에서 빠지면서 자동 리셋된다.
 
   // 검색어/필터 변경 시 페이지·누적 리셋 → 서버사이드로 1페이지부터 재요청
   // biome-ignore lint/correctness/useExhaustiveDependencies: 검색 조건 변경에만 반응하는 reset 이펙트
@@ -164,19 +162,26 @@ export function SearchPage() {
     setHasMore(data.hasMore);
   }, [data]);
 
-  function toggleGenre(genre: string) {
-    setSelectedGenres((prev) =>
-      prev.includes(genre) ? prev.filter((x) => x !== genre) : [...prev, genre],
+  // genre/category 다중값을 URL에서 토글한다(다른 파라미터는 보존, 히스토리 누적 방지로 replace).
+  function toggleParam(key: 'genre' | 'category', value: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const current = next.getAll(key);
+        next.delete(key);
+        const updated = current.includes(value)
+          ? current.filter((x) => x !== value)
+          : [...current, value];
+        for (const v of updated) next.append(key, v);
+        return next;
+      },
+      { replace: true },
     );
   }
 
-  function toggleCategory(category: string) {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((x) => x !== category)
-        : [...prev, category],
-    );
-  }
+  const toggleGenre = (genre: string) => toggleParam('genre', genre);
+  const toggleCategory = (category: string) =>
+    toggleParam('category', category);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
