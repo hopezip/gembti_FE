@@ -86,20 +86,63 @@ export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const nextId = useRef(1000);
+  // 현재 스트리밍 중인 봇 메시지 id(첫 delta에서 생성, 완료/실패 시 null로 리셋).
+  const streamingId = useRef<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const initials = (userName.trim().slice(0, 2) || '나').toUpperCase();
 
   const mutation = useMutation({
-    mutationFn: (message: string) => sendChatMessage({ message, sessionId }),
+    mutationFn: (message: string) => {
+      streamingId.current = null;
+      return sendChatMessage({ message, sessionId }, handleDelta);
+    },
     onSuccess: (reply) => {
       setSessionId(reply.sessionId);
-      appendText('bot', reply.message);
+      // 스트리밍으로 만든 버블이 있으면 최종 확정 텍스트(final.answer)로 교체, 없으면 새 버블.
+      if (streamingId.current !== null) {
+        setBotText(streamingId.current, reply.message);
+      } else {
+        appendText('bot', reply.message);
+      }
+      streamingId.current = null;
     },
     onError: () => {
-      appendText('bot', '전송에 실패했어요. 잠시 후 다시 시도해주세요.');
+      const errorText = '전송에 실패했어요. 잠시 후 다시 시도해주세요.';
+      if (streamingId.current !== null) {
+        setBotText(streamingId.current, errorText);
+      } else {
+        appendText('bot', errorText);
+      }
+      streamingId.current = null;
     },
   });
+
+  // delta 도착 — 첫 조각이면 새 봇 버블을 만들고, 이후엔 그 버블에 이어붙인다.
+  function handleDelta(chunk: string) {
+    if (streamingId.current === null) {
+      const id = nextId.current++;
+      streamingId.current = id;
+      setMessages((prev) => [
+        ...prev,
+        { id, role: 'bot', kind: 'text', text: chunk },
+      ]);
+    } else {
+      const id = streamingId.current;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === id && m.kind === 'text' ? { ...m, text: m.text + chunk } : m,
+        ),
+      );
+    }
+  }
+
+  // 특정 봇 텍스트 메시지의 본문을 통째로 교체(최종 확정·에러 표시용).
+  function setBotText(id: number, text: string) {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id && m.kind === 'text' ? { ...m, text } : m)),
+    );
+  }
 
   function appendText(role: 'user' | 'bot', text: string) {
     setMessages((prev) => [
@@ -237,7 +280,8 @@ export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
           />
         ))}
 
-        {mutation.isPending && <TypingRow />}
+        {/* 첫 delta가 오기 전까지만 타이핑 점 표시(이후엔 실시간으로 채워지는 버블이 대신함). */}
+        {mutation.isPending && streamingId.current === null && <TypingRow />}
       </div>
 
       {/* 입력창 */}
