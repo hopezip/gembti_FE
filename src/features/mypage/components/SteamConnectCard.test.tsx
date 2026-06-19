@@ -8,9 +8,11 @@ import { STEAM_AUTH_INTENT_STORAGE_KEY } from '@/features/onboarding/lib/steamAu
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 import { SteamConnectCard } from './SteamConnectCard';
 
-const disconnectSteam = vi.fn<() => Promise<void>>();
+const unlinkSteam = vi.fn<() => Promise<void>>();
+const syncSteam = vi.fn<() => Promise<void>>();
 vi.mock('@/features/mypage/api/mypage', () => ({
-  disconnectSteam: () => disconnectSteam(),
+  unlinkSteam: () => unlinkSteam(),
+  syncSteam: () => syncSteam(),
 }));
 vi.mock('@/components/ui/Toast', () => ({
   toaster: { create: vi.fn() },
@@ -73,8 +75,10 @@ const connectedProfile: MockUserProfile = {
 
 beforeEach(() => {
   assign.mockClear();
-  disconnectSteam.mockReset();
-  disconnectSteam.mockResolvedValue(undefined);
+  unlinkSteam.mockReset();
+  unlinkSteam.mockResolvedValue(undefined);
+  syncSteam.mockReset();
+  syncSteam.mockResolvedValue(undefined);
   window.sessionStorage.clear();
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -128,15 +132,29 @@ describe('SteamConnectCard', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('미연동 상태에서는 연동 해제 버튼이 보이지 않는다', () => {
+  it('미연동 상태에서는 연동 해제/재동기화 버튼이 보이지 않는다', () => {
     renderCard(unlinkedProfile);
 
     expect(
       screen.queryByRole('button', { name: '연동 해제' }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '라이브러리 재동기화' }),
+    ).not.toBeInTheDocument();
   });
 
-  it('연동 상태에서 해제 버튼 클릭 → 확인 단계를 거쳐 disconnectSteam을 호출한다', async () => {
+  it('연동 상태에서 재동기화 버튼을 누르면 syncSteam을 호출한다', async () => {
+    const user = userEvent.setup();
+    renderCard(connectedProfile);
+
+    await user.click(
+      screen.getByRole('button', { name: '라이브러리 재동기화' }),
+    );
+
+    expect(syncSteam).toHaveBeenCalledTimes(1);
+  });
+
+  it('연동 상태에서 해제 버튼 클릭 → 확인 단계를 거쳐 unlinkSteam을 호출한다', async () => {
     const user = userEvent.setup();
     renderCard(connectedProfile);
 
@@ -149,13 +167,13 @@ describe('SteamConnectCard', () => {
         'Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.',
       ),
     ).toBeInTheDocument();
-    expect(disconnectSteam).not.toHaveBeenCalled();
+    expect(unlinkSteam).not.toHaveBeenCalled();
 
-    // 3단계: 확인하면 disconnectSteam 호출
+    // 3단계: 확인하면 unlinkSteam 호출
     const confirmButtons = screen.getAllByRole('button', { name: '연동 해제' });
     await user.click(confirmButtons[confirmButtons.length - 1]);
 
-    expect(disconnectSteam).toHaveBeenCalledTimes(1);
+    expect(unlinkSteam).toHaveBeenCalledTimes(1);
   });
 
   it('확인 단계에서 취소하면 호출 없이 닫힌다', async () => {
@@ -170,6 +188,6 @@ describe('SteamConnectCard', () => {
         'Steam 연동을 해제하면 연동된 라이브러리 정보가 사라집니다.',
       ),
     ).not.toBeInTheDocument();
-    expect(disconnectSteam).not.toHaveBeenCalled();
+    expect(unlinkSteam).not.toHaveBeenCalled();
   });
 });
