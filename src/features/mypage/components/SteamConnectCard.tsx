@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/GameCard';
 import { Tag } from '@/components/ui/Tag';
 import { toaster } from '@/components/ui/Toast';
 import { STEAM_AUTH_START_URL } from '@/config/steam';
-import { disconnectSteam } from '@/features/mypage/api/mypage';
+import { unlinkSteam } from '@/features/mypage/api/mypage';
 import { setSteamLinkAuthIntent } from '@/features/onboarding/lib/steamAuthIntent';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
 
@@ -51,7 +51,7 @@ export function SteamConnectCard({ profile }: Props) {
 
   // 연동 해제 — 성공 시 프로필/라이브러리를 재조회해 auth/me 실값 기준으로 갱신한다.
   const disconnect = useMutation({
-    mutationFn: disconnectSteam,
+    mutationFn: unlinkSteam,
     onSuccess: async () => {
       setConfirming(false);
       await Promise.all([
