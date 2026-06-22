@@ -20,6 +20,8 @@ export function MyPage() {
   } = useQuery({
     queryKey: ['mypage', 'profile'],
     queryFn: getMyProfile,
+    // 진입마다 최신화 — 프로필 수정·스팀 동기화 직후 옛 값 방지 (MYPAGE-FE-023). 전역 60s는 불변.
+    staleTime: 0,
   });
 
   if (isLoading) {
