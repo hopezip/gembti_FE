@@ -67,9 +67,9 @@ const styles = {
   // 모바일 접힘 상태: 칩을 스크롤 없는 한 줄로(넘치는 칩은 가리고 '+ 더보기'로 펼침 — RESPONSIVE-FE-002).
   chipsCollapsed: css({
     '@media (max-width: 768px)': {
-      flexWrap: 'nowrap',
+      flexWrap: 'nowrap!',
       overflow: 'hidden',
-      '& > *': { flexShrink: '0' },
+      '& > *': { flexShrink: '0', transition: 'none' },
     },
   }),
   more: css({
