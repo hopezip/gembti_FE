@@ -104,14 +104,21 @@ export function MyPage() {
     >
       <ProfileHeader profile={profile} />
 
-      {/* 3컬럼 동등 크기 (모바일 ≤768px: 1열 — RESPONSIVE-FE-001) */}
+      {/* PC: 3열 / 태블릿(≤1024px): 기본정보 상단 풀폭 + 하단 2열 / 모바일(≤768px): 1열 */}
       <div
         className={css({
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '4',
           alignItems: 'stretch',
-          '@media (max-width: 768px)': { gridTemplateColumns: '1fr' },
+          '& > *': { minWidth: 0 },
+          '@media (max-width: 1024px)': {
+            gridTemplateColumns: '1fr 1fr',
+            '& > *:first-child': { gridColumn: '1 / -1' },
+          },
+          '@media (max-width: 768px)': {
+            gridTemplateColumns: '1fr',
+          },
         })}
       >
         <BasicInfoCard profile={profile} />
