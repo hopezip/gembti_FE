@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { flushSync } from 'react-dom';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -91,6 +92,7 @@ const DEFAULT_MESSAGES: ChatMessage[] = [
 ];
 
 export function ChatbotWindow({ onClose, userName, initialMessages }: Props) {
+  useBodyScrollLock();
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages ?? DEFAULT_MESSAGES,
   );
