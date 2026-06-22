@@ -4,20 +4,33 @@ import { useNavigate } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/GameCard';
+import { Input } from '@/components/ui/Input';
 import { withdrawMe } from '@/features/mypage/api/mypage';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { logout } from '@/services/auth';
 
 // 회원탈퇴 섹션 (MYPAGE-FE-011). DELETE /api/v1/auth/withdrawal → 세션 정리 후 홈 이동.
-//   사유·비밀번호 입력 없이 확인 한 번으로 바로 탈퇴한다.
-export function WithdrawalSection() {
+//   이메일 계정은 비밀번호 입력·일치가 필수(틀리면 백엔드가 에러 반환).
+//   steam 소셜로그인 계정은 비밀번호가 없어 입력 없이 바로 탈퇴한다.
+export function WithdrawalSection({
+  loginProvider,
+}: {
+  loginProvider: 'email' | 'steam' | null;
+}) {
   const navigate = useNavigate();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const [confirming, setConfirming] = useState(false);
+  const [password, setPassword] = useState('');
+  // steam 외(email·미상)는 비밀번호가 있는 계정이라 입력·일치를 요구한다.
+  const needsPassword = loginProvider !== 'steam';
 
   const mutation = useMutation({
     mutationFn: () =>
-      withdrawMe({ password: null, reason: null, detail: null }),
+      withdrawMe({
+        password: password.trim() || null,
+        reason: null,
+        detail: null,
+      }),
     onSuccess: async () => {
       // 탈퇴 후 토큰/쿠키 정리(서버 logout 실패해도 클라 상태는 비운다).
       await logout().catch(() => {});
@@ -95,9 +108,18 @@ export function WithdrawalSection() {
             정말 탈퇴하시겠어요? 탈퇴하면 계정과 활동 정보가 삭제되며 되돌릴 수
             없습니다.
           </p>
+          {needsPassword && (
+            <Input
+              size="sm"
+              type="password"
+              placeholder="비밀번호 입력"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
           {mutation.isError && (
             <span className={css({ fontSize: 'xs', color: 'danger.fg' })}>
-              탈퇴 처리에 실패했어요. 잠시 후 다시 시도해 주세요.
+              탈퇴 처리에 실패했어요. 비밀번호를 확인해 주세요.
             </span>
           )}
           <div
@@ -119,7 +141,9 @@ export function WithdrawalSection() {
               variant="dangerSolid"
               size="sm"
               onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
+              disabled={
+                mutation.isPending || (needsPassword && !password.trim())
+              }
             >
               {mutation.isPending ? '처리 중...' : '탈퇴하기'}
             </Button>

@@ -121,7 +121,7 @@ export function MyPage() {
 
       <LibrarySection />
 
-      <WithdrawalSection />
+      <WithdrawalSection loginProvider={profile.loginProvider} />
     </PageContainer>
   );
 }
