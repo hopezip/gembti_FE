@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
 import { css, cx } from 'styled-system/css';
@@ -202,6 +203,7 @@ export function GameMediaLightbox({
   onClose,
   onNavigate,
 }: GameMediaLightboxProps) {
+  useBodyScrollLock();
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const touchStartX = useRef<number | null>(null);
   const canPrev = index > 0;
