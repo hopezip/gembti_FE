@@ -26,7 +26,11 @@ export function WithdrawalSection({
 
   const mutation = useMutation({
     mutationFn: () =>
-      withdrawMe({ password: password.trim() || null, reason: null, detail: null }),
+      withdrawMe({
+        password: password.trim() || null,
+        reason: null,
+        detail: null,
+      }),
     onSuccess: async () => {
       // 탈퇴 후 토큰/쿠키 정리(서버 logout 실패해도 클라 상태는 비운다).
       await logout().catch(() => {});
@@ -137,7 +141,9 @@ export function WithdrawalSection({
               variant="dangerSolid"
               size="sm"
               onClick={() => mutation.mutate()}
-              disabled={mutation.isPending || (needsPassword && !password.trim())}
+              disabled={
+                mutation.isPending || (needsPassword && !password.trim())
+              }
             >
               {mutation.isPending ? '처리 중...' : '탈퇴하기'}
             </Button>
