@@ -137,17 +137,16 @@ export function PersonalityRadar({ personality }: Props) {
         </Button>
       </div>
 
-      {/* 차트 + 범례 — PC: 좌우 / 모바일: 상하 */}
+      {/* 차트 + 범례 — PC/태블릿: 좌우 / 모바일: 상하 */}
       <div
         className={css({
           display: 'flex',
-          gap: '16',
+          gap: '8',
           alignItems: 'center',
           justifyContent: 'center',
-          '@media (max-width: 520px)': {
+          '@media (max-width: 640px)': {
             flexDirection: 'column',
-            alignItems: 'stretch',
-            gap: '3',
+            gap: '4',
           },
         })}
       >
@@ -156,10 +155,9 @@ export function PersonalityRadar({ personality }: Props) {
           className={css({
             flexShrink: 0,
             w: '220px',
-            '@media (max-width: 520px)': {
-              w: 'full',
-              maxW: '240px',
-              mx: 'auto',
+            '@media (max-width: 640px)': {
+              w: '280px',
+              maxW: 'full',
             },
           })}
         >
@@ -247,15 +245,14 @@ export function PersonalityRadar({ personality }: Props) {
           className={css({
             display: 'flex',
             flexDirection: 'column',
-            gap: '4',
+            gap: '3',
             flexShrink: 0,
-            minW: 'max-content',
-            '@media (max-width: 520px)': {
+            '@media (max-width: 640px)': {
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, max-content)',
+              gridTemplateColumns: 'repeat(3, auto)',
               justifyContent: 'center',
-              justifyItems: 'start',
-              minW: 0,
+              rowGap: '2',
+              columnGap: '6',
             },
           })}
         >
@@ -266,7 +263,6 @@ export function PersonalityRadar({ personality }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '2',
-                minW: 'max-content',
               })}
             >
               <span
@@ -282,8 +278,6 @@ export function PersonalityRadar({ personality }: Props) {
                 className={css({
                   fontSize: 'xs',
                   color: 'fg.subtle',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
                 })}
               >
                 {p.label}
@@ -293,7 +287,6 @@ export function PersonalityRadar({ personality }: Props) {
                   fontSize: 'xs',
                   color: 'fg.default',
                   fontWeight: 'medium',
-                  flexShrink: 0,
                 })}
               >
                 {p.value * 10}

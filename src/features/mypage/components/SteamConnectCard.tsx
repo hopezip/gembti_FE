@@ -181,7 +181,7 @@ export function SteamConnectCard({ profile }: Props) {
             {!confirming && (
               <Button
                 variant="secondary"
-                size="sm"
+                size="md"
                 onClick={() => resync.mutate()}
                 disabled={resync.isPending}
               >
@@ -195,7 +195,7 @@ export function SteamConnectCard({ profile }: Props) {
               (!confirming ? (
                 <Button
                   variant="danger"
-                  size="sm"
+                  size="md"
                   onClick={() => setConfirming(true)}
                 >
                   연동 해제
