@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 33 33" fill="none">
+  <!-- GamBTI 메인 로고 G 심볼 마크 (src/components/layout/Logo.tsx LogoMark에서 추출). -->
+  <!-- 파비콘은 디자인 토큰을 못 쓰므로 accent.default(orange.500) 값을 #ef5a2c hex로 고정. 배경 투명. -->
+  <g transform="translate(0, 5.5)">
+    <path
+      d="M10.0834 18.3337L14.6667 3.66699H27.5L26.5834 6.87533H17.4167L14.6667 15.5837H22L22.9167 12.3753H20.1667L21.0834 9.62533H27.5L25.2084 18.3337H10.0834Z"
+      fill="#ef5a2c"
+    />
+    <g opacity="0.55">
+      <path d="M0.916626 6.41699H6.41663" stroke="#ef5a2c" stroke-width="1.375" stroke-linecap="round" />
+      <path d="M0 11H7.33333" stroke="#ef5a2c" stroke-width="1.375" stroke-linecap="round" />
+      <path d="M0.916626 15.584H6.41663" stroke="#ef5a2c" stroke-width="1.375" stroke-linecap="round" />
+    </g>
+  </g>
+</svg>
