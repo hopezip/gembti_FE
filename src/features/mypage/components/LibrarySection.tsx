@@ -131,12 +131,15 @@ export function LibrarySection() {
   const { data: library, isLoading } = useQuery({
     queryKey: ['mypage', 'library'],
     queryFn: getMyLibrary,
+    // 진입마다 최신화 — auth/me 공용 쿼리(fetchMeRaw)를 통해 프로필 쿼리와 1회로 dedupe된다 (MYPAGE-FE-023).
+    staleTime: 0,
   });
 
   // 비공개 안내 분기용 — MyPage가 이미 채운 프로필 쿼리를 캐시 재사용한다(추가 호출 없음).
   const { data: profile } = useQuery({
     queryKey: ['mypage', 'profile'],
     queryFn: getMyProfile,
+    staleTime: 0,
   });
   // Steam은 연동됐지만 게임 세부정보가 비공개라 라이브러리를 못 가져온 경우.
   const isLibraryPrivate =

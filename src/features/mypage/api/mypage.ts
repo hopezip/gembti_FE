@@ -5,6 +5,7 @@
 //   ⭐ 예외: getMyProfile은 실서버 GET /api/v1/auth/me로 직결한다(MYPAGE-FE-005). 나머지는 mock 유지.
 //   응답 타입은 한시적 mock 핸들러 타입을 재사용한다(백엔드 계약 확정 시 자동 생성물로 교체 예정).
 import { api } from '@/lib/ky';
+import { queryClient } from '@/lib/queryClient';
 import { getMeRaw } from '@/services/auth';
 import type { components } from '@/types/api';
 import type { MockUserProfile } from '@/mocks/handlers/mypage';
@@ -102,6 +103,18 @@ function getMyActivity(): Promise<UserActivityResponse> {
   return api.get('api/v1/auth/me/activity').json<UserActivityResponse>();
 }
 
+// auth/me 원본을 공용 쿼리(['auth','me','raw'])로 받아 프로필·라이브러리가 같은 응답을 공유한다 (MYPAGE-FE-023).
+//   이전엔 getMyProfile·getMyLibrary가 각자 getMeRaw()를 불러 auth/me가 진입마다 2번 나갔다(queryKey가 달라 dedupe 불가).
+//   fetchQuery는 staleTime을 존중한다: 같은 진입 내 동시 호출은 in-flight를 dedupe해 1회로 합치고,
+//   staleTime:0이라 마이페이지 재진입 시엔 캐시가 stale → 새로 받아 최신화한다(프로필 수정·스팀 동기화 직후 옛 값 방지).
+function fetchMeRaw(): ReturnType<typeof getMeRaw> {
+  return queryClient.fetchQuery({
+    queryKey: ['auth', 'me', 'raw'],
+    queryFn: getMeRaw,
+    staleTime: 0,
+  });
+}
+
 // 6축 키 → 한글 라벨·표시 순서. SurveyResultPage의 정식 컨벤션을 그대로 따른다.
 const PERSONALITY_AXES: { key: string; label: string }[] = [
   { key: 'exploration', label: '탐험' },
@@ -128,7 +141,7 @@ function mapPersonality(res: MyStatsResponse): MockUserProfile['personality'] {
 //   (실패 시 보유수/플레이시간·성향은 PROFILE_FALLBACK mock 폴백).
 export async function getMyProfile(): Promise<MockUserProfile> {
   const [me, activity, stats] = await Promise.all([
-    getMeRaw(),
+    fetchMeRaw(),
     getMyActivity().catch(() => null),
     getMyStats().catch(() => null),
   ]);
@@ -196,7 +209,7 @@ export async function unlinkSteam(): Promise<void> {
 // 내 라이브러리 — 전용 엔드포인트가 없어 GET /auth/me의 steam_library.games(보유 게임 전체)를 쓴다(MYPAGE-FE-012).
 //   장르 필터/검색/정렬/페이지네이션은 서버가 안 해주므로 호출부(LibrarySection)가 클라이언트에서 처리한다.
 export async function getMyLibrary(): Promise<LibraryGame[]> {
-  const me = await getMeRaw();
+  const me = await fetchMeRaw();
   const games = me.steam_library?.games ?? [];
   return games.map((g) => ({
     id: g.game_id ?? g.steam_app_id,
