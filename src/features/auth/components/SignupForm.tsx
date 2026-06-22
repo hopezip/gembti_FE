@@ -72,6 +72,11 @@ export function SignupForm({
   //   검증은 제출과 동일한 signupStep1Schema를 재사용한다(SSOT, 로직 중복 방지).
   const passwordConfirm = watch('passwordConfirm') ?? '';
   const ageConfirmed = watch('ageConfirmed') ?? false;
+  // 비밀번호 확인이 입력됐는데 본 비밀번호와 다르면 제출 전에도 즉시 불일치를 안내한다.
+  //   (mode:'onSubmit' + 제출 버튼이 isStep1Valid로 비활성화돼 onSubmit이 안 불리므로,
+  //    RHF 에러만으로는 불일치 안내가 뜨지 않던 문제 보완)
+  const passwordMismatch =
+    passwordConfirm.length > 0 && password !== passwordConfirm;
   const isStep1Valid = signupStep1Schema.safeParse({
     email,
     password,
@@ -156,7 +161,10 @@ export function SignupForm({
         label="비밀번호 확인"
         id="signup-password-confirm"
         required
-        error={errors.passwordConfirm?.message}
+        error={
+          errors.passwordConfirm?.message ??
+          (passwordMismatch ? '비밀번호가 일치하지 않습니다' : undefined)
+        }
       >
         <PasswordInput
           autoComplete="new-password"
