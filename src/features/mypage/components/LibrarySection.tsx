@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { css } from 'styled-system/css';
 import { EmptyState } from '@/components/feedback/empty-state/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -19,85 +20,103 @@ const SORT_OPTIONS: { key: LibrarySort; label: string }[] = [
 
 const PAGE_SIZE = 12;
 
+// 카드 링크 — 메인 섹션(RecommendedGames 등)과 동일 패턴(블록 링크 + hover lift + 포커스 링).
+const cardLink = css({
+  display: 'block',
+  textDecoration: 'none',
+  color: 'inherit',
+  borderRadius: 'xl',
+  transition: 'transform 0.15s ease',
+  _hover: { transform: 'translateY(-2px)' },
+  _focusVisible: {
+    outline: '2px solid',
+    outlineColor: 'accent.default',
+    outlineOffset: '2px',
+  },
+});
+
 function LibraryGameCard({ item }: { item: LibraryGame }) {
   return (
-    <GameCard padding="none" interactive>
-      <div
-        className={css({
-          aspectRatio: '16/10',
-          bg: 'bg.surfaceRaised',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderTopLeftRadius: 'xl',
-          borderTopRightRadius: 'xl',
-          color: 'fg.subtle',
-          fontSize: 'xs',
-        })}
-        style={
-          item.thumbnailUrl
-            ? { backgroundImage: `url(${item.thumbnailUrl})` }
-            : undefined
-        }
-      >
-        {!item.thumbnailUrl && '커버 없음'}
-      </div>
-      <div className={css({ px: '3', pt: '2.5', pb: '3' })}>
-        <span
-          className={css({
-            fontSize: 'xs',
-            color: 'fg.subtle',
-            display: 'block',
-            mb: '1',
-          })}
-        >
-          {item.genres.join(' · ')}
-        </span>
-        <p
-          className={css({
-            fontWeight: 'semibold',
-            color: 'fg.default',
-            fontSize: 'sm',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            mb: '1',
-          })}
-        >
-          {item.title}
-        </p>
+    // 카드를 /games/:id 상세로 가는 react-router Link로 감싼다(다른 섹션과 동일 진입점).
+    <Link to={`/games/${item.id}`} className={cardLink}>
+      <GameCard padding="none" interactive>
         <div
           className={css({
+            aspectRatio: '16/10',
+            bg: 'bg.surfaceRaised',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
-            mb: '0.5',
+            justifyContent: 'center',
+            borderTopLeftRadius: 'xl',
+            borderTopRightRadius: 'xl',
+            color: 'fg.subtle',
+            fontSize: 'xs',
           })}
+          style={
+            item.thumbnailUrl
+              ? { backgroundImage: `url(${item.thumbnailUrl})` }
+              : undefined
+          }
         >
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-            ▶ {item.playHours.toFixed(1)}시간
+          {!item.thumbnailUrl && '커버 없음'}
+        </div>
+        <div className={css({ px: '3', pt: '2.5', pb: '3' })}>
+          <span
+            className={css({
+              fontSize: 'xs',
+              color: 'fg.subtle',
+              display: 'block',
+              mb: '1',
+            })}
+          >
+            {item.genres.join(' · ')}
           </span>
-          {item.rating !== null && (
-            <span
-              className={css({
-                fontSize: 'xs',
-                color: 'warning.fg',
-                fontWeight: 'semibold',
-              })}
-            >
-              ★ {item.rating.toFixed(1)}
+          <p
+            className={css({
+              fontWeight: 'semibold',
+              color: 'fg.default',
+              fontSize: 'sm',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              mb: '1',
+            })}
+          >
+            {item.title}
+          </p>
+          <div
+            className={css({
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: '0.5',
+            })}
+          >
+            <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+              ▶ {item.playHours.toFixed(1)}시간
+            </span>
+            {item.rating !== null && (
+              <span
+                className={css({
+                  fontSize: 'xs',
+                  color: 'warning.fg',
+                  fontWeight: 'semibold',
+                })}
+              >
+                ★ {item.rating.toFixed(1)}
+              </span>
+            )}
+          </div>
+          {item.lastPlayedAt && (
+            <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
+              {item.lastPlayedAt}
             </span>
           )}
         </div>
-        {item.lastPlayedAt && (
-          <span className={css({ fontSize: 'xs', color: 'fg.subtle' })}>
-            {item.lastPlayedAt}
-          </span>
-        )}
-      </div>
-    </GameCard>
+      </GameCard>
+    </Link>
   );
 }
 
