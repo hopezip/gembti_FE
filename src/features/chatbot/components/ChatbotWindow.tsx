@@ -5,12 +5,12 @@ import remarkGfm from 'remark-gfm';
 import { useMutation } from '@tanstack/react-query';
 import {
   BarChart3,
+  ClipboardList,
   ExternalLink,
-  Folder,
+  Link2,
+  LogIn,
   type LucideIcon,
-  Search,
   Send,
-  Sparkles,
   Star,
   X,
 } from 'lucide-react';
@@ -28,19 +28,28 @@ const BRAND = 'GAMBIT AI';
 const BRAND_SUB = '게임 추천 AI 어시스턴트';
 const MAX_LEN = 100;
 
-// 칩별 아이콘은 시안에 맞춰 색을 다르게 한다(정적 css 클래스 — Panda 추출용).
+// 사용자가 자주 묻는 가이드성 항목으로 구성(클릭 시 해당 질문을 챗봇에 전송).
+//   칩별 아이콘은 시안에 맞춰 색을 다르게 한다(정적 css 클래스 — Panda 추출용).
 const SUGGESTIONS: { icon: LucideIcon; label: string; iconClass: string }[] = [
-  { icon: Search, label: '장르 추천', iconClass: css({ color: 'fg.default' }) },
+  {
+    icon: LogIn,
+    label: '로그인 방법',
+    iconClass: css({ color: 'fg.default' }),
+  },
+  {
+    icon: Link2,
+    label: 'Steam 연동 방법',
+    iconClass: css({ color: 'accent.default' }),
+  },
   {
     icon: BarChart3,
     label: '성향 분석',
     iconClass: css({ color: 'danger.fg' }),
   },
-  { icon: Sparkles, label: '탐험', iconClass: css({ color: 'warning.fg' }) },
   {
-    icon: Folder,
-    label: '내 라이브러리',
-    iconClass: css({ color: 'accent.default' }),
+    icon: ClipboardList,
+    label: '설문 방법',
+    iconClass: css({ color: 'warning.fg' }),
   },
 ];
 
